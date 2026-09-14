@@ -100,3 +100,35 @@ export interface ParsedTestimonial {
   source: string
   order: number
 }
+
+export type ParsedSection =
+  | { _type: 'heroSection'; heading: string; subheading?: string; background?: ParsedImageRef }
+  | {
+      _type: 'richTextSection'
+      heading?: string
+      content: PortableTextBlock[]
+      tone: 'white' | 'cream' | 'ink'
+    }
+  | { _type: 'tableSection'; heading?: string; headers: string[]; rows: string[][] }
+  | { _type: 'bookingWidgetSection' }
+  | { _type: 'galleryCarouselSection'; heading?: string; albumSlug: string }
+  | { _type: 'postListSection'; heading?: string; category: 'news' | 'announcement'; limit: number }
+
+export interface ParsedPage {
+  kind: 'page'
+  slug: string
+  title: string
+  sections: ParsedSection[]
+  metaDescription?: string
+}
+
+export interface ParsedDataset {
+  rooms: ParsedRoom[]
+  posts: ParsedPost[]
+  offers: ParsedOffer[]
+  venues: ParsedVenue[]
+  halls: ParsedHall[]
+  albums: ParsedAlbum[]
+  testimonials: ParsedTestimonial[]
+  pages: ParsedPage[]
+}
