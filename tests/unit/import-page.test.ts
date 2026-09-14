@@ -31,16 +31,35 @@ describe('parsePage()', () => {
     expect(page.sections.some((s) => s._type === 'bookingWidgetSection')).toBe(true)
   })
 
-  it('trang news và our-announcement có khối danh sách bài viết', async () => {
-    for (const [slug, category] of [
-      ['news', 'news'],
-      ['our-announcement', 'announcement'],
-    ] as const) {
-      const page = await read(slug).then((h) => parsePage(h, slug))
-      const list = page.sections.find((sec) => sec._type === 'postListSection') as any
-      expect(list, `${slug} phải có postListSection`).toBeTruthy()
-      expect(list.category).toBe(category)
-    }
+  it('trang news có khối danh sách bài viết (khớp đúng 3 post category news)', async () => {
+    const page = await read('news').then((h) => parsePage(h, 'news'))
+    const list = page.sections.find((sec) => sec._type === 'postListSection') as any
+    expect(list, 'news phải có postListSection').toBeTruthy()
+    expect(list.category).toBe('news')
+  })
+
+  it('trang our-announcement KHÔNG có postListSection — không có post nào category announcement để khớp', async () => {
+    const page = await read('our-announcement').then((h) => parsePage(h, 'our-announcement'))
+    expect(page.sections.some((sec) => sec._type === 'postListSection')).toBe(false)
+  })
+
+  it('trang our-announcement đổ 96 công bố thật thành một richTextSection dạng gạch đầu dòng có link', async () => {
+    const page = await read('our-announcement').then((h) => parsePage(h, 'our-announcement'))
+    const rich = page.sections.filter((s) => s._type === 'richTextSection') as any[]
+    expect(rich.length, 'phải có ít nhất 1 richTextSection chứa danh sách công bố').toBeGreaterThan(0)
+
+    const items = rich.flatMap((s) => s.content)
+    // Dữ liệu thật có 96 công bố (đã đếm trực tiếp trên our-announcement/index.html) —
+    // đòi > 50 để chống bắt-vài-mục-rồi-dừng, không đòi đúng 96 để không giòn theo
+    // dữ liệu nguồn cập nhật.
+    expect(items.length, 'phải có nhiều mục — dữ liệu thật có 96 công bố').toBeGreaterThan(50)
+
+    const hasDriveLink = items.some((block: any) =>
+      (block.markDefs ?? []).some(
+        (def: any) => def._type === 'link' && def.href?.includes('drive.google.com'),
+      ),
+    )
+    expect(hasDriveLink, 'phải có ít nhất một mục mang link Google Drive').toBe(true)
   })
 
   it('trang thường KHÔNG có khối danh sách bài viết', async () => {

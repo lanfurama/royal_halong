@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio'
 import { resolve, dirname } from 'node:path'
+import { randomKey } from '@portabletext/block-tools'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
 import { toImageRef, realSrc } from './shared'
@@ -17,6 +18,68 @@ function pushTable(
 ): void {
   if (headers.length === 0 || rows.length === 0) return
   sections.push({ _type: 'tableSection', heading, headers, rows })
+}
+
+/**
+ * Danh sách công bố thông tin trên /our-announcement (96 mục thật trên nguồn —
+ * hồ sơ công bố của một công ty niêm yết). Dựng bằng CÙNG lưới div đã dùng cho
+ * bảng Baccarat trên casino — `.nectar-hor-list-item` (hàng) >
+ * `.nectar-list-item` (ô) — nhưng nằm NGOÀI `.inner-toggle-wrap` nên
+ * pushTable() không thấy. Không dùng tableSection ở đây: bảng không có chỗ
+ * chứa link, mà link (tới file PDF trên Google Drive/portal ngoài) mới chính
+ * là thứ khiến một mục công bố có ích — dựng thủ công thành các khối
+ * richTextSection dạng gạch đầu dòng, tiêu đề là link tới `a.full-link`.
+ *
+ * Đã xác minh trên TOÀN BỘ 97 hàng thật (không chỉ vài hàng đầu): ngày luôn là
+ * `.nectar-list-item` #0, tiêu đề luôn là #1 — ổn định trên cả 97 hàng, kể cả
+ * hàng tiêu đề cột ("NGÀY"/"THÔNG BÁO", bị loại vì không có `a.full-link`).
+ * ĐIỂM LỆCH THẬT (không giả định): 94/96 hàng dữ liệu trỏ tới
+ * drive.google.com, nhưng 2 hàng trỏ tới host khác (`ric.ezgsm.fpts.com.vn`,
+ * `ric.dhcdonline.com` — cổng thông tin công ty niêm yết / họp cổ đông trực
+ * tuyến) — vẫn là công bố thật, có link thật, nên KHÔNG lọc riêng
+ * `drive.google.com`, giữ mọi hàng có link hợp lệ. Định dạng ngày cũng không
+ * đồng nhất (3 hàng dùng "d/m/yyyy" không có số 0 đứng trước thay vì
+ * "dd/mm/yyyy") — giữ nguyên văn, không cố chuẩn hoá.
+ */
+function parseAnnouncementList($: cheerio.CheerioAPI, main: ReturnType<typeof $>) {
+  const blocks: any[] = []
+  const seen = new Set<string>()
+
+  main.find('.nectar-hor-list-item').each((_, row) => {
+    const $row = $(row)
+    const items = $row.children('.nectar-list-item')
+    if (items.length !== 2) return
+
+    const date = textOf($(items[0]).html() ?? '')
+    const title = textOf($(items[1]).html() ?? '')
+    const href = $row.find('a.full-link').attr('href')
+    // Hàng tiêu đề cột không có link — bị loại tự nhiên bằng điều kiện này,
+    // không cần so khớp cứng chuỗi "NGÀY"/"THÔNG BÁO" (đỡ phụ thuộc ngôn ngữ).
+    if (!date || !title || !href) return
+
+    // Phòng khi dữ liệu nguồn dán trùng một hàng (đã gặp kiểu lỗi này ở
+    // wedding) — chưa thấy trên trang này (đã kiểm tường minh: 0 hàng trùng
+    // cả ba trường ngày+tiêu đề+link) nhưng chặn sẵn, không đợi gặp mới sửa.
+    const key = `${date}|${title}|${href}`
+    if (seen.has(key)) return
+    seen.add(key)
+
+    const linkKey = randomKey(12)
+    blocks.push({
+      _type: 'block',
+      _key: randomKey(12),
+      style: 'normal',
+      listItem: 'bullet',
+      level: 1,
+      markDefs: [{ _type: 'link', _key: linkKey, href }],
+      children: [
+        { _type: 'span', _key: randomKey(12), text: `${date} — `, marks: [] },
+        { _type: 'span', _key: randomKey(12), text: title, marks: [linkKey] },
+      ],
+    })
+  })
+
+  return blocks
 }
 
 export function parsePage(html: string, slug: string): ParsedPage {
@@ -131,14 +194,19 @@ export function parsePage(html: string, slug: string): ParsedPage {
     sections.push({ _type: 'bookingWidgetSection' })
   }
 
-  // Hai trang danh sách bài viết. Không có khối này thì /news và /our-announcement
-  // chỉ còn hero — bài viết không hiện ở đâu cả.
-  if (slug === 'news' || slug === 'our-announcement') {
-    sections.push({
-      _type: 'postListSection',
-      category: slug === 'news' ? 'news' : 'announcement',
-      limit: 12,
-    })
+  // /news khớp đúng 3 tài liệu `post` category 'news' — postListSection hợp
+  // lý, giữ nguyên. /our-announcement KHÔNG có tài liệu `post` category
+  // 'announcement' nào (cả 3 post hiện có đều 'news') — postListSection ở đây
+  // khớp 0 tài liệu, trang sẽ hiện hero rồi tới thông báo "chưa có bài viết"
+  // ngay phía trên 96 công bố thật. Dùng danh sách công bố dựng thủ công thay
+  // vào đó (xem parseAnnouncementList).
+  if (slug === 'news') {
+    sections.push({ _type: 'postListSection', category: 'news', limit: 12 })
+  } else if (slug === 'our-announcement') {
+    const announcementBlocks = parseAnnouncementList($, main)
+    if (announcementBlocks.length > 0) {
+      sections.push({ _type: 'richTextSection', content: announcementBlocks, tone: 'white' })
+    }
   }
 
   // Phần văn bản: `.wpb_text_column` KHÔNG PHẢI wrapper duy nhất site này dùng
