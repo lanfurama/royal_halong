@@ -115,6 +115,10 @@ const LINK = `{
 }`
 
 /** Mở đủ tham chiếu cho 14 loại section. */
+// `background` CHỈ là ảnh (heroSection, ctaBandSection). Nền màu của
+// richTextSection/imageTextSection là field riêng tên `tone` (chuỗi enum) —
+// hai thứ này từng trùng tên, và projection ảnh bên dưới sẽ phá giá trị chuỗi
+// nếu ai đó đặt lại tên cho trùng.
 const SECTIONS = `sections[]{
   ...,
   background ${IMAGE},
@@ -253,23 +257,34 @@ export async function getAllRoutes() {
   return data ?? []
 }
 
+/**
+ * `defineLive({ strict: true })` bắt MỌI lời gọi `cachedSanity` phải khai
+ * `perspective` và `stega`. Thiếu là hỏng typecheck, và hỏng cả lúc chạy.
+ * Gói lại một chỗ để không chỗ gọi nào quên.
+ */
+const PUBLISHED = { perspective: 'published', stega: false } as const
+
 export async function getDocBySlug(slug: string) {
-  const { data } = await cachedSanity({ query: DOC_BY_SLUG_QUERY, params: { slug } })
+  const { data } = await cachedSanity({
+    query: DOC_BY_SLUG_QUERY,
+    params: { slug },
+    ...PUBLISHED,
+  })
   return data
 }
 
 export async function getHome() {
-  const { data } = await cachedSanity({ query: HOME_QUERY })
+  const { data } = await cachedSanity({ query: HOME_QUERY, ...PUBLISHED })
   return data
 }
 
 export async function getSiteSettings() {
-  const { data } = await cachedSanity({ query: SITE_SETTINGS_QUERY })
+  const { data } = await cachedSanity({ query: SITE_SETTINGS_QUERY, ...PUBLISHED })
   return data
 }
 
 export async function getNavigation() {
-  const { data } = await cachedSanity({ query: NAVIGATION_QUERY })
+  const { data } = await cachedSanity({ query: NAVIGATION_QUERY, ...PUBLISHED })
   return data
 }
 ```
@@ -1419,15 +1434,15 @@ const BG = {
 } as const
 
 export function RichTextSection({
-  heading, content, background = 'white', narrow = true, lang,
+  heading, content, tone = 'white', narrow = true, lang,
 }: any & { lang: Locale }) {
   return (
-    <section className={`py-16 ${BG[background as keyof typeof BG] ?? BG.white}`}>
+    <section className={`py-16 ${BG[tone as keyof typeof BG] ?? BG.white}`}>
       <Container size={narrow ? 'narrow' : 'default'}>
         {heading && (
           <h2
             className={`font-display mb-6 text-3xl ${
-              background === 'ink' ? 'text-gold-hi' : 'text-gold-deep'
+              tone === 'ink' ? 'text-gold-hi' : 'text-gold-deep'
             }`}
           >
             {t(heading, lang)}
@@ -1458,10 +1473,10 @@ const BG = {
 } as const
 
 export function ImageTextSection({
-  heading, eyebrow, content, image, imageSide = 'left', background = 'white', cta, lang,
+  heading, eyebrow, content, image, imageSide = 'left', tone = 'white', cta, lang,
 }: any & { lang: Locale }) {
   return (
-    <section className={`py-16 ${BG[background as keyof typeof BG] ?? BG.white}`}>
+    <section className={`py-16 ${BG[tone as keyof typeof BG] ?? BG.white}`}>
       <Container>
         <div className="grid items-center gap-10 md:grid-cols-2">
           <Reveal className={imageSide === 'right' ? 'md:order-2' : ''}>
@@ -1476,7 +1491,7 @@ export function ImageTextSection({
             {eyebrow && (
               <p
                 className={`mb-3 text-xs tracking-[0.18em] uppercase ${
-                  background === 'ink' ? 'text-gold-hi' : 'text-gold-text'
+                  tone === 'ink' ? 'text-gold-hi' : 'text-gold-text'
                 }`}
               >
                 {t(eyebrow, lang)}
@@ -1485,7 +1500,7 @@ export function ImageTextSection({
             {heading && (
               <h2
                 className={`font-display mb-4 text-3xl ${
-                  background === 'ink' ? 'text-gold-hi' : 'text-gold-deep'
+                  tone === 'ink' ? 'text-gold-hi' : 'text-gold-deep'
                 }`}
               >
                 {t(heading, lang)}

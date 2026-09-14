@@ -1377,7 +1377,7 @@ Các trang còn lại (casino, wedding, lưu trú, pháp lý, reservation, payme
 ```ts
 export type ParsedSection =
   | { _type: 'heroSection'; heading: string; subheading?: string; background?: ParsedImageRef }
-  | { _type: 'richTextSection'; heading?: string; content: PortableTextBlock[]; background: 'white' | 'cream' | 'ink' }
+  | { _type: 'richTextSection'; heading?: string; content: PortableTextBlock[]; tone: 'white' | 'cream' | 'ink' }
   | { _type: 'tableSection'; heading?: string; headers: string[]; rows: string[][] }
   | { _type: 'bookingWidgetSection' }
   | { _type: 'galleryCarouselSection'; heading?: string; albumSlug: string }
@@ -1564,7 +1564,7 @@ export function parsePage(html: string, slug: string): ParsedPage {
     sections.push({
       _type: 'richTextSection',
       content,
-      background: index % 2 === 1 ? 'cream' : 'white',
+      tone: index % 2 === 1 ? 'cream' : 'white',
     })
   })
 
@@ -2181,7 +2181,7 @@ function sectionValue(section: ParsedPage['sections'][number], index: number, ca
         _key: key, _type: 'richTextSection',
         heading: localeValue(section.heading),
         content: localeValue(section.content),
-        background: section.background,
+        tone: section.tone,
       }
     case 'tableSection':
       return {
@@ -2369,6 +2369,27 @@ Expected: in bảng số document theo `_type`. Kỳ vọng thấy `room: 4`, `p
 Run: `pnpm import:run`
 Expected: in tiến trình theo lô, kết thúc "Xong."
 
+⚠️ **Ảnh không phân giải được sẽ để trống field bắt buộc.** `imageValue()` trả `undefined` khi
+`filePath` không có trong cache, nhưng `room.heroImage`, `heroSection.background` và
+`ctaBandSection.background` đều `required()`. API ghi của Sanity **không** kiểm validation, nên
+document vẫn vào — rồi hiện dấu đỏ trong Studio. Trước khi ghi thật, đếm xem có bao nhiêu ảnh
+thiếu:
+
+```bash
+pnpm tsx -e "
+import { readFile } from 'node:fs/promises'
+const docs = (await readFile('scripts/import/out/documents.ndjson','utf-8'))
+  .split('\n').filter(Boolean).map(l => JSON.parse(l))
+const missing = docs.filter(d =>
+  (d._type === 'room' && !d.heroImage) ||
+  (d.sections ?? []).some(s => ['heroSection','ctaBandSection'].includes(s._type) && !s.background))
+console.log('document thiếu ảnh bắt buộc:', missing.length)
+for (const d of missing) console.log(' -', d._id)
+"
+```
+
+Ra 0 thì ghi tiếp. Ra khác 0 thì sửa parser hoặc cache asset trước — đừng ghi rồi dọn sau.
+
 - [ ] **Step 4: Kiểm chứng trong Studio**
 
 Mở `http://localhost:3000/studio`. Kiểm:
@@ -2440,6 +2461,18 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
+
+## Không nằm trong phạm vi Plan B
+
+**Script import KHÔNG ghi `siteSettings` và `navigation`.** `buildDocuments()` không sinh hai
+singleton đó. Nghĩa là sau khi `pnpm import` chạy xong, những thứ sau vẫn **trống** và phải nhập
+tay trong Studio trước khi frontend của Plan C hiển thị được:
+
+- menu đầu trang và các cột chân trang (`navigation`)
+- tên thương hiệu, logo, điện thoại, email, địa chỉ, toạ độ bản đồ, mạng xã hội,
+  GCN ĐKDN, badge Bộ Công Thương, dòng bản quyền, id widget SecureBookings (`siteSettings`)
+
+Đừng tuyên bố "import xong" khi chưa nhập hai cái này — Plan C sẽ render header và footer rỗng.
 
 ## Hoàn thành Plan B
 
