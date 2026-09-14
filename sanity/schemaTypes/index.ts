@@ -15,6 +15,9 @@ import { galleryAlbum } from './documents/galleryAlbum'
 import { testimonial } from './documents/testimonial'
 import { sectionTypes } from './sections'
 import { page } from './documents/page'
+import { siteSettings } from './documents/siteSettings'
+import { navigation } from './documents/navigation'
+import { homePage } from './documents/homePage'
 
 export const schemaTypes: SchemaTypeDefinition[] = [
   localeString,
@@ -26,4 +29,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   seo,
   room, post, offer, venue, hall, galleryAlbum, testimonial,
   ...sectionTypes, page,
+  siteSettings, navigation, homePage,
 ]
