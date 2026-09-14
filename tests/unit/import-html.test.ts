@@ -1,6 +1,19 @@
 import { describe, it, expect } from 'vitest'
 import { cleanHtml, toPortableText, textOf } from '@/scripts/import/html'
 
+/**
+ * PortableTextBlock của Sanity gõ `children` rất lỏng (unknown) vì nó là type
+ * chung cho mọi kiểu block. Trong test này ta biết chắc `toPortableText` luôn
+ * trả block chữ (`block` type), nên khai một type hẹp chỉ để assert, không
+ * đổi type trả về thật của `toPortableText`.
+ */
+type TestBlock = {
+  _type: string
+  style?: string
+  listItem?: string
+  children: { text: string; marks?: string[] }[]
+}
+
 describe('cleanHtml()', () => {
   it('bỏ thẻ script và style cùng nội dung', () => {
     const out = cleanHtml('<p>Giữ</p><script>var a=1</script><style>p{color:red}</style>')
@@ -40,7 +53,7 @@ describe('textOf()', () => {
 
 describe('toPortableText()', () => {
   it('chuyển đoạn văn thành block kiểu normal', () => {
-    const blocks = toPortableText('<p>Phòng Deluxe hướng biển.</p>')
+    const blocks = toPortableText('<p>Phòng Deluxe hướng biển.</p>') as TestBlock[]
     expect(blocks).toHaveLength(1)
     expect(blocks[0]._type).toBe('block')
     expect(blocks[0].style).toBe('normal')
@@ -48,15 +61,15 @@ describe('toPortableText()', () => {
   })
 
   it('giữ tiêu đề và danh sách', () => {
-    const blocks = toPortableText('<h2>Luật chơi</h2><ul><li>Một</li><li>Hai</li></ul>')
+    const blocks = toPortableText('<h2>Luật chơi</h2><ul><li>Một</li><li>Hai</li></ul>') as TestBlock[]
     expect(blocks[0].style).toBe('h2')
     expect(blocks[1].listItem).toBe('bullet')
     expect(blocks).toHaveLength(3)
   })
 
   it('giữ chữ đậm thành decorator strong', () => {
-    const blocks = toPortableText('<p>Giá <strong>500.000đ</strong></p>')
-    const marked = blocks[0].children.find((c: any) => c.text === '500.000đ')
+    const blocks = toPortableText('<p>Giá <strong>500.000đ</strong></p>') as TestBlock[]
+    const marked = blocks[0].children.find((c) => c.text === '500.000đ')!
     expect(marked.marks).toContain('strong')
   })
 
