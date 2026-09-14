@@ -26,6 +26,10 @@ describe('t()', () => {
     const blocks = [{ _type: 'block', children: [] }]
     expect(t({ vi: blocks, en: [] }, 'en')).toEqual(blocks)
   })
+
+  it('coi chuỗi chỉ có khoảng trắng là trống, fallback về vi', () => {
+    expect(t({ vi: 'Lưu trú', en: '   ' }, 'en')).toBe('Lưu trú')
+  })
 })
 
 describe('isLocale()', () => {
