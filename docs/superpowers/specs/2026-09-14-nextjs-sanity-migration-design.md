@@ -164,7 +164,7 @@ areaSqm: number              capacity: localeString
 view: localeString           bedType: localeString
 summary: localeText          description: localeBlock
 heroImage: image             gallery: image[]
-features: [{ icon: image, label: localeString }]   // 16 mục/phòng, 15 icon dùng chung
+features: [{ icon: image, label: localeString }]   // 15 mục/phòng, 15 icon dùng chung
 order: number                seo
 ```
 

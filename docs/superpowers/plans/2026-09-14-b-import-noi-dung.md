@@ -10,6 +10,24 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-14-nextjs-sanity-migration-design.md`
 
+## ⚠️ Sự thật về dữ liệu nguồn: ảnh được lazy-load
+
+**Đọc `src` của thẻ `<img>` là SAI trên site này.** Salient lazy-load ảnh: `src` chứa một
+SVG placeholder `data:image/svg+xml`, còn URL thật nằm ở thuộc tính `data-nectar-img-src`.
+
+Đo trên chính repo này:
+
+| | |
+|---|---|
+| Thẻ `<img>` có `src` là placeholder `data:` | **238** / 545 |
+| Riêng trang `our-gallery` | **79** / 90 |
+
+Nghĩa là parser chỉ đọc `src` sẽ mất gần hết ảnh thư viện, và `$('img').first()` cho ảnh hero
+sẽ rơi vào logo (logo không lazy-load nên nó là ảnh đầu tiên có `src` thật).
+
+Mọi chỗ lấy URL ảnh phải qua một helper đọc `data-nectar-img-src` trước rồi mới fallback về
+`src`, và bỏ qua mọi giá trị bắt đầu bằng `data:`.
+
 ## Global Constraints
 
 - Plan A phải xong trước (schema Sanity đã tồn tại).
@@ -586,8 +604,10 @@ describe('parseRoom() trên trang deluxe thật', () => {
     expect(deluxe.bedType).toContain('Giường đôi')
   })
 
-  it('lấy đủ 16 tiện nghi', () => {
-    expect(deluxe.features).toHaveLength(16)
+  it('lấy đủ 15 tiện nghi', () => {
+    // Đếm thật: `<div class="iwithtext">` xuất hiện 15 lần, `.iwt-text` cũng 15.
+    // (Chuỗi "iwithtext" xuất hiện 16 lần trong file nhưng một lần không phải thẻ mục.)
+    expect(deluxe.features).toHaveLength(15)
   })
 
   it('mỗi tiện nghi có nhãn không rỗng', () => {
