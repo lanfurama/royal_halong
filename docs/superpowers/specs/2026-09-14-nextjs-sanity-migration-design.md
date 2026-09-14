@@ -57,7 +57,7 @@ app/
   api/
     leads/route.ts
     newsletter/route.ts
-    revalidate/route.ts         → webhook Sanity
+    draft-mode/{enable,disable}/route.ts
 sanity/
   schemaTypes/                  → document + object types
   lib/{client,image,queries,live}.ts
@@ -94,10 +94,23 @@ page     → <SectionRenderer sections={doc.sections} />
 
 ### Rendering & cache
 
-- Static generation mặc định (`generateStaticParams` từ Sanity).
-- Truy vấn gắn `next: { tags: [...] }`; webhook Sanity gọi `/api/revalidate` →
-  `revalidateTag`. Xác thực bằng `SANITY_REVALIDATE_SECRET`.
-- Draft mode + Presentation tool cho preview bản nháp.
+Dùng **Live Content API** của `next-sanity` 13, không tự dựng webhook revalidate.
+
+- `sanity/lib/live.ts` gọi `defineLive({ client, serverToken, browserToken, strict: true })`
+  → trả `SanityLive` + `sanityFetch`. `<SanityLive />` đặt trong root layout tự nhận
+  sự kiện thay đổi từ Sanity và gọi `revalidateTag(tag, 'max')`. **Không cần
+  `/api/revalidate`, không cần `SANITY_REVALIDATE_SECRET`.**
+- `next.config.ts` bật `cacheComponents: true` và `cacheLife: { default: sanity }`
+  (import `sanity` từ `next-sanity/live/cache-life`).
+- Một ranh giới `'use cache'` dùng chung: wrapper `cachedSanity` trong `live.ts`.
+  `sanityFetch` tự gọi `cacheTag`/`cacheLife` bên trong nên **caller không tự thêm
+  `'use cache'`** — thêm nữa là lồng ranh giới, sai.
+- `generateStaticParams` dùng `cachedSanityStaticParams`, `generateMetadata` dùng
+  `cachedSanityMetadata` (perspective `published`, `stega: false`).
+- ⚠️ Với `cacheComponents: true`, **`generateStaticParams` trả mảng rỗng là lỗi**
+  (`empty-generate-static-params`). Catch-all `[slug]` phải luôn trả ≥ 1 param, nên
+  script import phải chạy trước lần build đầu tiên.
+- Draft mode: `/api/draft-mode/enable` + `<VisualEditing />` khi `draftMode().isEnabled`.
 
 ---
 
@@ -235,6 +248,9 @@ title, slug, seo, sections: [ ...blocks ]
 | `bookingWidgetSection` | đặt phòng | nhúng SecureBookings |
 | `leadFormSection` | tiệc cưới, cung hội nghị | `formType: 'wedding' \| 'mice' \| 'general'` |
 | `faqSection` | phương thức thanh toán | Q/A localeBlock |
+| `postListSection` | **tin tức, thông báo** | liệt kê `post` theo `category`, có phân trang |
+
+Tổng cộng **15 block**.
 
 `seo` là object dùng chung: `metaTitle: localeString`, `metaDescription: localeText`,
 `ogImage`, `noIndex`.
@@ -407,13 +423,14 @@ theo breakpoint để không tải thừa.
 NEXT_PUBLIC_SANITY_PROJECT_ID
 NEXT_PUBLIC_SANITY_DATASET          production
 NEXT_PUBLIC_SANITY_API_VERSION      2026-09-14
-SANITY_API_READ_TOKEN               draft mode
-SANITY_API_WRITE_TOKEN              chỉ dùng cho script import, không đưa lên Vercel
-SANITY_REVALIDATE_SECRET
-DATABASE_URL                        Neon pooled
-RESEND_API_KEY                      optional
-NEXT_PUBLIC_SITE_URL
+SANITY_API_READ_TOKEN               bắt buộc — defineLive ném lỗi nếu thiếu
+SANITY_API_WRITE_TOKEN              chỉ script import dùng, KHÔNG đưa lên Vercel
+DATABASE_URL                        Neon pooled connection string
+RESEND_API_KEY                      optional — thiếu thì bỏ qua gửi mail
+NEXT_PUBLIC_SITE_URL                dùng cho canonical / hreflang / sitemap
 ```
+
+Không có `SANITY_REVALIDATE_SECRET` — Live Content API thay thế webhook revalidate.
 
 ---
 
