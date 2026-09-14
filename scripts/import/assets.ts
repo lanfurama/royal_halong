@@ -80,6 +80,35 @@ export async function uploadAll(
   return next
 }
 
+/**
+ * Upload danh sách ảnh GỐC (đường dẫn THẬT trên đĩa như `collectOriginalImages()`
+ * trả về — có thể là một biến thể srcset nếu bản gốc không tồn tại), nhưng GHI
+ * CACHE THEO ĐƯỜNG DẪN ĐÃ STRIP.
+ *
+ * Lý do: `toImageRef()` (dùng ở mọi parser) luôn tạo `ParsedImageRef.filePath`
+ * bằng `stripSizeSuffix()`, BẤT KỂ tên đã strip có thật trên đĩa hay không. Ví dụ
+ * `area.png` không tồn tại — chỉ có `area-300x300.png` — nên
+ * `collectOriginalImages()` trả về `area-300x300.png`; nhưng parser vẫn tạo
+ * `filePath: 'area.png'`. Nếu cache khoá theo đường dẫn thật (`area-300x300.png`)
+ * thì tra cứu ở pha transform (`cache[ref.filePath]`) luôn trượt cho MỌI icon dạng
+ * này — đã đo được 60/60 icon tiện nghi phòng rơi vào trường hợp này. Khoá theo
+ * đường dẫn đã strip khiến hai phía khớp nhau BẰNG CẤU TRÚC (stripSizeSuffix là
+ * idempotent — file đã là bản gốc thì tự khoá theo chính nó), không phải trùng hợp.
+ *
+ * Giá trị lưu trong cache vẫn là asset id của file THẬT đã upload — chỉ đổi KHOÁ.
+ */
+export async function uploadOriginals(
+  images: string[],
+  cache: AssetCache,
+  upload: UploadFn,
+): Promise<AssetCache> {
+  const canonicalToActual = new Map(images.map((actual) => [stripSizeSuffix(actual), actual]))
+  const canonicalPaths = [...canonicalToActual.keys()]
+  return uploadAll(canonicalPaths, cache, (canonicalPath) =>
+    upload(canonicalToActual.get(canonicalPath)!),
+  )
+}
+
 /** Upload thật lên Sanity. Chỉ dùng khi chạy script, không dùng trong test. */
 async function uploadToSanity(filePath: string): Promise<string> {
   const { writeClient } = await import('./sanityClient')
@@ -104,7 +133,7 @@ async function main() {
   console.log(`Ảnh gốc: ${images.length}, đã có trong cache: ${Object.keys(cache).length}`)
 
   let done = 0
-  const next = await uploadAll(images, cache, async (filePath) => {
+  const next = await uploadOriginals(images, cache, async (filePath) => {
     const id = await uploadToSanity(filePath)
     done += 1
     if (done % 10 === 0) console.log(`  đã upload ${done}...`)
