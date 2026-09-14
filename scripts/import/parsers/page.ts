@@ -4,6 +4,7 @@ import { randomKey } from '@portabletext/block-tools'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
 import { toImageRef, realSrc } from './shared'
+import { parseGalleryAlbums } from './gallery'
 import type { ParsedPage, ParsedSection } from '../types'
 
 /**
@@ -206,6 +207,22 @@ export function parsePage(html: string, slug: string): ParsedPage {
     const announcementBlocks = parseAnnouncementList($, main)
     if (announcementBlocks.length > 0) {
       sections.push({ _type: 'richTextSection', content: announcementBlocks, tone: 'white' })
+    }
+  } else if (slug === 'our-gallery') {
+    // parseGalleryAlbums() (gallery.ts) đổ 5 album thành document `galleryAlbum`
+    // riêng trong dataset.albums — nhưng KHÔNG section nào trên trang trỏ tới
+    // chúng. `galleryCarouselSection` là section DUY NHẤT transform.ts biến
+    // thành reference tới `galleryAlbum` (qua `albumSlug`); từng bị đánh dấu
+    // "nhánh chết, vô hại" ở review tổng Plan A — SAI, đây là section duy nhất
+    // gắn album vào trang, thiếu nó thì trang chỉ còn hero trên khoảng trống
+    // dù 5 document ảnh vẫn tồn tại trong dataset.
+    //
+    // Gọi LẠI parseGalleryAlbums() trên CHÍNH html của route này thay vì tự
+    // tính slug bằng slugify — hai nơi gọi CÙNG MỘT HÀM trên CÙNG MỘT input
+    // (html của route 'our-gallery') luôn cho cùng slug, không thể lệch nhau
+    // theo thời gian như khi chép lại logic slugify riêng.
+    for (const album of parseGalleryAlbums(html)) {
+      sections.push({ _type: 'galleryCarouselSection', heading: album.title, albumSlug: album.slug })
     }
   }
 

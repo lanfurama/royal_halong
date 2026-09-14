@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFile } from 'node:fs/promises'
 import * as cheerio from 'cheerio'
 import { parsePage } from '@/scripts/import/parsers/page'
+import { parseGalleryAlbums } from '@/scripts/import/parsers/gallery'
 import { routeToHtmlPath, ROUTES } from '@/scripts/import/paths'
 import { ROOM_SLUGS, POST_SLUGS } from '@/scripts/import/parse'
 
@@ -247,6 +248,35 @@ describe('richTextSection không rò rỉ card quảng bá chéo sang trang khá
       expect(
         combined.includes(text),
         `${route || '(home)'}: chứa câu quảng bá chéo "${text.slice(0, 40)}…" — không phải nội dung của trang này`,
+      ).toBe(false)
+    }
+  })
+})
+
+describe('trang our-gallery gắn đúng 5 album vào trang bằng galleryCarouselSection', () => {
+  it('mỗi galleryCarouselSection.albumSlug khớp CHÍNH XÁC slug mà parseGalleryAlbums() sinh ra cho cùng trang', async () => {
+    const html = await read('our-gallery')
+    const page = parsePage(html, 'our-gallery')
+    const carousels = page.sections.filter((s) => s._type === 'galleryCarouselSection') as any[]
+
+    // Nguồn sự thật độc lập: gọi thẳng parseGalleryAlbums() — hàm dataset.albums
+    // trong parse.ts cũng gọi — không tự đoán/hard-code 5 slug bằng tay, để
+    // test không lệch nếu dữ liệu nguồn hoặc slugify() đổi.
+    const albums = parseGalleryAlbums(html)
+    expect(albums.length, 'dữ liệu thật phải có 5 album').toBe(5)
+
+    expect(carousels.length, 'phải có đúng 1 galleryCarouselSection cho mỗi album').toBe(albums.length)
+    expect(carousels.map((c) => c.albumSlug).sort()).toEqual(albums.map((a) => a.slug).sort())
+  })
+
+  it('KHÔNG route "page" nào khác có galleryCarouselSection', async () => {
+    for (const route of PAGE_ROUTES) {
+      if (route === 'our-gallery') continue
+      const html = await read(route)
+      const page = parsePage(html, route)
+      expect(
+        page.sections.some((s) => s._type === 'galleryCarouselSection'),
+        `${route || '(home)'}: có galleryCarouselSection — chỉ our-gallery được phép có`,
       ).toBe(false)
     }
   })
