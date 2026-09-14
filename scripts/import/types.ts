@@ -56,3 +56,47 @@ export interface ParsedOffer {
   priceNote?: string
   order: number
 }
+
+export interface ParsedVenue {
+  kind: 'venue'
+  slug: string
+  name: string
+  venueKind: 'dining' | 'facility'
+  location?: string
+  capacity?: string
+  hours?: string
+  highlights: string[]
+  description: PortableTextBlock[]
+  image?: ParsedImageRef
+  menuUrl?: string
+  phone?: string
+  order: number
+}
+
+export interface ParsedHall {
+  kind: 'hall'
+  slug: string
+  name: string
+  areaSqm?: number
+  capacity?: string
+  description: PortableTextBlock[]
+  image?: ParsedImageRef
+  order: number
+}
+
+export interface ParsedAlbum {
+  kind: 'album'
+  slug: string
+  title: string
+  images: ParsedImageRef[]
+  order: number
+}
+
+export interface ParsedTestimonial {
+  kind: 'testimonial'
+  heading: string
+  quote: string
+  author: string
+  source: string
+  order: number
+}

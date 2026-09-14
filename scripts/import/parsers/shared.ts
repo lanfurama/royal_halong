@@ -18,6 +18,16 @@ export function slugify(input: string): string {
 }
 
 /**
+ * Theme Salient/Nectar lazy-load ảnh: `src` của `<img>` chỉ là placeholder SVG
+ * rỗng (`data:image/svg+xml...`), đường dẫn ảnh THẬT nằm ở `data-nectar-img-src`
+ * — dùng chung cho cả `<img>` lẫn `<div>` nền (background-image gán bằng JS lúc
+ * chạy, không có trong `src`/`style` tĩnh). Luôn ưu tiên attribute này trước.
+ */
+export function realSrc(el: { attr(name: string): string | undefined }): string | undefined {
+  return el.attr('data-nectar-img-src') ?? el.attr('src')
+}
+
+/**
  * `src` trong HTML là đường dẫn tương đối kiểu `../wp-content/uploads/...`.
  * Đổi thành đường dẫn tuyệt đối tới ảnh GỐC trên đĩa (khử hậu tố kích thước).
  */

@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio'
 import { resolve, dirname } from 'node:path'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
-import { toImageRef } from './shared'
+import { toImageRef, realSrc } from './shared'
 import type { ParsedRoom, ParsedRoomFeature } from '../types'
 
 const ORDER: Record<string, number> = {
@@ -31,7 +31,7 @@ export function parseRoom(html: string, slug: string): ParsedRoom {
     if (!label) return
     features.push({
       label,
-      icon: toImageRef($(el).find('.iwt-icon img').attr('src'), routeDir),
+      icon: toImageRef(realSrc($(el).find('.iwt-icon img')), routeDir),
     })
   })
 
@@ -46,13 +46,17 @@ export function parseRoom(html: string, slug: string): ParsedRoom {
 
   const gallery: ParsedRoom['gallery'] = []
   $('.wpb_gallery img, .nectar-flickity img').each((_, el) => {
-    const ref = toImageRef($(el).attr('src'), routeDir)
+    const ref = toImageRef(realSrc($(el)), routeDir)
     if (ref) gallery.push(ref)
   })
 
+  // Ảnh đại diện không phải <img> mà là nền của khối #intro (banner đầu trang),
+  // gán qua data-nectar-img-src trên .row-bg — không có class .page-header-bg-image
+  // như brief dự đoán ban đầu (selector đó không khớp gì trên HTML thật).
   const heroImage =
-    toImageRef($('.page-header-bg-image img').attr('src'), routeDir) ??
-    toImageRef($('img').first().attr('src'), routeDir)
+    toImageRef(realSrc($('#intro .row-bg').first()), routeDir) ??
+    toImageRef(realSrc($('.page-header-bg-image img').first()), routeDir) ??
+    toImageRef(realSrc($('img').first()), routeDir)
 
   const capacityLabel = findFeature('Sức chứa')
   const viewLabel = findFeature('Hướng phòng')

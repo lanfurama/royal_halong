@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio'
 import { resolve, dirname } from 'node:path'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
-import { toImageRef } from './shared'
+import { toImageRef, realSrc } from './shared'
 import type { ParsedPost } from '../types'
 
 /** Yoast nhúng một graph JSON-LD; datePublished trong đó đáng tin hơn HTML hiển thị. */
@@ -41,7 +41,8 @@ export function parsePost(html: string, slug: string): ParsedPost {
     publishedAt: datePublishedFrom(html),
     excerpt,
     coverImage: toImageRef(
-      $('meta[property="og:image"]').attr('content') ?? $('.post-featured-img img').attr('src'),
+      $('meta[property="og:image"]').attr('content') ??
+        realSrc($('.post-featured-img img').first()),
       routeDir,
     ),
     body: toPortableText(bodyHtml),
