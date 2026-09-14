@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  /* Màu thương hiệu — lấy từ salient-dynamic-styles.css của bản gốc */
+  --color-gold: #bf8d2c;       /* trên trắng 2.97 — CHỈ dùng làm nền/viền/icon */
+  --color-gold-hi: #d19f2b;    /* trên trắng 2.41 — CHỈ nền/viền/icon */
+  --color-gold-deep: #9b7f22;  /* trên trắng 3.85 — chữ >= 24px hoặc >= 19px bold */
+  --color-gold-text: #896520;  /* trên trắng 5.32, trên cream 4.55 — chữ nhỏ */
+  --color-ink: #0a0a0a;
+  --color-cream: #f4ece2;
+  --color-line: #e3d9cb;
+  --color-body: #333333;
+  --color-sky: #98c8e8;        /* trang trí, không làm chữ trên nền sáng */
+  --color-peach: #ffac66;      /* trang trí, không làm chữ trên nền sáng */
+
+  /* Font — biến do lib/fonts.ts gán */
+  --font-display: var(--font-arsenal), Georgia, serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-accent: var(--font-cormorant), Georgia, serif;
+  --font-alt: var(--font-fahkwang), system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    background: #ffffff;
+    color: var(--color-body);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  h1, h2, h3 { font-family: var(--font-display); }
+}
