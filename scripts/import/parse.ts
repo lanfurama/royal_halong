@@ -10,14 +10,16 @@ import { parseTestimonials } from './parsers/testimonial'
 import { parsePage } from './parsers/page'
 import type { ParsedDataset } from './types'
 
-const ROOM_SLUGS = ['deluxe', 'premium', 'villas-deluxe', 'villas-suite']
+// Xuất khẩu (export) để tests/unit/import-page.test.ts tự suy ra 15 route "page"
+// (ROUTES trừ 2 danh sách này) thay vì hard-code lại — một nguồn sự thật duy nhất.
+export const ROOM_SLUGS = ['deluxe', 'premium', 'villas-deluxe', 'villas-suite']
 
 /**
  * Liệt kê tường minh, KHÔNG lọc theo độ dài slug. Lọc `r.length > 40` tình cờ đúng
  * với 3 bài hiện có, nhưng độ dài slug không định nghĩa "đây là bài viết" — thêm một
  * bài tin tức tên ngắn hoặc một landing page tên dài là hỏng im lặng.
  */
-const POST_SLUGS = [
+export const POST_SLUGS = [
   'canh-bao-trang-facebook-gia-mao-khach-san-royal-halong-hotel',
   'quy-2-2023-ctcp-quoc-te-hoang-gia-ric-kien-tri-voi-muc-tieu-kinh-doanh-on-dinh',
   'thong-cao-bao-chi-dhcd-ctcp-quoc-te-hoang-gia-khoi-sac-cung-du-lich-dia-phuong',
@@ -82,7 +84,12 @@ async function main() {
   })
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exit(1)
-})
+// Chỉ chạy main khi gọi trực tiếp, không chạy khi bị test import (test cần
+// import ROOM_SLUGS/POST_SLUGS mà không kích hoạt việc đọc 22 file HTML + ghi
+// out/parsed.json — cùng pattern bảo vệ đã dùng ở assets.ts).
+if (process.argv[1]?.endsWith('parse.ts')) {
+  main().catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })
+}
