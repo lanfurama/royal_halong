@@ -45,3 +45,4 @@ next-env.d.ts
 # Artifact kiểm chứng bằng trình duyệt (không phải nguồn)
 .playwright-mcp/
 task*-tokens.png
+studio-*.png
