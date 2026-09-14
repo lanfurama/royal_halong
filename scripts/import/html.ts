@@ -49,6 +49,13 @@ export function cleanHtml(html: string): string {
       }
     })
   }
+  // Hết vòng lặp mà vẫn còn wrapper nghĩa là việc mở gói không hội tụ — báo lỗi
+  // ngay thay vì âm thầm trả về HTML mở gói dở dang (sẽ hỏng mọi parser sau này).
+  if (unwrapped) {
+    throw new Error(
+      `cleanHtml: mở gói wrapper không hội tụ sau ${guard} vòng lặp — vẫn còn wrapper chưa mở`,
+    )
+  }
 
   // Bỏ phần tử rỗng còn sót (không chữ, không ảnh).
   $('div, span, p').each((_, el) => {
