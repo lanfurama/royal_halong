@@ -41,5 +41,8 @@ export const venue = defineType({
     defineField({ name: 'phone', title: 'Điện thoại đặt chỗ', type: 'string' }),
     defineField({ name: 'order', title: 'Thứ tự', type: 'number', initialValue: 0 }),
   ],
+  orderings: [
+    { name: 'order', title: 'Thứ tự', by: [{ field: 'order', direction: 'asc' }] },
+  ],
   preview: { select: { title: 'name.vi', subtitle: 'kind', media: 'image' } },
 })

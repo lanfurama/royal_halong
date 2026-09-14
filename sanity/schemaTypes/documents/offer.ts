@@ -22,5 +22,8 @@ export const offer = defineType({
     defineField({ name: 'order', title: 'Thứ tự', type: 'number', initialValue: 0 }),
     defineField({ name: 'seo', title: 'SEO', type: 'seo' }),
   ],
+  orderings: [
+    { name: 'order', title: 'Thứ tự', by: [{ field: 'order', direction: 'asc' }] },
+  ],
   preview: { select: { title: 'title.vi', subtitle: 'priceNote.vi', media: 'image' } },
 })

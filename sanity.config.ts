@@ -3,9 +3,9 @@ import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
 import { apiVersion, dataset, projectId } from './sanity/env'
 import { schemaTypes } from './sanity/schemaTypes'
-import { structure } from './sanity/structure'
+import { structure, SINGLETON_IDS } from './sanity/structure'
 
-const SINGLETON_TYPES = new Set(['siteSettings', 'navigation', 'homePage'])
+const SINGLETON_TYPES = new Set(SINGLETON_IDS)
 
 export default defineConfig({
   basePath: '/studio',

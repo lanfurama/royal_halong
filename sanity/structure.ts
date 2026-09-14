@@ -6,7 +6,7 @@ const SINGLETONS = [
   { id: 'homePage', title: 'Trang chủ' },
 ] as const
 
-const SINGLETON_IDS: string[] = SINGLETONS.map((s) => s.id)
+export const SINGLETON_IDS: string[] = SINGLETONS.map((s) => s.id)
 
 export const structure: StructureResolver = (S) =>
   S.list()

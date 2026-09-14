@@ -1,4 +1,4 @@
-import { defineType, defineField, defineArrayMember } from 'sanity'
+import { defineType, defineField, defineArrayMember, type Rule } from 'sanity'
 
 const blockContent = [
   defineArrayMember({
@@ -26,7 +26,7 @@ const blockContent = [
           title: 'Liên kết',
           fields: [
             { name: 'href', type: 'url', title: 'URL',
-              validation: (r: any) => r.uri({ scheme: ['http', 'https', 'mailto', 'tel'] }) },
+              validation: (r: Rule) => r.uri({ scheme: ['http', 'https', 'mailto', 'tel'], allowRelative: true }) },
             { name: 'blank', type: 'boolean', title: 'Mở tab mới' },
           ],
         },
@@ -46,7 +46,7 @@ export const localeBlock = defineType({
       title: 'Tiếng Việt',
       type: 'array',
       of: blockContent,
-      validation: (r) => r.required(),
+      validation: (r) => r.required().min(1),
     }),
     defineField({ name: 'en', title: 'English', type: 'array', of: blockContent }),
   ],

@@ -1,6 +1,7 @@
 {
   "name": "royal-halong",
   "version": "1.0.0",
+  "private": true,
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,6 +9,7 @@
     "build": "next build",
     "start": "next start",
     "typegen": "next typegen",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },

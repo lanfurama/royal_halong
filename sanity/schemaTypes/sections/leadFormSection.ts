@@ -24,5 +24,8 @@ export const leadFormSection = defineType({
     }),
     defineField({ name: 'successMessage', title: 'Thông báo khi gửi thành công', type: 'localeText' }),
   ],
-  preview: { select: { title: 'heading.vi', subtitle: 'formType' } },
+  preview: {
+    select: { title: 'heading.vi', subtitle: 'formType' },
+    prepare: ({ title, subtitle }) => ({ title: `Form liên hệ — ${title ?? ''}`, subtitle }),
+  },
 })

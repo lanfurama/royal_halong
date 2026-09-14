@@ -8,7 +8,7 @@ export const richTextSection = defineType({
     defineField({ name: 'heading', title: 'Tiêu đề', type: 'localeString' }),
     defineField({ name: 'content', title: 'Nội dung', type: 'localeBlock', validation: (r) => r.required() }),
     defineField({
-      name: 'background',
+      name: 'tone',
       title: 'Nền',
       type: 'string',
       options: {

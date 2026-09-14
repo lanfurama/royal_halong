@@ -10,7 +10,7 @@ export const localeText = defineType({
       title: 'Tiếng Việt',
       type: 'text',
       rows: 3,
-      validation: (r) => r.required(),
+      validation: (r) => r.required().min(1),
     }),
     defineField({ name: 'en', title: 'English', type: 'text', rows: 3 }),
   ],

@@ -23,7 +23,7 @@ export const imageTextSection = defineType({
       initialValue: 'left',
     }),
     defineField({
-      name: 'background',
+      name: 'tone',
       title: 'Nền',
       type: 'string',
       options: {

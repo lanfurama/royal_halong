@@ -16,6 +16,9 @@ export const galleryAlbum = defineType({
     }),
     defineField({ name: 'order', title: 'Thứ tự', type: 'number', initialValue: 0 }),
   ],
+  orderings: [
+    { name: 'order', title: 'Thứ tự', by: [{ field: 'order', direction: 'asc' }] },
+  ],
   preview: {
     select: { title: 'title.vi', media: 'images.0' },
   },

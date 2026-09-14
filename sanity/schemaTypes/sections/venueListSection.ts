@@ -28,5 +28,5 @@ export const venueListSection = defineType({
       hidden: ({ parent }) => parent?.filterKind !== 'manual',
     }),
   ],
-  preview: { select: { title: 'heading.vi', subtitle: 'filterKind' }, prepare: ({ title, subtitle }) => ({ title: `Venue — ${title ?? ''}`, subtitle }) },
+  preview: { select: { title: 'heading.vi', subtitle: 'filterKind' }, prepare: ({ title, subtitle }) => ({ title: `Nhà hàng / Tiện ích — ${title ?? ''}`, subtitle }) },
 })

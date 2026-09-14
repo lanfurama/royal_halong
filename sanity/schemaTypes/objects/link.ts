@@ -30,10 +30,17 @@ export const link = defineType({
       name: 'href',
       title: 'URL',
       type: 'url',
-      validation: (r) => r.uri({ scheme: ['http', 'https', 'mailto', 'tel'] }),
+      validation: (r) => r.uri({ scheme: ['http', 'https', 'mailto', 'tel'], allowRelative: true }),
       hidden: ({ parent }) => parent?.kind !== 'external',
     }),
     defineField({ name: 'label', title: 'Chữ trên liên kết', type: 'localeString' }),
     defineField({ name: 'blank', title: 'Mở tab mới', type: 'boolean', initialValue: false }),
   ],
+  preview: {
+    select: { title: 'label.vi', kind: 'kind', href: 'href' },
+    prepare: ({ title, kind, href }) => ({
+      title: title ?? '(chưa đặt tên)',
+      subtitle: kind === 'external' ? href : 'Trang trong site',
+    }),
+  },
 })
