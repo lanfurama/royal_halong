@@ -13,6 +13,8 @@ import { venue } from './documents/venue'
 import { hall } from './documents/hall'
 import { galleryAlbum } from './documents/galleryAlbum'
 import { testimonial } from './documents/testimonial'
+import { sectionTypes } from './sections'
+import { page } from './documents/page'
 
 export const schemaTypes: SchemaTypeDefinition[] = [
   localeString,
@@ -23,4 +25,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   link,
   seo,
   room, post, offer, venue, hall, galleryAlbum, testimonial,
+  ...sectionTypes, page,
 ]
