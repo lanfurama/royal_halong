@@ -79,6 +79,18 @@ export function parseVenues(
     // Ảnh venue là <div class="column-image-bg" data-nectar-img-src="..."> ở cột
     // anh em trong cùng .wpb_row — không phải <img> trong chunk. Tìm trong chunk
     // trước (phòng trường hợp có <img> thật), lùi ra cả hàng nếu không thấy.
+    //
+    // CỐ Ý KHÔNG mở rộng tìm kiếm ra ngoài .wpb_row của chính heading (ví dụ dò
+    // sang .wpb_row kế tiếp). NHÀ HÀNG PHÚC VIÊN trên culinary hợp lệ không có
+    // [data-nectar-img-src] nào trong hàng của nó — đã xác minh trực tiếp bằng
+    // cách in con của .wpb_row đó, chỉ có 2 phần tử, không phần tử nào mang ảnh.
+    // Có một .wpb_gallery ảnh nhà hàng nằm ở .wpb_row liền sau, nhưng không có gì
+    // trong markup xác nhận nó thuộc về Phúc Viên chứ không phải một dải ảnh độc
+    // lập theo ranh giới section — "gần" trong file không phải "thuộc về" trong
+    // DOM. Nếu đoán nhầm, ảnh sai sẽ gắn vào nhà hàng chính một cách âm thầm, tệ
+    // hơn nhiều so với để trống cho biên tập viên điền tay trong Studio. Vì vậy
+    // `image: undefined` cho venue này là kết quả đúng, không phải lỗi cần "sửa"
+    // bằng cách nới rộng phạm vi tìm kiếm.
     let imageEl = chunk.find('[data-nectar-img-src]').first()
     if (!imageEl.length) imageEl = $(el).closest('.wpb_row').find('[data-nectar-img-src]').first()
 
