@@ -1,0 +1,50 @@
+import * as cheerio from 'cheerio'
+import { resolve, dirname } from 'node:path'
+import { ROOT } from '../paths'
+import { toPortableText, textOf } from '../html'
+import { toImageRef } from './shared'
+import type { ParsedPost } from '../types'
+
+/** Yoast nhúng một graph JSON-LD; datePublished trong đó đáng tin hơn HTML hiển thị. */
+function datePublishedFrom(html: string): string {
+  const match = html.match(/"datePublished"\s*:\s*"([^"]+)"/)
+  return match ? match[1] : new Date().toISOString()
+}
+
+export function parsePost(html: string, slug: string): ParsedPost {
+  const $ = cheerio.load(html)
+  const routeDir = dirname(resolve(ROOT, slug, 'index.html'))
+
+  const title =
+    textOf($('h1.entry-title').html() ?? '') ||
+    textOf($('.page-header-content h1').html() ?? '') ||
+    textOf($('h3').first().html() ?? '') ||
+    ($('meta[property="og:title"]').attr('content') ?? '').replace(/\s*-\s*Royal.*$/i, '').trim()
+
+  const bodyHtml =
+    $('.post-content .content-inner').html() ??
+    $('.entry-content').html() ??
+    $('.post-area .content-inner').html() ??
+    ''
+
+  // Trang nguồn không có <meta name="description">, chỉ có og:description.
+  const excerpt =
+    ($('meta[name="description"]').attr('content') ?? '').trim() ||
+    ($('meta[property="og:description"]').attr('content') ?? '').trim() ||
+    undefined
+
+  return {
+    kind: 'post',
+    slug,
+    title,
+    category: 'news',
+    publishedAt: datePublishedFrom(html),
+    excerpt,
+    coverImage: toImageRef(
+      $('meta[property="og:image"]').attr('content') ?? $('.post-featured-img img').attr('src'),
+      routeDir,
+    ),
+    body: toPortableText(bodyHtml),
+    author: textOf($('.meta-author a').html() ?? '') || undefined,
+  }
+}

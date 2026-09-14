@@ -33,3 +33,26 @@ export interface ParsedRoom {
   features: ParsedRoomFeature[]
   order: number
 }
+
+export interface ParsedPost {
+  kind: 'post'
+  slug: string
+  title: string
+  category: 'news' | 'announcement'
+  publishedAt: string // ISO 8601
+  excerpt?: string
+  coverImage?: ParsedImageRef
+  body: PortableTextBlock[]
+  author?: string
+}
+
+export interface ParsedOffer {
+  kind: 'offer'
+  slug: string
+  title: string
+  excerpt?: string
+  image?: ParsedImageRef
+  body: PortableTextBlock[]
+  priceNote?: string
+  order: number
+}
