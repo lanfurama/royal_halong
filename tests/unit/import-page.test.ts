@@ -95,7 +95,7 @@ describe('slug giữ nguyên để không mất SEO', () => {
 const nonPageRoutes = new Set<string>([...ROOM_SLUGS, ...POST_SLUGS])
 const PAGE_ROUTES = ROUTES.filter((r) => !nonPageRoutes.has(r))
 
-// 3 route mà nội dung chính THẬT SỰ không phải văn xuôi tĩnh — xác minh trực
+// 4 route mà nội dung chính THẬT SỰ không phải văn xuôi tĩnh — xác minh trực
 // tiếp trên HTML gốc (không suy ra từ output của parser đang được kiểm):
 //  - reservation: chữ hiển thị của main-content (đã loại <script>/<style>) chỉ
 //    59 ký tự — trang gần như chỉ là widget đặt phòng SecureBookings nhúng qua
@@ -104,7 +104,13 @@ const PAGE_ROUTES = ROUTES.filter((r) => !nonPageRoutes.has(r))
 //    — bản xem trước bài viết WordPress render tĩnh vào HTML lúc export, nhưng
 //    ở site Next.js sẽ do postListSection truy vấn ĐỘNG lúc chạy; đông cứng nó
 //    vào richTextSection là sai — không phải chỗ thiếu cần bắt thêm.
-const DYNAMIC_OR_TRIVIAL_ROUTES = new Set(['reservation', 'news', 'our-announcement'])
+//  - our-gallery: toàn bộ 2 khối `.wpb_text_column`/`p.vc_custom_heading` từng
+//    khớp trên trang này ĐỀU là card "khám phá thêm" dùng chung (rò rỉ đã sửa
+//    ở vòng này, xem chặn RÒ RỈ trong page.ts) — trang thật KHÔNG có văn xuôi
+//    riêng nào ngoài card đó (đã xác minh: 0 khối còn lại sau khi loại card).
+//    Ngưỡng 20% giờ đúng ra phải là 0% cho route này, không phải một khoảng
+//    thiếu cần bắt thêm.
+const DYNAMIC_OR_TRIVIAL_ROUTES = new Set(['reservation', 'news', 'our-announcement', 'our-gallery'])
 
 // Ngưỡng tối thiểu — chọn AN TOÀN dưới tỉ lệ thật thấp nhất trong số các route
 // có văn xuôi tĩnh thật sau khi sửa (trang chủ, ~30%), và cao hơn nhiều so với
@@ -202,4 +208,46 @@ describe('parsePage() trên cả 15 route "page" thật — chống bắt thiế
       ).toBeGreaterThanOrEqual(mainVisibleLen * MIN_CAPTURE_RATIO)
     },
   )
+})
+
+// Card "khám phá thêm" dùng chung — cùng hình dạng DOM với văn xuôi thật
+// (h4 + đoạn text + `.nectar-cta`) nên việc mở rộng selector ở trên vô tình
+// bắt luôn 3 câu quảng bá chéo này trên các trang KHÔNG PHẢI chủ của chúng
+// (reviewer đo trực tiếp trên out/parsed.json). Với mỗi câu, `ownRoute` là
+// route DUY NHẤT nơi câu đó là nội dung thật của chính trang — xác minh bằng
+// cách grep câu trên cả 15 route rồi map với đích của `.nectar-cta` tương
+// ứng: "Trao lời yêu thương…" trỏ `wedding`, "Tận hưởng không gian sang
+// trọng…" trỏ `luu-tru-phong-khach-san-villas` — cả hai câu THẬT SỰ tồn tại
+// trên đúng route đó dưới dạng nội dung riêng (không đi kèm `.nectar-cta`
+// trong wrapper gần nhất, nên không bị chặn RÒ RỈ loại bỏ). "Tận hưởng tối đa
+// kỳ nghỉ…" trỏ `offers`, nhưng bản thân trang offers KHÔNG chứa câu này —
+// đã grep xác nhận — nên câu này không có "trang chủ" thật nào trong 15 route
+// và phải biến mất ở MỌI route sau khi sửa, kể cả offers.
+const CROSS_SELL_SENTENCES: Array<{ text: string; ownRoute: string | null }> = [
+  {
+    text: 'Trao lời yêu thương với một nửa của bạn tại Cung Hội nghị Quốc tế Hoàng Gia.',
+    ownRoute: 'wedding',
+  },
+  {
+    text: 'Tận hưởng không gian sang trọng và ấm cúng tại khách sạn Royal Hạ Long',
+    ownRoute: 'luu-tru-phong-khach-san-villas',
+  },
+  { text: 'Tận hưởng tối đa kỳ nghỉ', ownRoute: null },
+]
+
+describe('richTextSection không rò rỉ card quảng bá chéo sang trang khác', () => {
+  it.each(PAGE_ROUTES)('route "%s" không chứa câu quảng bá chéo của trang khác', async (route) => {
+    const html = await read(route)
+    const page = parsePage(html, route)
+    const richSections = page.sections.filter((s) => s._type === 'richTextSection') as any[]
+    const combined = richSections.map((s) => flattenText(s.content)).join(' ')
+
+    for (const { text, ownRoute } of CROSS_SELL_SENTENCES) {
+      if (route === ownRoute) continue // trang chủ thật của câu này — được giữ
+      expect(
+        combined.includes(text),
+        `${route || '(home)'}: chứa câu quảng bá chéo "${text.slice(0, 40)}…" — không phải nội dung của trang này`,
+      ).toBe(false)
+    }
+  })
 })

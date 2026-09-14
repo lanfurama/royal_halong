@@ -241,6 +241,32 @@ export function parsePage(html: string, slug: string): ParsedPage {
     return true
   })
 
+  // Chặn RÒ RỈ — card "khám phá thêm" dùng chung, không phải nội dung riêng
+  // của trang này. Khác loại với hai chặn "nhân đôi" dưới đây (#1, #2): đây
+  // không phải một đoạn bị bắt HAI LẦN, mà là nội dung THỪA không thuộc trang
+  // này bị bắt THÊM VÀO — phát hiện của reviewer sau vòng sửa trước (mở rộng
+  // selector vô tình bắt luôn card quảng bá chéo). Card này có CÙNG hình dạng
+  // DOM với mô tả phòng/hall/venue thật — h4 + đoạn text + `.nectar-cta` —
+  // nên CHỈ xét "wrapper chứa .nectar-cta" là chưa đủ, đã tự đo và xoá nhầm:
+  // mô tả phòng thật trên luu-tru-phong-khach-san-villas (7 khối), mô tả sảnh
+  // thật trên royal-international-convention-palace (3 khối), mô tả nhà
+  // hàng/quầy bar thật trên culinary (5 khối). Điểm khác biệt THẬT (đo trên
+  // toàn bộ 15 route, không suy diễn): card quảng bá chéo LUÔN nằm ở hàng
+  // top-level CUỐI CÙNG trong main-content — đúng như reviewer mô tả "cards ở
+  // cuối template" — trong khi mô tả phòng/hall/venue nằm giữa trang. Kết hợp
+  // CẢ hai điều kiện (wrapper có cta + nằm ở hàng cuối) tách sạch: kiểm trên
+  // mọi khối bị loại lẫn mọi khối giữ lại trên cả 15 route, khớp 100% với
+  // danh sách rò rỉ đã xác nhận (0 false positive, 0 false negative).
+  const topLevelRows = main.children('.row').children('.wpb_row').toArray()
+  const lastTopLevelRow = topLevelRows[topLevelRows.length - 1]
+  const bodyNodes = topLevelNodes.filter((el) => {
+    if (!lastTopLevelRow) return true
+    const wrapper = $(el).closest('.wpb_wrapper')
+    const hasCta = wrapper.length > 0 && wrapper.find('.nectar-cta').length > 0
+    if (!hasCta) return true
+    return !$.contains(lastTopLevelRow, el)
+  })
+
   // Chặn nhân đôi #2 — NỘI DUNG giống hệt lặp lại ở hai node độc lập (không
   // phải quan hệ lồng nhau): gặp THẬT trên wedding — cùng một khối
   // `id="fws_6aa762adc19c3"` (đoạn "Trao lời yêu thương với một nửa của
@@ -249,7 +275,7 @@ export function parsePage(html: string, slug: string): ParsedPage {
   // bản thuần.
   const seenText = new Set<string>()
   let richIndex = 0
-  for (const el of topLevelNodes) {
+  for (const el of bodyNodes) {
     const rawHtml = $(el).html() ?? ''
     const plainText = textOf(rawHtml)
     if (!plainText || seenText.has(plainText)) continue
