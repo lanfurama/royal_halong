@@ -896,11 +896,23 @@ export const localeBlock = defineType({
   title: 'Nội dung song ngữ',
   type: 'object',
   fields: [
-    defineField({ name: 'vi', title: 'Tiếng Việt', type: 'array', of: blockContent }),
+    defineField({
+      name: 'vi',
+      title: 'Tiếng Việt',
+      type: 'array',
+      of: blockContent,
+      validation: (r) => r.required(),
+    }),
     defineField({ name: 'en', title: 'English', type: 'array', of: blockContent }),
   ],
 })
 ```
+
+`vi` bắt buộc, giống `localeString` và `localeText` — bất đối xứng này chính là thứ fallback
+một chiều của `lib/i18n.ts` dựa vào. Nó **không** làm hỏng các field rich text tuỳ chọn
+(`hall.description`, `venue.description`…): field không được đụng tới thì object là `undefined`
+và validation lồng nhau không kích hoạt. Nó chỉ kích hoạt khi đã nhập EN mà bỏ trống VI —
+đúng tình huống cần chặn.
 
 - [ ] **Step 4: Viết localeSlug.ts**
 
@@ -945,7 +957,8 @@ export const figure = defineType({
       name: 'alt',
       title: 'Mô tả ảnh (alt)',
       type: 'localeString',
-      description: 'Bắt buộc cho accessibility. Mô tả nội dung ảnh, không phải "ảnh khách sạn".',
+      description:
+        'Mô tả nội dung ảnh cho người dùng screen reader. Để trống nếu ảnh chỉ mang tính trang trí (ảnh nền, hoạ tiết). Đừng viết "ảnh khách sạn" — hãy tả thứ đang có trong ảnh.',
     }),
     defineField({ name: 'caption', title: 'Chú thích hiển thị', type: 'localeString' }),
   ],
