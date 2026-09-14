@@ -34,12 +34,16 @@ export function parseVenues(
   const routeDir = dirname(resolve(ROOT, route, 'index.html'))
   const venues: ParsedVenue[] = []
 
-  /** Nhặt giá trị đứng ngay sau một nhãn h5, ví dụ "SỨC CHỨA" -> "250 khách". */
+  // Nhãn (ĐỊA ĐIỂM/SỨC CHỨA/MỞ CỬA) và giá trị đi kèm không phải hai h5 anh em như
+  // brief giả định. Cấu trúc thật là cặp <div class="nectar-list-item"> anh em
+  // trong một .nectar-hor-list-item: mục nhãn có thể là text thường (trang
+  // experiences) hoặc bọc trong h5 (trang culinary) — giá trị luôn là mục
+  // .nectar-list-item kế tiếp. Dò trên .nectar-list-item, không dò trên h5.
   const valueAfterLabel = (scope: ReturnType<typeof $>, label: string): string | undefined => {
     let found: string | undefined
-    scope.find('h5').each((_, el) => {
+    scope.find('.nectar-list-item').each((_, el) => {
       if (textOf($(el).html() ?? '').toUpperCase().includes(label.toUpperCase())) {
-        const next = $(el).next('h5')
+        const next = $(el).next('.nectar-list-item')
         if (next.length) found = textOf(next.html() ?? '')
       }
     })
@@ -60,11 +64,23 @@ export function parseVenues(
     if (name !== name.toUpperCase()) return
     if (venues.some((v) => v.name === name)) return
 
-    const chunk = $(el).nextUntil('h4')
+    // h5 của nhà hàng chính (và đôi khi h4 outlet) bị bọc trong div
+    // .nectar-split-heading — bản thân heading không còn anh em nào (nội dung
+    // thật là anh em của WRAPPER). Nếu heading nằm trong wrapper đó thì duyệt anh
+    // em từ wrapper; nếu không (outlet dạng h4 trần như PIANO BAR) thì duyệt từ
+    // chính heading như cũ.
+    const container = $(el).parent().hasClass('nectar-split-heading') ? $(el).parent() : $(el)
+    const chunk = container.nextUntil('h4, h5, .nectar-split-heading:has(h4, h5)')
     const bodyHtml = chunk
       .map((_, n) => $.html(n))
       .get()
       .join('')
+
+    // Ảnh venue là <div class="column-image-bg" data-nectar-img-src="..."> ở cột
+    // anh em trong cùng .wpb_row — không phải <img> trong chunk. Tìm trong chunk
+    // trước (phòng trường hợp có <img> thật), lùi ra cả hàng nếu không thấy.
+    let imageEl = chunk.find('[data-nectar-img-src]').first()
+    if (!imageEl.length) imageEl = $(el).closest('.wpb_row').find('[data-nectar-img-src]').first()
 
     venues.push({
       kind: 'venue',
@@ -80,7 +96,7 @@ export function parseVenues(
         .get()
         .filter(Boolean),
       description: toPortableText(bodyHtml),
-      image: toImageRef(realSrc(chunk.find('img').first()), routeDir),
+      image: toImageRef(realSrc(imageEl), routeDir),
       menuUrl: chunk.find('a[href*="drive.google.com"]').first().attr('href'),
       phone: (textOf(bodyHtml).match(/0\d[\d\s.]{7,}/) ?? [])[0]?.trim(),
       order: index,

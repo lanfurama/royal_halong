@@ -24,6 +24,12 @@ export function parseHalls(html: string): ParsedHall[] {
     const capMatch = meta.match(/SỨC CHỨA:\s*([\d.,]+)/i)
 
     const chunk = $(el).nextUntil('h4')
+
+    // Ảnh hall là <div class="column-image-bg" data-nectar-img-src="..."> ở cột
+    // anh em trong cùng .wpb_row — không phải <img> trong chunk.
+    let imageEl = chunk.find('[data-nectar-img-src]').first()
+    if (!imageEl.length) imageEl = $(el).closest('.wpb_row').find('[data-nectar-img-src]').first()
+
     halls.push({
       kind: 'hall',
       slug: slugify(name),
@@ -36,7 +42,7 @@ export function parseHalls(html: string): ParsedHall[] {
           .get()
           .join(''),
       ),
-      image: toImageRef(realSrc(chunk.find('img').first()), routeDir),
+      image: toImageRef(realSrc(imageEl), routeDir),
       order: index,
     })
   })

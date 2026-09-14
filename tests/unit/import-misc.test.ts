@@ -49,6 +49,36 @@ describe('parseVenues()', () => {
       expect(v.name.length).toBeLessThanOrEqual(35)
     }
   })
+
+  // NHÀ HÀNG PHÚC VIÊN: heading là h5 bọc trong div .nectar-split-heading — nội
+  // dung mô tả thật (3 đoạn văn + CTA) là anh em của WRAPPER đó, không phải anh em
+  // của chính h5, nên nextUntil('h4') từ chính heading luôn rỗng.
+  it('nhà hàng chính có mô tả không rỗng', async () => {
+    const venues = parseVenues(await read('culinary'), 'culinary', 'dining')
+    const main = venues.find((v) => v.name.toUpperCase().includes('PHÚC VIÊN'))
+    expect(main?.description.length ?? 0).toBeGreaterThan(0)
+  })
+
+  // Nhãn ĐỊA ĐIỂM/SỨC CHỨA/MỞ CỬA nằm trong .nectar-list-item (đôi khi là h5, đôi
+  // khi là text thường), giá trị đi kèm là .nectar-list-item anh em — không phải
+  // "h5 nhãn" rồi ".next('h5')" như code brief giả định.
+  it('ít nhất một venue mỗi trang có location hoặc hours', async () => {
+    const culinary = parseVenues(await read('culinary'), 'culinary', 'dining')
+    const experiences = parseVenues(await read('experiences'), 'experiences', 'facility')
+    expect(culinary.some((v) => v.location || v.hours)).toBe(true)
+    expect(experiences.some((v) => v.location || v.hours)).toBe(true)
+  })
+
+  // Ảnh venue là <div class="column-image-bg" data-nectar-img-src="..."> trong cột
+  // anh em của .wpb_row chứa heading — không phải <img> trong chunk.
+  it('ít nhất một venue có ảnh trỏ tới file thật, không phải placeholder', async () => {
+    const culinary = parseVenues(await read('culinary'), 'culinary', 'dining')
+    const withImage = culinary.filter((v) => v.image?.filePath)
+    expect(withImage.length).toBeGreaterThan(0)
+    for (const v of withImage) {
+      expect(v.image!.filePath).not.toMatch(/^data:/)
+    }
+  })
 })
 
 describe('parseHalls()', () => {
@@ -57,6 +87,17 @@ describe('parseHalls()', () => {
     expect(halls).toHaveLength(3)
     const halong = halls.find((h) => h.name.toUpperCase().includes('HA LONG'))
     expect(halong?.areaSqm).toBe(762)
+  })
+
+  // Ảnh hall là <div class="column-image-bg" data-nectar-img-src="..."> trong cột
+  // anh em cùng .wpb_row, không phải <img> trong chunk.
+  it('ít nhất một hall có ảnh trỏ tới file thật, không phải placeholder', async () => {
+    const halls = parseHalls(await read('royal-international-convention-palace'))
+    const withImage = halls.filter((h) => h.image?.filePath)
+    expect(withImage.length).toBeGreaterThan(0)
+    for (const h of withImage) {
+      expect(h.image!.filePath).not.toMatch(/^data:/)
+    }
   })
 })
 

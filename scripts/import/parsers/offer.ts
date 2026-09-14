@@ -24,8 +24,12 @@ export function parseOffers(html: string, route = 'offers'): ParsedOffer[] {
     if (!title) return
     if (NOT_AN_OFFER.some((skip) => title.toLowerCase().includes(skip.toLowerCase()))) return
 
-    // Nội dung ưu đãi = mọi phần tử anh em cho tới h4 kế tiếp.
-    const chunk = $(el).nextUntil('h4')
+    // h4 thật bị bọc trong div .nectar-split-heading — bản thân h4 không còn anh em
+    // nào (nội dung thật là anh em của WRAPPER, không phải của h4). Nếu heading nằm
+    // trong wrapper đó thì duyệt anh em từ wrapper; nếu không thì duyệt từ chính h4
+    // (để không vỡ trường hợp markup không bọc, nếu có).
+    const container = $(el).parent().hasClass('nectar-split-heading') ? $(el).parent() : $(el)
+    const chunk = container.nextUntil('h4, .nectar-split-heading:has(h4)')
     const bodyHtml = chunk
       .map((_, n) => $.html(n))
       .get()
