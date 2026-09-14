@@ -394,7 +394,16 @@ Lưu ý test "mảng rỗng cũng là trống": `t({vi: blocks, en: []}, 'en')` 
 - [ ] **Step 2: Chạy test, xác nhận FAIL**
 
 Run: `pnpm test tests/unit/i18n.test.ts`
-Expected: FAIL — `Failed to resolve import "@/lib/i18n"`.
+Expected: FAIL với đúng dòng này (đã đo thật, không phải đoán):
+
+```
+Error: Cannot find package '@/lib/i18n' imported from <repo>/tests/unit/i18n.test.ts
+```
+
+Lưu ý: **không** phải `Failed to resolve import ... Does the file exist?` của Vite. Dù
+`vitest.config.ts` có alias `@`, với vitest 5 lỗi phân giải vẫn nổi lên dưới dạng
+`ERR_MODULE_NOT_FOUND` của Node. Ghi rõ ở đây vì đoán sai chỗ này từng khiến một vòng review
+kết luận nhầm rằng bằng chứng RED bị dựng.
 
 - [ ] **Step 3: Viết lib/i18n.ts**
 
