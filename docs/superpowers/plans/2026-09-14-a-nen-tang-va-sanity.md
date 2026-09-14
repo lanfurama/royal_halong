@@ -90,7 +90,7 @@ Mở `package.json`, thay khối `"scripts"` bằng:
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": { "@/*": ["./*"] }
@@ -101,6 +101,15 @@ Mở `package.json`, thay khối `"scripts"` bằng:
 ```
 
 `exclude` bỏ `wp-content`/`wp-includes`/`assets` để TS không quét 1.000 file tĩnh.
+
+`jsx` phải là `react-jsx`, không phải `preserve`: Next 16 + React 19 dùng automatic JSX
+runtime, và `next dev` sẽ **tự sửa** field này rồi in "mandatory changes were made to your
+tsconfig.json" nếu bạn đặt khác. Next cũng tự thêm `.next/dev/types/**/*.ts` vào `include` —
+để yên, đó là hành vi bình thường chứ không phải rác.
+
+Ngoài ra `pnpm init` của pnpm 11 sinh sẵn một khối `devEngines.packageManager` mà chính pnpm
+sau đó từ chối (`Invalid package manager specification`). Xoá khối đó đi; `packageManager`
+ở Step 2 mới là thứ cần giữ.
 
 - [ ] **Step 4: Viết next.config.ts**
 
@@ -172,18 +181,16 @@ Giá trị tương phản trong comment là số đo thật (xem spec mục 7), 
 ```ts
 import { Arsenal, Inter, Cormorant, Fahkwang } from 'next/font/google'
 
-const SUBSETS = ['latin', 'vietnamese'] as const
-
 export const display = Arsenal({
   weight: ['700'],
-  subsets: [...SUBSETS],
+  subsets: ['latin', 'vietnamese'],
   display: 'swap',
   variable: '--font-arsenal',
 })
 
 export const body = Inter({
   weight: ['400', '500', '600', '700'],
-  subsets: [...SUBSETS],
+  subsets: ['latin', 'vietnamese'],
   display: 'swap',
   variable: '--font-inter',
 })
@@ -191,7 +198,7 @@ export const body = Inter({
 export const accent = Cormorant({
   weight: ['500'],
   style: ['normal', 'italic'],
-  subsets: [...SUBSETS],
+  subsets: ['latin', 'vietnamese'],
   display: 'swap',
   variable: '--font-cormorant',
 })
@@ -204,8 +211,13 @@ export const alt = Fahkwang({
 })
 ```
 
-Fahkwang không có subset `vietnamese` trên Google Fonts — chỉ khai `latin`, nếu build
-báo lỗi subset thì đó là lý do.
+⚠️ **Mọi đối số của `next/font/google` phải là literal.** Không tách hằng dùng chung
+(`const SUBSETS = [...]` rồi `subsets: [...SUBSETS]`), không biến, không giá trị tính toán.
+`next/font` là transform lúc biên dịch, đọc AST của đối số chứ không đánh giá nó —
+gặp spread sẽ hỏng với `Error: Unexpected spread` và trang trả HTTP 500. Lặp lại
+`['latin', 'vietnamese']` ở từng font là đúng, không phải trùng lặp cần dọn.
+
+Fahkwang không có subset `vietnamese` trên Google Fonts — chỉ khai `latin`.
 
 - [ ] **Step 8: Viết app/layout.tsx**
 
@@ -289,9 +301,14 @@ trước rồi build lại.
 
 - [ ] **Step 14: Commit**
 
+Lần `pnpm dev` đầu tiên, Next 16 tự sinh `AGENTS.md` và `CLAUDE.md` ở gốc repo và ghi lại
+chúng ở mỗi lần chạy sau. **Commit cả hai** — `AGENTS.md` trỏ tới `node_modules/next/dist/docs/`
+là tài liệu Next 16 thật, và nếu gitignore thì chúng tái sinh thành rác trong `git status`
+suốt phần còn lại của dự án. Đừng đặt `agentRules: false`.
+
 ```bash
 git add package.json pnpm-lock.yaml tsconfig.json next.config.ts postcss.config.mjs \
-  app lib vitest.config.ts tests .gitignore
+  app lib vitest.config.ts tests .gitignore AGENTS.md CLAUDE.md
 git commit -m "feat(a1): scaffold Next.js 16 + Tailwind 4 + design token + font
 
 Token gold/cream/ink lấy từ bản gốc, thêm --color-gold-text #896520 cho chữ nhỏ
