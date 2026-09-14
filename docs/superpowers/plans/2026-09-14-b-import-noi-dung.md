@@ -303,9 +303,21 @@ describe('textOf()', () => {
   })
 })
 
+/**
+ * `toPortableText` trả `PortableTextBlock[]` của Sanity, mà `children` ở kiểu đó
+ * loose nên `blocks[0].children[0].text` là `unknown` và `tsc --noEmit` sẽ đỏ.
+ * Khai một type hẹp ngay trong test và assert qua nó.
+ */
+type TestBlock = {
+  _type: string
+  style?: string
+  listItem?: string
+  children: { text: string; marks?: string[] }[]
+}
+
 describe('toPortableText()', () => {
   it('chuyển đoạn văn thành block kiểu normal', () => {
-    const blocks = toPortableText('<p>Phòng Deluxe hướng biển.</p>')
+    const blocks = toPortableText('<p>Phòng Deluxe hướng biển.</p>') as TestBlock[]
     expect(blocks).toHaveLength(1)
     expect(blocks[0]._type).toBe('block')
     expect(blocks[0].style).toBe('normal')
@@ -313,16 +325,16 @@ describe('toPortableText()', () => {
   })
 
   it('giữ tiêu đề và danh sách', () => {
-    const blocks = toPortableText('<h2>Luật chơi</h2><ul><li>Một</li><li>Hai</li></ul>')
+    const blocks = toPortableText('<h2>Luật chơi</h2><ul><li>Một</li><li>Hai</li></ul>') as TestBlock[]
     expect(blocks[0].style).toBe('h2')
     expect(blocks[1].listItem).toBe('bullet')
     expect(blocks).toHaveLength(3)
   })
 
   it('giữ chữ đậm thành decorator strong', () => {
-    const blocks = toPortableText('<p>Giá <strong>500.000đ</strong></p>')
-    const marked = blocks[0].children.find((c: any) => c.text === '500.000đ')
-    expect(marked.marks).toContain('strong')
+    const blocks = toPortableText('<p>Giá <strong>500.000đ</strong></p>') as TestBlock[]
+    const marked = blocks[0].children.find((c) => c.text === '500.000đ')
+    expect(marked?.marks).toContain('strong')
   })
 
   it('trả mảng rỗng khi HTML không có chữ', () => {
@@ -365,7 +377,11 @@ export function cleanHtml(html: string): string {
   const $ = cheerio.load(html, null, false)
 
   $(DROP_SELECTOR).remove()
-  $('*')
+  // `$('*')` không khớp node root của fragment, nên comment nằm ngay ở cấp cao nhất
+  // (không lồng trong thẻ nào) sẽ lọt lưới. `.addBack()` gộp root vào tập chọn.
+  $.root()
+    .find('*')
+    .addBack()
     .contents()
     .filter((_, node) => node.type === 'comment')
     .remove()
@@ -1604,7 +1620,17 @@ import { parsePage } from './parsers/page'
 import type { ParsedDataset } from './types'
 
 const ROOM_SLUGS = ['deluxe', 'premium', 'villas-deluxe', 'villas-suite']
-const POST_SLUGS = ROUTES.filter((r) => r.length > 40)
+
+/**
+ * Liệt kê tường minh, KHÔNG lọc theo độ dài slug. Lọc `r.length > 40` tình cờ đúng
+ * với 3 bài hiện có, nhưng độ dài slug không định nghĩa "đây là bài viết" — thêm một
+ * bài tin tức tên ngắn hoặc một landing page tên dài là hỏng im lặng.
+ */
+const POST_SLUGS = [
+  'canh-bao-trang-facebook-gia-mao-khach-san-royal-halong-hotel',
+  'quy-2-2023-ctcp-quoc-te-hoang-gia-ric-kien-tri-voi-muc-tieu-kinh-doanh-on-dinh',
+  'thong-cao-bao-chi-dhcd-ctcp-quoc-te-hoang-gia-khoi-sac-cung-du-lich-dia-phuong',
+]
 
 async function main() {
   await mkdir(OUT_DIR, { recursive: true })
@@ -2115,7 +2141,11 @@ function venueDoc(venue: ParsedVenue, cache: AssetCache) {
     location: localeValue(venue.location),
     capacity: localeValue(venue.capacity),
     hours: localeValue(venue.hours),
-    highlights: venue.highlights.map((h, i) => ({ _key: `h-${i}`, vi: h })),
+    highlights: venue.highlights.map((h, i) => ({
+      _key: `h-${i}`,
+      _type: 'localeString',
+      vi: h,
+    })),
     description: localeValue(venue.description),
     image: imageValue(venue.image, cache),
     menuUrl: venue.menuUrl,
@@ -2187,10 +2217,21 @@ function sectionValue(section: ParsedPage['sections'][number], index: number, ca
       return {
         _key: key, _type: 'tableSection',
         heading: localeValue(section.heading),
-        headers: section.headers.map((h, i) => ({ _key: `th-${i}`, vi: h })),
+        // Phần tử mảng thuộc kiểu object có tên PHẢI mang `_type`, nếu không
+        // Studio không biết render bằng gì.
+        headers: section.headers.map((h, i) => ({
+          _key: `th-${i}`,
+          _type: 'localeString',
+          vi: h,
+        })),
         rows: section.rows.map((row, r) => ({
           _key: `tr-${r}`,
-          cells: row.map((cell, c) => ({ _key: `td-${c}`, vi: cell })),
+          _type: 'row',
+          cells: row.map((cell, c) => ({
+            _key: `td-${c}`,
+            _type: 'localeString',
+            vi: cell,
+          })),
         })),
       }
     case 'bookingWidgetSection':
