@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "canh-bao-trang-facebook-gia-mao-khach-san-royal-halong-hotel/index.html",
+  "entry": "canh-bao-trang-facebook-gia-mao-khach-san-royal-halong-hotel/index.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-09-14T03:00:52.839Z",
+  "updatedAt": "2026-09-14T03:00:52.839Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

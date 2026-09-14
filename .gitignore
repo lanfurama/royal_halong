@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# env
+.env
+.env*.local
+!.env.example
+
+# sanity
+.sanity/
+
+# import script artefacts (sinh lại được bằng `pnpm import`)
+scripts/import/out/
+
+# test
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# misc
+.DS_Store
+*.pem
+.vercel
+.turbo
+*.tsbuildinfo
+next-env.d.ts
+.idea/
+.vscode/*
+!.vscode/extensions.json

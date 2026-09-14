@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "luu-tru-phong-khach-san-villas/index.html",
+  "entry": "luu-tru-phong-khach-san-villas/index.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-09-14T03:00:52.780Z",
+  "updatedAt": "2026-09-14T03:00:52.780Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danh mục trang — Bản sao Royal Halong Hotel</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  :root{
+    /* Lấy nguyên từ salient-dynamic-styles.css của site gốc */
+    --gold:#bf8d2c;
+    --gold-hi:#d19f2b;
+    --gold-deep:#9b7f22;
+    --ink:#0a0a0a;
+    --cream:#f4ece2;
+    --body:#333333;
+    --line:#e3d9cb;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--body);
+    font:400 16px/1.6 Inter,system-ui,sans-serif;
+  }
+
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  /* ---- Header ---- */
+  header{background:var(--ink);color:#fff;padding:48px 0 44px}
+  .head-inner{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+  .head-inner img{width:72px;height:auto;flex:none}
+  .eyebrow{
+    font:500 12px/1 Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--gold-hi);margin:0 0 10px;
+  }
+  h1{
+    font:700 34px/1.15 Arsenal,Georgia,serif;
+    margin:0 0 10px;color:#fff;letter-spacing:.01em;
+  }
+  .sub{margin:0;color:#c9c4bd;font-size:15px;max-width:60ch}
+  .sub code{
+    background:rgba(255,255,255,.10);padding:2px 7px;border-radius:3px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:#efe7db;
+  }
+
+  /* ---- Stat strip ---- */
+  .stats{
+    display:flex;flex-wrap:wrap;gap:0;border-top:1px solid rgba(255,255,255,.14);
+    margin-top:32px;padding-top:22px;
+  }
+  .stat{padding-right:44px}
+  .stat b{display:block;font:700 22px/1.2 Arsenal,Georgia,serif;color:var(--gold-hi)}
+  .stat span{font-size:12.5px;color:#a8a29a;letter-spacing:.04em}
+
+  /* ---- Sections ---- */
+  main{padding:52px 0 64px}
+  section{margin-bottom:44px}
+  h2{
+    font:700 13px/1 Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--gold-deep);margin:0 0 16px;
+    padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
+
+  a.card{
+    display:block;text-decoration:none;background:var(--card);
+    border:1px solid var(--line);border-radius:4px;
+    padding:15px 17px;color:var(--body);
+    transition:background .14s ease,border-color .14s ease,transform .14s ease;
+  }
+  a.card .label{
+    display:block;font:500 15px/1.35 Inter,sans-serif;color:var(--ink);margin-bottom:5px;
+  }
+  a.card .path{
+    display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:12px;color:#8a8178;word-break:break-all;
+  }
+  a.card .meta{
+    display:block;margin-top:8px;font-size:11.5px;color:#9a9189;letter-spacing:.03em;
+  }
+  /* Hover: nền tối đi, chữ vẫn đậm hơn nền — không bao giờ giảm tương phản */
+  a.card:hover{background:#faf5ee;border-color:var(--gold);transform:translateY(-1px)}
+  a.card:hover .label{color:var(--gold-deep)}
+  a.card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+  /* Thẻ trang chủ nổi bật */
+  a.card.primary{background:var(--ink);border-color:var(--ink)}
+  a.card.primary .label{color:#fff}
+  a.card.primary .path{color:#b4ab9f}
+  a.card.primary .meta{color:#8f877d}
+  a.card.primary:hover{background:#1c1a17;border-color:var(--gold)}
+  a.card.primary:hover .label{color:var(--gold-hi)}
+
+  /* ---- Note ---- */
+  .note{
+    background:#fff;border:1px solid var(--line);border-left:3px solid var(--gold);
+    border-radius:4px;padding:18px 20px;font-size:14px;line-height:1.65;
+  }
+  .note p{margin:0 0 9px}
+  .note p:last-child{margin:0}
+  .note strong{color:var(--ink)}
+  .note code{
+    background:var(--cream);padding:2px 6px;border-radius:3px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:var(--gold-deep);
+  }
+
+  footer{
+    border-top:1px solid var(--line);padding:22px 0 40px;
+    font-size:12.5px;color:#8a8178;
+  }
+
+  @media (max-width:640px){
+    header{padding:34px 0 30px}
+    h1{font-size:26px}
+    .head-inner{gap:18px}
+    .head-inner img{width:56px}
+    .stat{padding-right:28px}
+    main{padding:36px 0 48px}
+  }
+</style>
+</head>
+<body data-od-id="clone-site-index">
+
+<header data-od-id="index-header">
+  <div class="wrap head-inner">
+    <img src="wp-content/uploads/2023/04/Logo-Royal-Ha-Long-Hotel.png" alt="Royal Halong Hotel">
+    <div>
+      <p class="eyebrow">Bản sao cục bộ · royalhalonghotel.com/vi</p>
+      <h1>Danh mục trang</h1>
+      <p class="sub">Trang điều hướng nhẹ cho bản clone. Trang chủ đầy đủ nằm ở <code>index.html</code>.</p>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="stats" data-od-id="index-stats">
+      <div class="stat"><b>22</b><span>TRANG</span></div>
+      <div class="stat"><b>1.111</b><span>TỆP TÀI NGUYÊN</span></div>
+      <div class="stat"><b>26</b><span>FONT TỰ HOST</span></div>
+      <div class="stat"><b>0</b><span>MÃ THEO DÕI</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section data-od-id="section-chinh">
+    <h2>Trang chính</h2>
+    <div class="grid">
+      <a class="card primary" href="index.html" data-od-id="route-home">
+        <span class="label">Trang chủ</span>
+        <span class="path">index.html</span>
+        <span class="meta">174 KB · trang đầy đủ</span>
+      </a>
+      <a class="card" href="luu-tru-phong-khach-san-villas/index.html" data-od-id="route-luu-tru">
+        <span class="label">Lưu trú — Phòng khách sạn &amp; Villas</span>
+        <span class="path">luu-tru-phong-khach-san-villas/</span>
+        <span class="meta">132 KB</span>
+      </a>
+      <a class="card" href="casino/index.html" data-od-id="route-casino">
+        <span class="label">Casino</span>
+        <span class="path">casino/</span>
+        <span class="meta">168 KB</span>
+      </a>
+      <a class="card" href="culinary/index.html" data-od-id="route-culinary">
+        <span class="label">Ẩm thực</span>
+        <span class="path">culinary/</span>
+        <span class="meta">135 KB</span>
+      </a>
+      <a class="card" href="experiences/index.html" data-od-id="route-experiences">
+        <span class="label">Trải nghiệm</span>
+        <span class="path">experiences/</span>
+        <span class="meta">144 KB</span>
+      </a>
+      <a class="card" href="our-gallery/index.html" data-od-id="route-gallery">
+        <span class="label">Thư viện ảnh</span>
+        <span class="path">our-gallery/</span>
+        <span class="meta">198 KB · 90 ảnh</span>
+      </a>
+      <a class="card" href="offers/index.html" data-od-id="route-offers">
+        <span class="label">Ưu đãi</span>
+        <span class="path">offers/</span>
+        <span class="meta">121 KB</span>
+      </a>
+      <a class="card" href="reservation/index.html" data-od-id="route-reservation">
+        <span class="label">Đặt phòng</span>
+        <span class="path">reservation/</span>
+        <span class="meta">90 KB · form không gửi được</span>
+      </a>
+    </div>
+  </section>
+
+  <section data-od-id="section-hoi-nghi">
+    <h2>Hội nghị &amp; Tiệc cưới</h2>
+    <div class="grid">
+      <a class="card" href="wedding/index.html" data-od-id="route-wedding">
+        <span class="label">Tiệc cưới</span>
+        <span class="path">wedding/</span>
+        <span class="meta">126 KB</span>
+      </a>
+      <a class="card" href="royal-international-convention-palace/index.html" data-od-id="route-convention">
+        <span class="label">Cung Hội nghị Quốc tế Hoàng Gia Hạ Long</span>
+        <span class="path">royal-international-convention-palace/</span>
+        <span class="meta">127 KB</span>
+      </a>
+    </div>
+  </section>
+
+  <section data-od-id="section-phong">
+    <h2>Loại phòng &amp; Villa</h2>
+    <div class="grid">
+      <a class="card" href="deluxe/index.html" data-od-id="route-deluxe">
+        <span class="label">Deluxe</span>
+        <span class="path">deluxe/</span>
+        <span class="meta">136 KB</span>
+      </a>
+      <a class="card" href="premium/index.html" data-od-id="route-premium">
+        <span class="label">Premium</span>
+        <span class="path">premium/</span>
+        <span class="meta">131 KB</span>
+      </a>
+      <a class="card" href="villas-deluxe/index.html" data-od-id="route-villas-deluxe">
+        <span class="label">Villas Deluxe</span>
+        <span class="path">villas-deluxe/</span>
+        <span class="meta">131 KB</span>
+      </a>
+      <a class="card" href="villas-suite/index.html" data-od-id="route-villas-suite">
+        <span class="label">Villas Suite</span>
+        <span class="path">villas-suite/</span>
+        <span class="meta">132 KB</span>
+      </a>
+    </div>
+  </section>
+
+  <section data-od-id="section-tin-tuc">
+    <h2>Tin tức &amp; Thông báo</h2>
+    <div class="grid">
+      <a class="card" href="news/index.html" data-od-id="route-news">
+        <span class="label">Tin tức &amp; Báo chí</span>
+        <span class="path">news/</span>
+        <span class="meta">129 KB</span>
+      </a>
+      <a class="card" href="our-announcement/index.html" data-od-id="route-announcement">
+        <span class="label">Thông báo</span>
+        <span class="path">our-announcement/</span>
+        <span class="meta">146 KB</span>
+      </a>
+      <a class="card" href="canh-bao-trang-facebook-gia-mao-khach-san-royal-halong-hotel/index.html" data-od-id="route-bai-canh-bao">
+        <span class="label">Cảnh báo trang Facebook giả mạo</span>
+        <span class="path">canh-bao-trang-facebook-gia-mao…/</span>
+        <span class="meta">137 KB · bài viết</span>
+      </a>
+      <a class="card" href="quy-2-2023-ctcp-quoc-te-hoang-gia-ric-kien-tri-voi-muc-tieu-kinh-doanh-on-dinh/index.html" data-od-id="route-bai-quy2">
+        <span class="label">Quý 2/2023 — RIC kiên trì mục tiêu kinh doanh ổn định</span>
+        <span class="path">quy-2-2023-ctcp-quoc-te-hoang-gia…/</span>
+        <span class="meta">133 KB · bài viết</span>
+      </a>
+      <a class="card" href="thong-cao-bao-chi-dhcd-ctcp-quoc-te-hoang-gia-khoi-sac-cung-du-lich-dia-phuong/index.html" data-od-id="route-bai-thong-cao">
+        <span class="label">Thông cáo báo chí — ĐHCĐ CTCP Quốc tế Hoàng Gia</span>
+        <span class="path">thong-cao-bao-chi-dhcd-ctcp…/</span>
+        <span class="meta">138 KB · bài viết</span>
+      </a>
+    </div>
+  </section>
+
+  <section data-od-id="section-phap-ly">
+    <h2>Thông tin &amp; Pháp lý</h2>
+    <div class="grid">
+      <a class="card" href="payment-methods/index.html" data-od-id="route-payment">
+        <span class="label">Phương thức thanh toán</span>
+        <span class="path">payment-methods/</span>
+        <span class="meta">86 KB</span>
+      </a>
+      <a class="card" href="privacy-policy/index.html" data-od-id="route-privacy">
+        <span class="label">Chính sách bảo mật</span>
+        <span class="path">privacy-policy/</span>
+        <span class="meta">123 KB</span>
+      </a>
+      <a class="card" href="terms-and-conditions/index.html" data-od-id="route-terms">
+        <span class="label">Điều khoản &amp; Điều kiện</span>
+        <span class="path">terms-and-conditions/</span>
+        <span class="meta">111 KB</span>
+      </a>
+    </div>
+  </section>
+
+  <section data-od-id="section-luu-y">
+    <h2>Lưu ý</h2>
+    <div class="note">
+      <p><strong>Trang này chỉ để điều hướng</strong> — không có trong site gốc. Bản sao trung thực
+      là <code>index.html</code> và 21 thư mục route.</p>
+      <p><strong>Chưa thể triển khai công khai.</strong> Toàn bộ ảnh, nội dung, mã số doanh nghiệp
+      và huy hiệu "Đã thông báo Bộ Công Thương" thuộc về Royal Halong Hotel; theme Salient cần giấy
+      phép ThemeForest. Xem danh sách cần thay trong <code>NOTES.md</code>.</p>
+      <p><strong>Form đặt phòng không hoạt động</strong> — endpoint <code>admin-ajax.php</code> phía
+      máy chủ không được sao chép.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap" data-od-id="index-footer">
+  Bản sao cục bộ phục vụ nghiên cứu · Nguồn: royalhalonghotel.com/vi/ · 22 trang, 1.111 tài nguyên
+</footer>
+
+</body>
+</html>

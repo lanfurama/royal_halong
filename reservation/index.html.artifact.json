@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "reservation/index.html",
+  "entry": "reservation/index.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-09-14T03:00:52.801Z",
+  "updatedAt": "2026-09-14T03:00:52.801Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

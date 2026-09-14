@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "news/index.html",
+  "entry": "news/index.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-09-14T03:00:52.809Z",
+  "updatedAt": "2026-09-14T03:00:52.809Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}
