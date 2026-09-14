@@ -2968,6 +2968,13 @@ test('lightbox thư viện ảnh mở và đóng được', async ({ page }) => 
 Run: `pnpm test:e2e`
 Expected: tất cả PASS.
 
+⚠️ **Bẫy đã biết — thiếu favicon làm hỏng cả 19 test route.** Test `routes.spec.ts` assert
+`expect(errors).toEqual([])`, mà không có favicon thì mọi trang sinh
+`Failed to load resource: 404 (Not Found) @ /favicon.ico` trong console → **fail toàn bộ**.
+Đã xác nhận bằng trình duyệt thật ở Plan A Task 1. Sửa trước khi chạy: đặt một file
+`app/icon.png` (hoặc `app/favicon.ico`) — Next tự phục vụ nó. Lấy tạm logo từ
+`wp-content/uploads/`, sau này thay bằng `siteSettings.favicon` trong Sanity.
+
 Vi phạm axe hay gặp và cách xử lý:
 - `color-contrast` → gần như chắc chắn do dùng `text-gold` cho chữ nhỏ trên nền sáng.
   Đổi sang `text-gold-text`. Đây đúng là thứ bảng đo ở spec mục 7 cảnh báo.
