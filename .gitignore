@@ -41,3 +41,7 @@ next-env.d.ts
 
 # SDD workspace (scratch, sinh lại được)
 .superpowers/
+
+# Artifact kiểm chứng bằng trình duyệt (không phải nguồn)
+.playwright-mcp/
+task*-tokens.png
