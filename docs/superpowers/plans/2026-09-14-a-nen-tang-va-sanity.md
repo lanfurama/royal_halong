@@ -502,6 +502,23 @@ SANITY_API_WRITE_TOKEN=<token quyền Editor, chỉ dùng cho plan B>
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
+⚠️ **`sanity projects create` KHÔNG tạo dataset.** Sau khi tạo project, kiểm tra và tạo
+dataset, nếu không mọi truy vấn trả `Dataset "production" not found`:
+
+```bash
+pnpm dlx sanity@6.13.2 dataset create production
+```
+
+⚠️ **Phải thêm CORS origin, nếu không Studio kẹt ở spinner.** Sanity chặn
+`http://localhost:3000` cho tới khi origin được khai báo; console báo một loạt lỗi
+`blocked by CORS policy` trên `/users/me`. Thêm bằng CLI hoặc ở sanity.io/manage → API → CORS:
+
+```bash
+pnpm dlx sanity@6.13.2 cors add http://localhost:3000 --credentials
+```
+
+Cờ `--credentials` là bắt buộc — thiếu nó Studio không đăng nhập được.
+
 - [ ] **Step 3: Viết .env.example (có commit, không chứa giá trị thật)**
 
 ```
@@ -723,20 +740,45 @@ import { dataset, projectId } from './sanity/env'
 export default defineCliConfig({ api: { projectId, dataset } })
 ```
 
-- [ ] **Step 13: Viết app/studio/[[...tool]]/page.tsx**
+- [ ] **Step 13: Viết route Studio — HAI file, không phải một**
+
+⚠️ Đừng để server component import `sanity.config.ts` rồi truyền qua prop. Đã thử và
+build vỡ hai lần liên tiếp:
+1. Turbopack bundle `sanity` cho đồ thị RSC → phân giải `swr` theo điều kiện `react-server`
+   → entry đó không có default export → `The export default was not found`.
+2. Vượt qua được (1) thì gặp `Functions cannot be passed directly to Client Components` —
+   config chứa `document.actions` và `newDocumentOptions` (Task 7 thêm để khoá singleton),
+   React không serialize hàm qua ranh giới server → client.
+
+Cách đúng: client component **tự import** config. Config nằm trọn trong bundle client,
+không đi qua ranh giới nào, và `sanity` không lọt vào đồ thị server.
 
 ```tsx
+// app/studio/[[...tool]]/Studio.tsx
+'use client'
+
 import { NextStudio } from 'next-sanity/studio'
 import config from '@/sanity.config'
 
-export const dynamic = 'force-static'
+export function Studio() {
+  return <NextStudio config={config} />
+}
+```
+
+```tsx
+// app/studio/[[...tool]]/page.tsx
+import { Studio } from './Studio'
 
 export { metadata, viewport } from 'next-sanity/studio'
 
 export default function StudioPage() {
-  return <NextStudio config={config} />
+  return <Studio />
 }
 ```
+
+`page.tsx` vẫn là server component vì `metadata`/`viewport` chỉ export được từ đó.
+**Không** thêm `export const dynamic = 'force-static'`: Next 16 loại bỏ nó khi bật
+Cache Components, nhưng nó vẫn stub `cookies()`/`headers()` cho cả cây `/studio`.
 
 - [ ] **Step 14: Gắn SanityLive vào root layout**
 
