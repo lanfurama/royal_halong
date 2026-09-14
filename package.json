@@ -11,7 +11,12 @@
     "typegen": "next typegen",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "import:parse": "tsx scripts/import/parse.ts",
+    "import:assets": "tsx scripts/import/assets.ts",
+    "import:transform": "tsx scripts/import/transform.ts",
+    "import:run": "tsx scripts/import/run.ts",
+    "import": "pnpm import:parse && pnpm import:assets && pnpm import:transform && pnpm import:run"
   },
   "keywords": [],
   "author": "",
@@ -29,13 +34,20 @@
     "styled-components": "6.5.3"
   },
   "devDependencies": {
+    "@portabletext/block-tools": "6.0.0",
+    "@sanity/schema": "6.13.2",
     "@tailwindcss/postcss": "4.3.3",
+    "@types/jsdom": "21.1.7",
     "@types/node": "22.20.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "5.2.0",
+    "cheerio": "1.2.0",
+    "dotenv": "17.4.2",
+    "jsdom": "26.1.0",
     "postcss": "8.5.23",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.13",
     "typescript": "5.9.3",
     "vitest": "5.0.0"
   }
