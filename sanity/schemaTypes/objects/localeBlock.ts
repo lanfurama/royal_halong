@@ -41,7 +41,13 @@ export const localeBlock = defineType({
   title: 'Nội dung song ngữ',
   type: 'object',
   fields: [
-    defineField({ name: 'vi', title: 'Tiếng Việt', type: 'array', of: blockContent }),
+    defineField({
+      name: 'vi',
+      title: 'Tiếng Việt',
+      type: 'array',
+      of: blockContent,
+      validation: (r) => r.required(),
+    }),
     defineField({ name: 'en', title: 'English', type: 'array', of: blockContent }),
   ],
 })
