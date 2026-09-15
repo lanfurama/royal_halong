@@ -320,7 +320,7 @@ khi JS chưa load.
 
 ## 6. Script import
 
-Chạy một lần bằng `pnpm import`, idempotent, chạy lại nhiều lần cho kết quả như nhau.
+Chạy một lần bằng `pnpm run import:all`, idempotent, chạy lại nhiều lần cho kết quả như nhau.
 
 **`parse.ts`** — cheerio đọc 22 file HTML, xuất JSON trung gian
 (`scripts/import/out/parsed.json`). Mỗi loại trang một parser riêng:

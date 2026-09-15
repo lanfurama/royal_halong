@@ -1307,7 +1307,7 @@ Website khách sạn Royal Halong, dựng lại từ bản clone WordPress/Salie
 ```bash
 pnpm install
 cp .env.example .env.local    # điền giá trị thật
-pnpm import                   # đổ nội dung từ bản clone HTML vào Sanity (chạy một lần)
+pnpm run import:all                   # đổ nội dung từ bản clone HTML vào Sanity (chạy một lần)
 pnpm dev
 ```
 
@@ -1322,7 +1322,7 @@ pnpm dev
 | `pnpm build` / `pnpm start` | Build và chạy production |
 | `pnpm test` | Unit test (Vitest) |
 | `pnpm test:e2e` | E2E (Playwright, tự build trước) |
-| `pnpm import` | Import nội dung — xem `docs/import.md` |
+| `pnpm run import:all` | Import nội dung — xem `docs/import.md` |
 | `pnpm db:generate` / `db:migrate` / `db:studio` | Migration Neon |
 
 ## Kiến trúc

@@ -473,7 +473,7 @@ export async function generateStaticParams() {
   // cacheComponents bắt buộc trả ít nhất một param.
   if (params.length === 0) {
     throw new Error(
-      'Sanity chưa có document nào có slug. Chạy `pnpm import` (Plan B) trước khi build.',
+      'Sanity chưa có document nào có slug. Chạy `pnpm run import:all` (Plan B) trước khi build.',
     )
   }
   return params

@@ -2371,7 +2371,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: Task 8 (`out/documents.ndjson`), Task 7 (`sanityClient.ts`)
-- Produces: lệnh `pnpm import:run` và `pnpm import`
+- Produces: lệnh `pnpm import:run` và `pnpm run import:all`
 
 - [ ] **Step 1: Viết scripts/import/run.ts**
 
@@ -2462,7 +2462,7 @@ Mở `http://localhost:3000/studio`. Kiểm:
 
 - [ ] **Step 5: Chạy lại toàn bộ pipeline để chứng minh idempotent**
 
-Run: `pnpm import`
+Run: `pnpm run import:all`
 Expected: `Upload mới: 0` ở pha assets; số document không đổi trong Studio; không có
 document trùng nào xuất hiện.
 
@@ -2477,7 +2477,7 @@ document trùng nào xuất hiện.
 
 ```bash
 cp .env.example .env.local   # điền project id + SANITY_API_WRITE_TOKEN
-pnpm import                  # chạy cả 4 pha
+pnpm run import:all                  # chạy cả 4 pha
 ```
 
 Từng pha chạy riêng được:
@@ -2526,7 +2526,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ## Không nằm trong phạm vi Plan B
 
 **Script import KHÔNG ghi `siteSettings` và `navigation`.** `buildDocuments()` không sinh hai
-singleton đó. Nghĩa là sau khi `pnpm import` chạy xong, những thứ sau vẫn **trống** và phải nhập
+singleton đó. Nghĩa là sau khi `pnpm run import:all` chạy xong, những thứ sau vẫn **trống** và phải nhập
 tay trong Studio trước khi frontend của Plan C hiển thị được:
 
 - menu đầu trang và các cột chân trang (`navigation`)
@@ -2538,7 +2538,7 @@ tay trong Studio trước khi frontend của Plan C hiển thị được:
 ## Hoàn thành Plan B
 
 - Sanity có đủ nội dung 22 trang và ~213 ảnh, mọi field `vi` đầy, `en` trống.
-- `pnpm import` chạy lại được bất cứ lúc nào.
+- `pnpm run import:all` chạy lại được bất cứ lúc nào.
 - 63 unit test xanh.
 
 **Tiếp theo:** Plan C dựng frontend. Điều kiện tiên quyết đã thoả — Sanity có dữ liệu
