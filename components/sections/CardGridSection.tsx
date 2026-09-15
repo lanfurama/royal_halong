@@ -9,10 +9,18 @@ const COLS = { 2: 'md:grid-cols-2', 3: 'md:grid-cols-3', 4: 'md:grid-cols-2 lg:g
 export function CardGridSection({
   heading,
   subheading,
-  cards = [],
+  cards,
   columns = 3,
   lang,
 }: any & { lang: Locale }) {
+  // `cards` chạy qua `cards[]{...}` trong SECTIONS projection (xem
+  // `sanity/lib/queries.ts`) — projection này áp lên MỌI section, không chỉ
+  // cardGridSection. Với section nào không có field `cards`, GROQ trả về
+  // `null` tường minh, không phải `undefined` — default parameter (`cards =
+  // []`) chỉ bắt `undefined`, không bắt `null`, nên `cards.map` từng nổ
+  // (`Cannot read properties of null (reading 'map')`) ngay khi editor lưu
+  // một cardGridSection còn trống. `?? []` bắt cả hai.
+  const list: any[] = cards ?? []
   return (
     <section className="bg-cream py-16">
       <Container>
@@ -27,7 +35,7 @@ export function CardGridSection({
           </p>
         )}
         <div className={`grid gap-8 ${COLS[columns as 2 | 3 | 4] ?? COLS[3]}`}>
-          {cards.map((card: any, index: number) => {
+          {list.map((card: any, index: number) => {
             const cardTitle = t<string>(card.title, lang)
             return (
               <Reveal key={card._key ?? index} delay={index * 90}>

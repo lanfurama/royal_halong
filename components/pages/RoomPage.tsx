@@ -1,13 +1,23 @@
 import { t, type Locale } from '@/lib/i18n'
-import type { SanityDoc } from '@/sanity/lib/fetchers'
+import { getReservationSlug, type SanityDoc } from '@/sanity/lib/fetchers'
+import { hrefFor } from '@/lib/routes'
 import { Container } from '@/components/ui/Container'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { RichText } from '@/components/ui/PortableText'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 
-export function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
+export async function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
   const roomTitle = t<string>(doc.title as any, lang)
+  // Trước đây hardcode `/${lang}/reservation` — gãy ngay khi trang "Đặt
+  // phòng" đổi slug hoặc có slug EN riêng khác slug vi (hreflang sẽ trỏ khác
+  // với nút này). Suy ra từ Sanity qua `_id` tất định `page.reservation`
+  // (xem `RESERVATION_SLUG_QUERY`), cùng cách `resolveSlug`/`hrefFor` đã
+  // dùng cho mọi link nội bộ khác trong dự án. `reservationSlug` null (doc bị
+  // xoá/đổi `_id`) -> `hrefFor` tự rơi về `/${lang}` — fallback an toàn hơn
+  // hardcode một slug có thể đã đổi, dù không lý tưởng bằng có slug thật.
+  const reservationSlug = await getReservationSlug()
+  const reservationHref = reservationSlug ? hrefFor(lang, reservationSlug) : `/${lang}/reservation`
 
   return (
     <>
@@ -44,7 +54,7 @@ export function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
           <div className="grid gap-12 md:grid-cols-[3fr_2fr]">
             <div>
               <RichText value={doc.description} lang={lang} />
-              <Button href={`/${lang}/reservation`} className="mt-6">
+              <Button href={reservationHref} className="mt-6">
                 Đặt phòng
               </Button>
             </div>

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { t, type Locale } from '@/lib/i18n'
+import type { SlugField } from '@/lib/routes'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { SmartLink } from '@/components/ui/SmartLink'
 import { Container } from '@/components/ui/Container'
@@ -16,10 +17,15 @@ export function Header({
   lang,
   navigation,
   settings,
+  slug,
 }: {
   lang: Locale
   navigation: any
   settings: any
+  /** Slug (song ngữ) của TRANG HIỆN TẠI — truyền xuống `LangSwitcher` để nó
+   * trỏ đúng bản dịch riêng từng locale thay vì hoán prefix mù. `undefined`
+   * (không truyền) giữ hành vi hoán prefix cũ — xem `LangSwitcher.tsx`. */
+  slug?: SlugField | null
 }) {
   const items: any[] = navigation?.header ?? []
   const brand = t<string>(settings?.brandName, lang) ?? BRAND_FALLBACK
@@ -85,7 +91,7 @@ export function Header({
         )}
 
         <div className="flex items-center gap-4">
-          <LangSwitcher lang={lang} />
+          <LangSwitcher lang={lang} slug={slug} />
           <MobileMenu lang={lang} items={items} />
         </div>
       </Container>

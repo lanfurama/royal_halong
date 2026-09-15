@@ -3,7 +3,10 @@ import { Container } from '@/components/ui/Container'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { RichText } from '@/components/ui/PortableText'
 
-export function HallListSection({ heading, resolved = [], lang }: any & { lang: Locale }) {
+export function HallListSection({ heading, resolved, lang }: any & { lang: Locale }) {
+  // Xem chú thích cùng lớp lỗi ở CardGridSection/VenueListSection — default
+  // parameter không chặn được `null` tường minh.
+  const list: any[] = resolved ?? []
   return (
     <section className="bg-cream py-16">
       <Container>
@@ -13,7 +16,7 @@ export function HallListSection({ heading, resolved = [], lang }: any & { lang: 
           </h2>
         )}
         <div className="space-y-12">
-          {resolved.map((hall: any, index: number) => {
+          {list.map((hall: any, index: number) => {
             const hallName = t<string>(hall.name, lang)
             return (
               <article key={hall._id} className="grid items-center gap-8 md:grid-cols-2">

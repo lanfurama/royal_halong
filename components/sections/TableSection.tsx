@@ -4,10 +4,14 @@ import { Container } from '@/components/ui/Container'
 export function TableSection({
   heading,
   caption,
-  headers = [],
-  rows = [],
+  headers,
+  rows,
   lang,
 }: any & { lang: Locale }) {
+  // Xem chú thích cùng lớp lỗi ở CardGridSection/VenueListSection — default
+  // parameter không chặn được `null` tường minh.
+  const headerList: any[] = headers ?? []
+  const rowList: any[] = rows ?? []
   return (
     <section className="py-12">
       <Container>
@@ -30,7 +34,7 @@ export function TableSection({
             {caption && <caption className="mb-2 text-left text-xs">{t<string>(caption, lang)}</caption>}
             <thead>
               <tr className="bg-cream">
-                {headers.map((cell: any, index: number) => (
+                {headerList.map((cell: any, index: number) => (
                   <th
                     key={cell._key ?? index}
                     scope="col"
@@ -42,7 +46,7 @@ export function TableSection({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row: any, rowIndex: number) => (
+              {rowList.map((row: any, rowIndex: number) => (
                 <tr key={row._key ?? rowIndex} className={rowIndex % 2 ? 'bg-cream/40' : ''}>
                   {(row.cells ?? []).map((cell: any, cellIndex: number) => (
                     <td key={cell._key ?? cellIndex} className="border-line border px-3 py-2">

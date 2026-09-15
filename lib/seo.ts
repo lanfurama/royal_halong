@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
-import { t, LOCALES, type Locale } from './i18n'
+import { t, isEmpty, LOCALES, DEFAULT_LOCALE, type Locale } from './i18n'
 import { resolveSlug, type SlugField } from './routes'
+import { siteUrl as defaultSiteUrl } from './site-url'
+import { urlFor } from '@/sanity/lib/image'
 
 export function absoluteUrl(path: string, siteUrl: string): string {
   return `${siteUrl.replace(/\/+$/, '')}${path.startsWith('/') ? path : `/${path}`}`
@@ -10,7 +12,7 @@ export function buildMetadata({
   doc,
   lang,
   settings,
-  siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+  siteUrl = defaultSiteUrl(),
 }: {
   // `SanityDoc` (sanity/lib/fetchers.ts) mang index signature `[key: string]:
   // unknown` — TS coi kiểu tường minh bên dưới là "weak type" (mọi field đều
@@ -34,10 +36,46 @@ export function buildMetadata({
     const localeSlug = resolveSlug(doc?.slug, locale)
     languages[locale] = absoluteUrl(localeSlug ? `/${locale}/${localeSlug}` : `/${locale}`, siteUrl)
   }
+  // `x-default` báo cho Google biết phiên bản nào dùng khi không khớp locale
+  // nào cả — luôn trỏ `vi` (DEFAULT_LOCALE), nguồn nội dung thật duy nhất.
+  languages['x-default'] = languages[DEFAULT_LOCALE]
+
+  // Toàn bộ `/en/*` hôm nay được prerender, index được, tự-canonical, và
+  // giống hệt byte-for-byte bản `/vi/*` — `t()` (lib/i18n.ts) luôn fallback
+  // vi khi en trống, nên "bản EN" không tồn tại về nội dung, chỉ tồn tại về
+  // route. Google thấy 24 URL trùng lặp được quảng cáo là một bản tiếng Anh
+  // không có thật. Việc rẻ nhất-mà-đúng: kiểm tra field universal duy nhất có
+  // trên MỌI loại document (title — bắt buộc trên page/homePage/room/post/
+  // offer) có bản dịch EN THẬT hay không, KHÔNG qua `t()` (vì `t()` tự
+  // fallback, sẽ luôn báo "có"). Không có -> đây là bản sao vi giả làm en ->
+  // noindex, nhưng vẫn để `follow` (đường link nội bộ vẫn nên được đi qua).
+  const hasOwnLocaleContent = lang === DEFAULT_LOCALE || !isEmpty(doc?.title?.[lang])
+  // Biên tập viên tự chặn (`seo.noIndex`) -> chặn hẳn (không index, không
+  // theo link). Bản sao vi-giả-làm-en -> chỉ không index, VẪN cho theo link
+  // nội bộ (dẫn bot về đúng bản vi có nội dung thật thay vì cụt đường).
+  const robots = doc?.seo?.noIndex
+    ? { index: false, follow: false }
+    : !hasOwnLocaleContent
+      ? { index: false, follow: true }
+      : undefined
+
+  // `seo.ogImage` được query (`sanity/lib/queries.ts:87,95`) nhưng trước đây
+  // không chỗ nào tiêu thụ nó. Ảnh chia sẻ mạng xã hội mặc định rơi về ảnh
+  // của Next tự chọn (thường không có) thay vì ảnh biên tập viên đã chọn.
+  const ogImageAsset = doc?.seo?.ogImage
+  const ogImageUrl = ogImageAsset?.asset
+    ? urlFor(ogImageAsset).width(1200).height(630).fit('crop').url()
+    : undefined
 
   return {
     title: pageTitle === brand ? brand : `${pageTitle} — ${brand}`,
     description,
+    // `ogImageUrl` ở trên luôn là URL tuyệt đối (cdn.sanity.io) nên tự nó
+    // không cần `metadataBase` để resolve — nhưng Next dùng field này chung
+    // cho mọi URL tương đối khác trong metadata (og/twitter), và không có nó
+    // sẽ resolve nhầm về `localhost:3000` mặc định trên chính production.
+    // Set luôn ở đây, cùng nguồn `siteUrl` với canonical/hreflang.
+    metadataBase: new URL(siteUrl),
     alternates: {
       canonical: absoluteUrl(path, siteUrl),
       languages,
@@ -49,8 +87,9 @@ export function buildMetadata({
       siteName: brand,
       locale: lang === 'vi' ? 'vi_VN' : 'en_US',
       type: 'website',
+      ...(ogImageUrl ? { images: [{ url: ogImageUrl }] } : {}),
     },
-    ...(doc?.seo?.noIndex ? { robots: { index: false, follow: false } } : {}),
+    ...(robots ? { robots } : {}),
   }
 }
 
@@ -72,7 +111,7 @@ const BRAND_FALLBACK = 'Royal Halong Hotel'
 export function buildHotelJsonLd({
   settings,
   lang,
-  siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+  siteUrl = defaultSiteUrl(),
 }: {
   settings: any
   lang: Locale

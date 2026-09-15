@@ -2,7 +2,10 @@ import { t, type Locale } from '@/lib/i18n'
 import { Container } from '@/components/ui/Container'
 import { RichText } from '@/components/ui/PortableText'
 
-export function FaqSection({ heading, items = [], lang }: any & { lang: Locale }) {
+export function FaqSection({ heading, items, lang }: any & { lang: Locale }) {
+  // Xem chú thích cùng lớp lỗi ở CardGridSection/VenueListSection — default
+  // parameter không chặn được `null` tường minh.
+  const list: any[] = items ?? []
   return (
     <section className="py-16">
       <Container size="narrow">
@@ -13,7 +16,7 @@ export function FaqSection({ heading, items = [], lang }: any & { lang: Locale }
             trực tiếp — `<details>` không hợp lệ ở đó. `<details>`/`<summary>` gốc
             đã đủ ngữ nghĩa câu hỏi/trả lời, không cần thêm dl/dt/dd. */}
         <div className="divide-line divide-y">
-          {items.map((item: any, index: number) => (
+          {list.map((item: any, index: number) => (
             <details key={item._key ?? index} className="group py-4">
               <summary className="marker:content-none cursor-pointer list-none font-semibold">
                 <span className="flex items-center justify-between">

@@ -3,26 +3,42 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LOCALES, type Locale } from '@/lib/i18n'
+import { resolveSlug, type SlugField } from '@/lib/routes'
 
 /**
- * Chỉ đổi prefix locale, giữ nguyên slug. Tách hàm thuần để test không cần
- * router context (usePathname() đòi App Router runtime, không gọi được
- * trong test node thường).
- *
- * Slug EN riêng (nếu có) sẽ được xử lý ở Task 7 khi sinh `hreflang` — ở đây
- * giữ đơn giản vì đa số trang dùng chung slug.
+ * Chỉ đổi prefix locale, giữ nguyên slug. Dùng làm FALLBACK khi nơi gọi
+ * không truyền `slug` (xem `LangSwitcher` bên dưới) — vd. test cũ gọi
+ * `<LangSwitcher lang="vi" />` trần. Hành vi thật (khi có `slug`) giờ suy ra
+ * đúng slug riêng theo từng locale qua `resolveSlug`, không hoán prefix nữa.
  */
 export function swapLocalePrefix(pathname: string, from: Locale, to: Locale): string {
   return pathname.replace(new RegExp(`^/${from}`), `/${to}`)
 }
 
-export function LangSwitcher({ lang }: { lang: Locale }) {
+export function LangSwitcher({ lang, slug }: { lang: Locale; slug?: SlugField | null }) {
   const pathname = usePathname()
 
   return (
     <div className="flex items-center gap-2 text-xs tracking-wider uppercase">
       {LOCALES.map((locale) => {
-        const href = swapLocalePrefix(pathname, lang, locale)
+        // Bug thật: hoán prefix thuần (`/vi/<slug-vi>` -> `/en/<slug-vi>`)
+        // giả định slug giống nhau ở mọi locale. `hreflang` (`lib/seo.ts`,
+        // `buildMetadata`) đã suy ra đúng slug riêng theo từng locale qua
+        // `resolveSlug` — ngày biên tập viên thêm slug EN khác slug VI,
+        // hoán prefix trỏ sai trong khi hreflang trỏ đúng, ngược nhau.
+        // Khi nơi gọi CÓ truyền `slug` (`Header` nhận từ `SiteChrome`, được
+        // trang hiện tại truyền xuống — xem `SiteChrome.tsx`), suy ra href
+        // đúng y hệt cách `buildMetadata` sinh `hreflang`, không phụ thuộc
+        // `usePathname()` — đúng ngay trong HTML server trả về, không cần
+        // JS. `slug === undefined` (nơi gọi cũ chưa truyền, vd. test render
+        // trần bên dưới) mới rơi về hoán prefix cũ.
+        const href =
+          slug !== undefined
+            ? (() => {
+                const localeSlug = resolveSlug(slug, locale)
+                return localeSlug ? `/${locale}/${localeSlug}` : `/${locale}`
+              })()
+            : swapLocalePrefix(pathname, lang, locale)
         const active = locale === lang
         return (
           <Link

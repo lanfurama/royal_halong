@@ -48,6 +48,16 @@ export function SanityImage({ image, lang, sizes, priority, className, decorativ
   const dimensions = image.asset.metadata?.dimensions
   const alt = resolveImageAlt(image, lang, { decorative, fallbackAlt })
 
+  // Sanity CDN thay cho `/_next/image` — xem `lib/sanity-image-loader.ts`
+  // (wired qua `images.loader: 'custom'` trong `next.config.ts`) để biết vì
+  // sao KHÔNG dùng prop `loader` tại đây: `next/image` cần gọi lại loader ở
+  // phía client (responsive width), và một prop `loader` là hàm JS trần
+  // KHÔNG serialize được qua ranh giới Server -> Client Component — build
+  // thật sự nổ (`Functions cannot be passed directly to Client Components`)
+  // với đúng cách viết inline này, vì SanityImage được hầu hết section
+  // (Server Component, không "use client") gọi trực tiếp. Cấu hình loader
+  // toàn cục qua file (`loaderFile`) là cách Next hỗ trợ chính thức cho đúng
+  // nhu cầu này, không đụng ranh giới serialize đó.
   return (
     <Image
       src={urlFor(image).url()}

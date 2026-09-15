@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/Button'
 import { hrefFor } from '@/lib/routes'
 import { Reveal } from '@/components/ui/Reveal'
 
-export function RoomListSection({ heading, resolved = [], lang }: any & { lang: Locale }) {
+export function RoomListSection({ heading, resolved, lang }: any & { lang: Locale }) {
+  // Xem chú thích cùng lớp lỗi ở CardGridSection/VenueListSection — default
+  // parameter không chặn được `null` tường minh.
+  const list: any[] = resolved ?? []
   return (
     <section className="py-16">
       <Container>
@@ -15,7 +18,7 @@ export function RoomListSection({ heading, resolved = [], lang }: any & { lang: 
           </h2>
         )}
         <div className="grid gap-8 md:grid-cols-2">
-          {resolved.map((room: any, index: number) => {
+          {list.map((room: any, index: number) => {
             const roomTitle = t<string>(room.title, lang)
             return (
               <Reveal key={room._id} delay={index * 90}>

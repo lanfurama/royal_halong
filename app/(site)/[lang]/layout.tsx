@@ -4,11 +4,6 @@ import { VisualEditing } from 'next-sanity/visual-editing'
 import { notFound } from 'next/navigation'
 import { display, body, accent, alt } from '@/lib/fonts'
 import { isLocale, LOCALES } from '@/lib/i18n'
-import { getNavigation, getSiteSettings } from '@/sanity/lib/fetchers'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import { JsonLd } from '@/components/seo/JsonLd'
-import { buildHotelJsonLd } from '@/lib/seo'
 import { SanityLive } from '@/sanity/lib/live'
 import '../../globals.css'
 
@@ -47,16 +42,15 @@ export default async function SiteLayout({ children, params }: LayoutProps<'/[la
   const { isEnabled: isDraftMode } = await draftMode()
   const fontVars = [display, body, accent, alt].map((f) => f.variable).join(' ')
 
-  const [settings, navigation] = await Promise.all([getSiteSettings(), getNavigation()])
-  const hotelJsonLd = buildHotelJsonLd({ settings, lang })
-
+  // Header/Footer/JsonLd chuyển xuống từng PAGE qua `<SiteChrome>` (xem
+  // `components/layout/SiteChrome.tsx`) — layout này không có `slug` của
+  // trang con (Next không truyền param của segment con lên layout cha), nên
+  // không thể truyền slug đúng xuống `LangSwitcher`. `{children}` ở đây giờ
+  // LÀ `<SiteChrome>...</SiteChrome>` do page trả về.
   return (
     <html lang={lang} className={fontVars}>
       <body>
-        <JsonLd data={hotelJsonLd} />
-        <Header lang={lang} navigation={navigation} settings={settings} />
-        <main id="main">{children}</main>
-        <Footer lang={lang} navigation={navigation} settings={settings} />
+        {children}
         <SanityLive includeDrafts={isDraftMode} />
         {isDraftMode && <VisualEditing />}
       </body>

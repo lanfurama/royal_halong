@@ -137,3 +137,14 @@ export const HALLS_QUERY = defineQuery(`
   _id, name, slug, areaSqm, capacity, description, image ${IMAGE}
 }
 `)
+
+// `_id` tất định `page.<slug-vi>` do script import sinh ra (xem
+// `scripts/import/transform.ts` — `docId('page', page.slug)`), giống hệt
+// cách `homePage`/`siteSettings`/`navigation` đã được truy vấn bằng `_id`
+// cố định thay vì đoán slug. Dùng để suy ra đường dẫn trang đặt phòng ĐÚNG
+// theo dữ liệu Sanity (xem `RoomPage.tsx`), thay vì hardcode `/${lang}/
+// reservation` — hardcode đó gãy ngay khi trang "Đặt phòng" đổi slug hoặc có
+// slug EN riêng.
+export const RESERVATION_SLUG_QUERY = defineQuery(`
+*[_id == "page.reservation"][0]{ slug }
+`)

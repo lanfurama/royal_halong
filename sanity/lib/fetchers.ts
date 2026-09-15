@@ -1,10 +1,12 @@
 import { cachedSanity, cachedSanityStaticParams } from './live'
+import type { SlugField } from '@/lib/routes'
 import {
   ALL_ROUTES_QUERY,
   DOC_BY_SLUG_QUERY,
   HOME_QUERY,
   SITE_SETTINGS_QUERY,
   NAVIGATION_QUERY,
+  RESERVATION_SLUG_QUERY,
 } from './queries'
 
 /**
@@ -62,4 +64,15 @@ export async function getSiteSettings() {
 export async function getNavigation() {
   const { data } = await cachedSanity({ query: NAVIGATION_QUERY, ...PUBLISHED })
   return data
+}
+
+/**
+ * Slug của trang "Đặt phòng" (`_id` tất định `page.reservation` — xem chú
+ * thích ở `RESERVATION_SLUG_QUERY`). Dùng thay cho hardcode `/${lang}/
+ * reservation` ở `RoomPage.tsx`. `null` khi document đó bị xoá/đổi `_id` —
+ * chỗ gọi tự fallback về path tĩnh cũ, không throw.
+ */
+export async function getReservationSlug(): Promise<SlugField | null> {
+  const { data } = await cachedSanity({ query: RESERVATION_SLUG_QUERY, ...PUBLISHED })
+  return (data as { slug?: SlugField } | null)?.slug ?? null
 }

@@ -26,7 +26,7 @@ export function CtaBandSection({
         </div>
       )}
       <Container className="relative text-center text-white">
-        <h2 className="font-display text-3xl">{t<string>(heading, lang)}</h2>
+        {heading && <h2 className="font-display text-3xl">{t<string>(heading, lang)}</h2>}
         {description && <p className="mx-auto mt-3 max-w-xl">{t<string>(description, lang)}</p>}
         {cta && (
           <SmartLink link={cta} lang={lang} className={CTA_BAND_BUTTON_CLASSES} />

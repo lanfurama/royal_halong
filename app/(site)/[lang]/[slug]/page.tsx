@@ -7,6 +7,7 @@ import { SectionRenderer } from '@/components/sections/SectionRenderer'
 import { RoomPage } from '@/components/pages/RoomPage'
 import { PostPage } from '@/components/pages/PostPage'
 import { OfferPage } from '@/components/pages/OfferPage'
+import { SiteChrome } from '@/components/layout/SiteChrome'
 
 export async function generateMetadata({ params }: PageProps<'/[lang]/[slug]'>): Promise<Metadata> {
   const { lang, slug } = await params
@@ -38,22 +39,42 @@ export default async function DynamicPage({ params }: PageProps<'/[lang]/[slug]'
   const [doc, settings] = await Promise.all([getDocBySlug(slug), getSiteSettings()])
   if (!doc) notFound()
 
+  // `doc.slug` (song ngữ) truyền xuống `SiteChrome` -> `Header` ->
+  // `LangSwitcher`, để nút chuyển ngôn ngữ suy đúng slug riêng từng locale
+  // (giống hệt cách `buildMetadata` sinh `hreflang`) thay vì hoán prefix mù —
+  // xem `components/layout/SiteChrome.tsx` và Fix c9-8.
+  const slugField = doc.slug as any
+
   switch (doc._type) {
     case 'room':
-      return <RoomPage doc={doc} lang={lang} />
+      return (
+        <SiteChrome lang={lang} slug={slugField}>
+          <RoomPage doc={doc} lang={lang} />
+        </SiteChrome>
+      )
     case 'post':
-      return <PostPage doc={doc} lang={lang} />
+      return (
+        <SiteChrome lang={lang} slug={slugField}>
+          <PostPage doc={doc} lang={lang} />
+        </SiteChrome>
+      )
     case 'offer':
-      return <OfferPage doc={doc} lang={lang} />
+      return (
+        <SiteChrome lang={lang} slug={slugField}>
+          <OfferPage doc={doc} lang={lang} />
+        </SiteChrome>
+      )
     default: {
       const widgetId = (settings as any)?.secureBookingsWidgetId as string | undefined
       return (
-        <SectionRenderer
-          sections={(doc.sections as unknown[]) ?? []}
-          lang={lang}
-          widgetId={widgetId}
-          siteSettings={settings}
-        />
+        <SiteChrome lang={lang} slug={slugField}>
+          <SectionRenderer
+            sections={(doc.sections as unknown[]) ?? []}
+            lang={lang}
+            widgetId={widgetId}
+            siteSettings={settings}
+          />
+        </SiteChrome>
       )
     }
   }

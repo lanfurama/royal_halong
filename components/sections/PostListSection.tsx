@@ -7,11 +7,14 @@ import { hrefFor } from '@/lib/routes'
 
 export function PostListSection({
   heading,
-  resolved = [],
+  resolved,
   limit = 12,
   lang,
 }: any & { lang: Locale }) {
-  const posts = resolved.slice(0, limit)
+  // Xem chú thích cùng lớp lỗi ở CardGridSection/VenueListSection — default
+  // parameter không chặn được `null` tường minh.
+  const list: any[] = resolved ?? []
+  const posts = list.slice(0, limit)
 
   if (posts.length === 0) {
     return (

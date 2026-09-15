@@ -13,7 +13,11 @@ function MetaRow({ label, value }: { label: string; value?: string }) {
   )
 }
 
-export function VenueListSection({ heading, resolved = [], lang }: any & { lang: Locale }) {
+export function VenueListSection({ heading, resolved, lang }: any & { lang: Locale }) {
+  // Cùng lớp lỗi với `cards` của CardGridSection: default parameter không bắt
+  // được `null` tường minh, chỉ bắt `undefined`. `resolved` hôm nay luôn là
+  // mảng khi đúng `_type`, nhưng phòng thủ đồng nhất với mọi section khác.
+  const list: any[] = resolved ?? []
   return (
     <section className="py-16">
       <Container>
@@ -23,7 +27,7 @@ export function VenueListSection({ heading, resolved = [], lang }: any & { lang:
           </h2>
         )}
         <div className="space-y-16">
-          {resolved.map((venue: any, index: number) => {
+          {list.map((venue: any, index: number) => {
             const venueName = t<string>(venue.name, lang)
             return (
               <article key={venue._id} className="grid items-start gap-8 md:grid-cols-2">

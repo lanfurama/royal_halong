@@ -144,6 +144,68 @@ test('favicon (href do <link rel="icon"> khai) tải được, không bị middl
   expect(res.status()).toBe(200)
 })
 
+// Bẫy `public/` đã xảy ra thật, rộng hơn riêng favicon: `middleware.ts` cũ
+// chỉ liệt kê tường minh `favicon.ico|robots.txt|sitemap.xml`, MỌI file khác
+// trong `public/` (vd. `public/leaflet/marker-icon.png`, thêm ở nhánh này)
+// vẫn bị redirect locale (308 -> `/vi/leaflet/marker-icon.png`) rồi 404 — xác
+// nhận bằng curl. Test favicon trước chỉ đóng ĐÚNG MỘT instance (favicon có
+// test), để ngỏ cả lớp lỗi. Hai phần dưới đây đóng lớp lỗi rộng hơn:
+//
+// (1) quét MỌI `href`/`src` cùng gốc (same-origin) thật sự có trong DOM của
+//     một trang (không chỉ favicon) và fetch từng cái — bắt được asset nào
+//     tình cờ bị middleware nuốt mà không cần biết trước tên file.
+// (2) fetch trực tiếp hai file Leaflet mới thêm — `LeafletMap.tsx` tự đặt
+//     `iconUrl`/`iconRetinaUrl` bằng JS (Leaflet gắn `background-image` cho
+//     `<img class="leaflet-marker-icon">` khi marker mount), không phải một
+//     `<img src>`/`<link href>` tĩnh nằm sẵn trong HTML — DOM-scan ở (1)
+//     không thấy được, và hôm nay chưa có `mapSection` nào trong Sanity nên
+//     không trang nào trong danh sách ROUTES thực sự render `<LeafletMap>`.
+//     Fetch thẳng theo đúng path mà component khai để không phụ thuộc dữ
+//     liệu Sanity có mapSection hay chưa.
+test('mọi href/src cùng gốc trong DOM tải được (không bị middleware redirect locale rồi 404)', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/vi/casino')
+
+  const sameOriginPaths = await page.evaluate(() => {
+    const urls = new Set<string>()
+    const collect = (el: Element, attr: string) => {
+      const value = el.getAttribute(attr)
+      if (!value) return
+      try {
+        const url = new URL(value, window.location.href)
+        if (url.origin === window.location.origin) urls.add(url.pathname + url.search)
+      } catch {
+        // href/src không parse được (vd. `mailto:`, `tel:`) -> bỏ qua, không
+        // phải asset để fetch.
+      }
+    }
+    document.querySelectorAll('img[src]').forEach((el) => collect(el, 'src'))
+    document
+      .querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="stylesheet"], link[rel="preload"]')
+      .forEach((el) => collect(el, 'href'))
+    document.querySelectorAll('script[src]').forEach((el) => collect(el, 'src'))
+    return [...urls]
+  })
+
+  expect(sameOriginPaths.length).toBeGreaterThan(0)
+
+  for (const path of sameOriginPaths) {
+    const res = await request.get(path)
+    expect(res.status(), `${path} -> ${res.status()}`).toBe(200)
+  }
+})
+
+test('asset Leaflet cục bộ (public/leaflet/*) tải được, không bị middleware redirect locale rồi 404', async ({
+  request,
+}) => {
+  for (const path of ['/leaflet/marker-icon.png', '/leaflet/marker-icon-2x.png']) {
+    const res = await request.get(path)
+    expect(res.status(), `${path} -> ${res.status()}`).toBe(200)
+  }
+})
+
 test('trang tin tức liệt kê được bài viết', async ({ page }) => {
   await page.goto('/vi/news')
   // 3 bài trong bản clone gốc. Nếu là 0 -> thiếu postListSection trong Sanity
@@ -151,10 +213,49 @@ test('trang tin tức liệt kê được bài viết', async ({ page }) => {
   await expect(page.locator('article')).not.toHaveCount(0)
 })
 
-test('không còn tham chiếu tới domain gốc', async ({ page }) => {
-  await page.goto('/vi')
-  const html = await page.content()
-  expect(html).not.toContain('royalhalonghotel.com')
+// Test cũ chỉ kiểm `/vi` — trang RỖNG NHẤT site, 0 link. Đo thật trên toàn bộ
+// route: `/vi/offers` có 12 lần xuất hiện "royalhalonghotel.com" (gồm 2
+// anchor SỐNG `<a href="http://www.royalhalonghotel.com/">` trong richText
+// `page.offers`), `/en/offers` cũng 12, `/vi/privacy-policy` có 4 — nhưng 4
+// lần ở privacy-policy là chữ `sales@royalhalonghotel.com` (nội dung hợp lệ,
+// không phải link). Test cũ xanh dù cả hai anchor sống đó tồn tại — không hề
+// chạm tới `/offers`.
+//
+// Sửa hai việc:
+// 1. Quét MỌI route trong ROUTES, cả hai locale (dùng `request.get()` đọc
+//    HTML thô thay vì `page.goto()` từng route — rẻ hơn nhiều lần, không cần
+//    render/hydrate để đếm text).
+// 2. Phân biệt LIÊN KẾT (rò rỉ thật — `href="...royalhalonghotel.com..."`
+//    hoặc `src="...royalhalonghotel.com..."`) với domain xuất hiện dưới dạng
+//    CHỮ (email hiển thị dạng text, không phải mailto/anchor — hợp lệ, không
+//    assert). Chỉ assert rỗng cho nhóm (1).
+//
+// Dữ liệu đã sửa qua `scripts/fix-offers-old-domain-links.ts` (gỡ 2 anchor
+// sống trong `page.offers`, giữ nguyên chữ) — test này là guard để lớp lỗi
+// đó (anchor sống trỏ domain chết) không quay lại, ở BẤT KỲ route nào, không
+// chỉ `/offers`.
+test('không còn LIÊN KẾT (href/src) trỏ domain gốc royalhalonghotel.com ở bất kỳ route nào — domain dưới dạng chữ (vd. email) vẫn hợp lệ', async ({
+  request,
+}) => {
+  // `mailto:` không phải "liên kết tới website cũ" — nó là địa chỉ email,
+  // vẫn hoạt động độc lập với việc web hosting của domain cũ còn sống hay
+  // không (khác hạ tầng). Cùng nhóm hợp lệ với domain xuất hiện dưới dạng
+  // chữ thường — loại trừ khỏi bẫy rò rỉ, chỉ bắt link http(s)/src thật sự
+  // dẫn ra ngoài site.
+  const OLD_DOMAIN_LINK = /(?:href|src)\s*=\s*"(?!mailto:)[^"]*royalhalonghotel\.com[^"]*"/gi
+  const leaks: string[] = []
+
+  for (const route of ROUTES) {
+    for (const lang of ['vi', 'en'] as const) {
+      const path = `/${lang}/${route}`
+      const res = await request.get(path)
+      const html = await res.text()
+      const matches = html.match(OLD_DOMAIN_LINK) ?? []
+      for (const match of matches) leaks.push(`${path}: ${match}`)
+    }
+  }
+
+  expect(leaks).toEqual([])
 })
 
 test('trang không cuộn ngang ở khổ điện thoại', async ({ page }) => {

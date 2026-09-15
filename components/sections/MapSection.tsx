@@ -15,7 +15,7 @@ export function MapSection({
   overrideCoords,
   lat,
   lng,
-  zoom = 15,
+  zoom,
   lang,
   siteSettings,
 }: any & { lang: Locale; siteSettings?: any }) {
@@ -38,6 +38,15 @@ export function MapSection({
       : typeof siteSettings?.lng === 'number'
         ? siteSettings.lng
         : 107.0435
+  // Cùng logic override với lat/lng ở trên — trước đây field này bị bỏ qua,
+  // luôn rơi về literal `15` dù `siteSettings.mapZoom` có giá trị, trái với
+  // đúng ý định đã ghi ở `SectionRenderer.tsx` (siteSettings.lat/lng/mapZoom).
+  const zoomLevel =
+    overrideCoords && typeof zoom === 'number'
+      ? zoom
+      : typeof siteSettings?.mapZoom === 'number'
+        ? siteSettings.mapZoom
+        : 15
 
   return (
     <section className="py-16">
@@ -47,7 +56,7 @@ export function MapSection({
             {t<string>(heading, lang)}
           </h2>
         )}
-        <LeafletMap lat={latitude} lng={longitude} zoom={typeof zoom === 'number' ? zoom : 15} />
+        <LeafletMap lat={latitude} lng={longitude} zoom={zoomLevel} />
       </Container>
     </section>
   )

@@ -85,3 +85,91 @@ describe('SectionRenderer', () => {
     expect(heading.className).not.toContain('text-gold-hi')
   })
 })
+
+// --- Fix c9-2: bảng, chạy qua TOÀN BỘ registry, hình dạng GROQ thật -------
+//
+// Bug c9-1 (CardGridSection) sống sót qua review riêng của nó vì bộ test cũ
+// ở trên chỉ có MỘT fixture (richTextSection), không có field nào bị null.
+// Thực tế GROQ: `SECTIONS` projection trong `sanity/lib/queries.ts` áp
+// `background/image/cta/cards[]{...}` lên MỌI section KHÔNG ĐIỀU KIỆN theo
+// `_type` — với section nào không có field đó trên schema, GROQ trả về
+// `null` TƯỜNG MINH (không phải `undefined`). Default parameter kiểu
+// `cards = []` chỉ bắt `undefined`, không bắt `null` -> `cards.map` nổ ngay
+// khi editor lưu một cardGridSection còn trống (xem c9-1). `resolved` (từ
+// `select(...)` trong 4 nhánh `_type ==` khác) và `album` (từ nhánh
+// galleryCarouselSection) cũng đi qua cùng con đường "field lạ trên _type
+// khác thành null" nếu ai đó gộp field ẩu sau này — feed cả hai vào mọi
+// fixture, không chỉ loại thật sự dùng chúng, để bài test này còn bắt được
+// lớp lỗi đó nếu nó quay lại ở field khác.
+//
+// Chạy TỪNG _type có trong REGISTRY (`SectionRenderer.tsx`) — bảng dưới đây
+// phải khớp 1-1 với `SECTION_TYPE_NAMES` (`sanity/schemaTypes/sections`);
+// thiếu một loại là bỏ sót đúng lớp lỗi mà bài test này tồn tại để chặn.
+const GROQ_NULLS = {
+  background: null,
+  image: null,
+  cta: null,
+  cards: null,
+  resolved: null,
+  album: null,
+} as const
+
+const HEADING = { vi: 'Tiêu đề kiểm thử' }
+const RICH_CONTENT = {
+  vi: [
+    {
+      _type: 'block',
+      _key: 'b1',
+      style: 'normal',
+      children: [{ _type: 'span', _key: 's1', text: 'Nội dung kiểm thử', marks: [] }],
+    },
+  ],
+}
+
+const SECTION_FIXTURES: Record<string, Record<string, unknown>> = {
+  heroSection: { heading: HEADING, ...GROQ_NULLS },
+  richTextSection: { heading: HEADING, content: RICH_CONTENT, ...GROQ_NULLS },
+  imageTextSection: { heading: HEADING, content: RICH_CONTENT, ...GROQ_NULLS },
+  cardGridSection: { heading: HEADING, ...GROQ_NULLS },
+  galleryCarouselSection: { heading: HEADING, ...GROQ_NULLS },
+  venueListSection: { heading: HEADING, ...GROQ_NULLS },
+  hallListSection: { heading: HEADING, ...GROQ_NULLS },
+  roomListSection: { heading: HEADING, ...GROQ_NULLS },
+  ctaBandSection: { heading: HEADING, ...GROQ_NULLS },
+  mapSection: { heading: HEADING, ...GROQ_NULLS },
+  // headers/rows không nằm trong SECTIONS projection chung (chỉ thuộc riêng
+  // tableSection), nhưng cùng lớp lỗi: field mảng có default parameter, có
+  // thể bị null tường minh nếu ai đó sau này gộp chung projection. Test luôn
+  // để đóng luôn đường đó.
+  tableSection: { heading: HEADING, headers: null, rows: null, ...GROQ_NULLS },
+  bookingWidgetSection: { ...GROQ_NULLS },
+  leadFormSection: { heading: HEADING, ...GROQ_NULLS },
+  faqSection: { heading: HEADING, items: null, ...GROQ_NULLS },
+  postListSection: { heading: HEADING, ...GROQ_NULLS },
+}
+
+describe('SectionRenderer — mọi _type trong registry sống sót qua hình dạng GROQ thật', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+  afterEach(() => {
+    warn.mockClear()
+  })
+
+  for (const [type, fixture] of Object.entries(SECTION_FIXTURES)) {
+    it(`${type}: không throw với field null do projection chiếu vào, không render heading rỗng`, () => {
+      const section = { _key: 'k', _type: type, ...fixture }
+
+      expect(() =>
+        render(<SectionRenderer sections={[section]} lang="vi" widgetId={undefined} />),
+      ).not.toThrow()
+
+      // Không có thẻ heading (h1..h6) nào render ra mà rỗng nội dung — dấu
+      // hiệu component đọc field null/undefined rồi vẫn render heading trần
+      // thay vì bỏ qua nó (CtaBandSection/LeadFormSection từng làm vậy).
+      const headings = screen.queryAllByRole('heading')
+      for (const heading of headings) {
+        expect(heading.textContent?.trim()).not.toBe('')
+      }
+    })
+  }
+})

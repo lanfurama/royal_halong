@@ -2,9 +2,10 @@ import type { MetadataRoute } from 'next'
 import { LOCALES } from '@/lib/i18n'
 import { getAllRoutes } from '@/sanity/lib/fetchers'
 import { absoluteUrl } from '@/lib/seo'
+import { siteUrl as getSiteUrl } from '@/lib/site-url'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const siteUrl = getSiteUrl()
   const routes = await getAllRoutes()
 
   const entries: MetadataRoute.Sitemap = LOCALES.map((lang) => ({
