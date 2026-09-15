@@ -8,6 +8,7 @@ import { parseHalls } from './parsers/hall'
 import { parseGalleryAlbums } from './parsers/gallery'
 import { parseTestimonials } from './parsers/testimonial'
 import { parsePage } from './parsers/page'
+import { parseNavigation, parseSiteSettings } from './parsers/settings'
 import type { ParsedDataset } from './types'
 
 // Xuất khẩu (export) để tests/unit/import-page.test.ts tự suy ra 15 route "page"
@@ -29,7 +30,10 @@ async function main() {
   await mkdir(OUT_DIR, { recursive: true })
   const read = (r: string) => readFile(routeToHtmlPath(r), 'utf-8')
 
+  const homeHtml = await read('')
   const dataset: ParsedDataset = {
+    navigation: parseNavigation(homeHtml),
+    settings: parseSiteSettings(homeHtml, await read('reservation')),
     rooms: [],
     posts: [],
     offers: [],
@@ -81,6 +85,8 @@ async function main() {
     albums: dataset.albums.length,
     testimonials: dataset.testimonials.length,
     pages: dataset.pages.length,
+    'menu (mục cấp 1)': dataset.navigation.header.length,
+    'cột chân trang': dataset.navigation.footerColumns.length,
   })
 }
 

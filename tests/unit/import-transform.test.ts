@@ -5,6 +5,8 @@ import type { ParsedDataset } from '@/scripts/import/types'
 const emptyDataset: ParsedDataset = {
   rooms: [], posts: [], offers: [], venues: [],
   halls: [], albums: [], testimonials: [], pages: [],
+  navigation: { header: [], footerColumns: [] },
+  settings: { brandName: 'Royal Halong Hotel', emails: [], socials: [] },
 }
 
 describe('docId()', () => {
@@ -210,7 +212,12 @@ describe('buildDocuments()', () => {
       offers: [{ kind: 'offer', slug: 'x', title: 'X', body: [], order: 0 }],
     }
     const docs = buildDocuments(dataset, {}) as any[]
-    const allowed = ['room', 'post', 'offer', 'venue', 'hall', 'galleryAlbum', 'testimonial', 'page', 'homePage']
+    // Hai singleton `navigation`/`siteSettings` giờ cũng do pipeline sinh ra,
+    // không còn phải nhập tay trong Studio.
+    const allowed = [
+      'room', 'post', 'offer', 'venue', 'hall', 'galleryAlbum', 'testimonial', 'page', 'homePage',
+      'navigation', 'siteSettings',
+    ]
     for (const d of docs) expect(allowed).toContain(d._type)
   })
 

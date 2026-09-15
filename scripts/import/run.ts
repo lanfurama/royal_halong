@@ -3,14 +3,45 @@ import { OUT_DIR } from './paths'
 
 const BATCH_SIZE = 50
 
+/**
+ * `--only=<type[,type...]>`: chỉ ghi document thuộc các _type được nêu.
+ *
+ * Cần thiết vì `createOrReplace` ghi đè TOÀN BỘ document: một lần chạy lại
+ * đầy đủ sẽ xoá mọi chỉnh sửa hậu-import trên dataset sống (ví dụ đợt gỡ link
+ * trỏ về domain cũ) và đưa nội dung về đúng trạng thái của bản clone.
+ */
+export function parseOnlyFilter(argv: string[]): Set<string> | undefined {
+  const flag = argv.find((a) => a.startsWith('--only='))
+  if (!flag) return undefined
+  const types = flag
+    .slice('--only='.length)
+    .split(',')
+    .map((t) => t.trim())
+    .filter((t) => t !== '')
+  if (types.length === 0) {
+    throw new Error('--only= rỗng: nêu ít nhất một _type, ví dụ --only=navigation,siteSettings')
+  }
+  return new Set(types)
+}
+
 async function main() {
   const dryRun = process.argv.includes('--dry-run')
+  const only = parseOnlyFilter(process.argv)
   const raw = await readFile(`${OUT_DIR}/documents.ndjson`, 'utf-8')
-  const documents = raw
+  const all = raw
     .split('\n')
     .filter((line) => line.trim() !== '')
     .map((line) => JSON.parse(line))
+  const documents = only ? all.filter((d) => only.has(d._type)) : all
 
+  if (only) {
+    if (documents.length === 0) {
+      throw new Error(
+        `--only=${[...only].join(',')} không khớp document nào trong ${all.length} document đã dựng.`,
+      )
+    }
+    console.log(`Lọc --only=${[...only].join(',')}: ${documents.length}/${all.length} document.`)
+  }
   console.log(`${documents.length} document sẵn sàng.`)
   if (dryRun) {
     console.log('--dry-run: không ghi gì. Loại document:')

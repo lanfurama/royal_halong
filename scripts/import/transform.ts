@@ -3,6 +3,7 @@ import { OUT_DIR } from './paths'
 import type {
   ParsedDataset, ParsedImageRef, ParsedRoom, ParsedPost, ParsedOffer,
   ParsedVenue, ParsedHall, ParsedAlbum, ParsedTestimonial, ParsedPage, ParsedSection,
+  ParsedNavigation, ParsedSiteSettings, NavTarget,
 } from './types'
 import type { AssetCache } from './assets'
 
@@ -296,6 +297,120 @@ function pageDoc(page: ParsedPage, cache: AssetCache, testimonialIds: string[]) 
   }
 }
 
+/** Ảnh cho trường schema kiểu `image` trần (logo/badge) — KHÔNG phải `figure`. */
+function plainImage(ref: ParsedImageRef | undefined, cache: AssetCache) {
+  if (!ref) return undefined
+  const assetId = cache[ref.filePath]
+  if (!assetId) return undefined
+  return { _type: 'image' as const, asset: { _type: 'reference' as const, _ref: assetId } }
+}
+
+/**
+ * Route (theo bản clone) -> `_id` document. Dựng TỪ chính dataset thay vì đoán
+ * theo loại: nếu một route đổi từ `page` sang `room` thì map tự đúng theo.
+ */
+export function routeDocIds(dataset: ParsedDataset): Map<string, string> {
+  const map = new Map<string, string>()
+  for (const p of dataset.pages) {
+    if (p.slug !== '') map.set(p.slug, docId('page', p.slug))
+  }
+  for (const r of dataset.rooms) map.set(r.slug, docId('room', r.slug))
+  for (const p of dataset.posts) map.set(p.slug, docId('post', p.slug))
+  return map
+}
+
+function linkValue(target: NavTarget, label: string, routes: Map<string, string>, key: string) {
+  if (target.kind === 'none') return undefined
+  if (target.kind === 'external') {
+    return { _key: key, _type: 'link', kind: 'external', href: target.href, label: localeValue(label) }
+  }
+  // Trang chủ không có slug để tham chiếu; `hrefFor()` ở frontend trả về
+  // `/<lang>` khi thiếu `internalSlug`, nên link nội bộ KHÔNG reference là
+  // đúng nghĩa "về trang chủ".
+  if (target.route === '') {
+    return { _key: key, _type: 'link', kind: 'internal', label: localeValue(label) }
+  }
+  const id = routes.get(target.route)
+  if (!id) {
+    // Im lặng bỏ qua ở đây nghĩa là một mục menu biến mất mà không ai biết —
+    // đúng kiểu lỗi đã tái diễn ở pha import trước. Cho fail to.
+    throw new Error(
+      `linkValue(): mục menu "${label}" trỏ tới route "${target.route}" nhưng không document nào có route đó.`,
+    )
+  }
+  return {
+    _key: key,
+    _type: 'link',
+    kind: 'internal',
+    label: localeValue(label),
+    reference: { _type: 'reference', _ref: id },
+  }
+}
+
+export function navigationDoc(nav: ParsedNavigation, dataset: ParsedDataset) {
+  const routes = routeDocIds(dataset)
+  return {
+    _id: 'navigation',
+    _type: 'navigation',
+    header: nav.header.map((item, i) => ({
+      _key: `nav-${i}`,
+      _type: 'navItem',
+      label: localeValue(item.label),
+      link: linkValue(item.target, item.label, routes, `link-${i}`),
+      children: item.children.map((child, j) => ({
+        _key: `nav-${i}-${j}`,
+        _type: 'navChild',
+        label: localeValue(child.label),
+        link: linkValue(child.target, child.label, routes, `link-${i}-${j}`),
+      })),
+    })),
+    footerColumns: nav.footerColumns.map((col, i) => ({
+      _key: `col-${i}`,
+      _type: 'footerColumn',
+      title: localeValue(col.title),
+      links: col.links.map((l, j) => linkValue(l.target, l.label, routes, `col-${i}-${j}`)),
+    })),
+  }
+}
+
+export function siteSettingsDoc(settings: ParsedSiteSettings, cache: AssetCache) {
+  return {
+    _id: 'siteSettings',
+    _type: 'siteSettings',
+    brandName: localeValue(settings.brandName),
+    logo: plainImage(settings.logo, cache),
+    logoLight: plainImage(settings.logoLight, cache),
+    tel: settings.tel,
+    mobile: settings.mobile,
+    hotline: settings.hotline,
+    emails: settings.emails.length > 0 ? settings.emails : undefined,
+    addressShort: localeValue(settings.addressShort),
+    addressFull: localeValue(settings.addressFull),
+    // `initialValue` của schema chỉ áp dụng khi tạo document TRONG Studio, không
+    // áp cho document import — thiếu ba số này thì MapSection không có toạ độ.
+    lat: 20.9538,
+    lng: 107.0435,
+    mapZoom: 15,
+    socials:
+      settings.socials.length > 0
+        ? settings.socials.map((s, i) => ({
+            _key: `social-${i}`,
+            _type: 'social',
+            platform: s.platform,
+            url: s.url,
+          }))
+        : undefined,
+    companyName: localeValue(settings.companyName),
+    businessLicense: settings.businessLicense,
+    licenseIssuer: localeValue(settings.licenseIssuer),
+    licenseDate: settings.licenseDate,
+    motBadge: plainImage(settings.motBadge, cache),
+    motBadgeUrl: settings.motBadgeUrl,
+    copyright: localeValue(settings.copyright),
+    secureBookingsWidgetId: settings.secureBookingsWidgetId,
+  }
+}
+
 export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unknown[] {
   const testimonialDocs = dataset.testimonials.map(testimonialDoc)
   const testimonialIds = testimonialDocs.map((t) => t._id)
@@ -308,6 +423,8 @@ export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unkno
     ...dataset.albums.map((a) => albumDoc(a, cache)),
     ...testimonialDocs,
     ...dataset.pages.map((p) => pageDoc(p, cache, testimonialIds)),
+    navigationDoc(dataset.navigation, dataset),
+    siteSettingsDoc(dataset.settings, cache),
   ]
 
   // `_id` của galleryAlbum/venue/hall/offer đến từ slugify() của một tiêu đề —

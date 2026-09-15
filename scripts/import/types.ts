@@ -133,6 +133,55 @@ export interface ParsedPage {
   metaDescription?: string
 }
 
+/** Đích của một mục điều hướng sau khi đã chuẩn hoá href của bản clone. */
+export type NavTarget =
+  | { kind: 'internal'; route: string }
+  | { kind: 'external'; href: string }
+  | { kind: 'none' }
+
+export interface ParsedNavItem {
+  label: string
+  target: NavTarget
+  children: ParsedNavItem[]
+}
+
+export interface ParsedFooterColumn {
+  title: string
+  links: Array<{ label: string; target: NavTarget }>
+}
+
+export interface ParsedNavigation {
+  header: ParsedNavItem[]
+  footerColumns: ParsedFooterColumn[]
+}
+
+export interface ParsedSocial {
+  platform: 'facebook' | 'instagram' | 'tripadvisor' | 'x' | 'youtube'
+  url: string
+}
+
+export interface ParsedSiteSettings {
+  brandName: string
+  logo?: ParsedImageRef
+  logoLight?: ParsedImageRef
+  tel?: string
+  mobile?: string
+  hotline?: string
+  emails: string[]
+  addressShort?: string
+  addressFull?: string
+  socials: ParsedSocial[]
+  companyName?: string
+  businessLicense?: string
+  licenseIssuer?: string
+  /** ISO yyyy-mm-dd — schema siteSettings.licenseDate là kiểu `date`. */
+  licenseDate?: string
+  motBadge?: ParsedImageRef
+  motBadgeUrl?: string
+  copyright?: string
+  secureBookingsWidgetId?: string
+}
+
 export interface ParsedDataset {
   rooms: ParsedRoom[]
   posts: ParsedPost[]
@@ -142,4 +191,6 @@ export interface ParsedDataset {
   albums: ParsedAlbum[]
   testimonials: ParsedTestimonial[]
   pages: ParsedPage[]
+  navigation: ParsedNavigation
+  settings: ParsedSiteSettings
 }
