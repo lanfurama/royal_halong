@@ -17,7 +17,10 @@
     "import:assets": "tsx scripts/import/assets.ts",
     "import:transform": "tsx scripts/import/transform.ts",
     "import:run": "tsx scripts/import/run.ts",
-    "import:all": "pnpm import:parse && pnpm import:assets && pnpm import:transform && pnpm import:run"
+    "import:all": "pnpm import:parse && pnpm import:assets && pnpm import:transform && pnpm import:run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "keywords": [],
   "author": "",
@@ -25,9 +28,11 @@
   "type": "module",
   "packageManager": "pnpm@11.21.0",
   "dependencies": {
+    "@neondatabase/serverless": "1.1.0",
     "@portabletext/react": "8.0.1",
     "@sanity/image-url": "2.1.1",
     "@sanity/vision": "6.13.2",
+    "drizzle-orm": "0.45.2",
     "embla-carousel-react": "8.6.0",
     "leaflet": "1.9.4",
     "next": "16.3.5",
@@ -54,6 +59,7 @@
     "@vitejs/plugin-react": "5.2.0",
     "cheerio": "1.2.0",
     "dotenv": "17.4.2",
+    "drizzle-kit": "0.31.10",
     "groq-js": "2.0.0",
     "jsdom": "26.1.0",
     "postcss": "8.5.23",
