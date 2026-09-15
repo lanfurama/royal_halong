@@ -32,13 +32,13 @@ interface Props {
  * Tách riêng hàm thuần này để có thể test độc lập, không cần render DOM.
  */
 export function resolveImageAlt(
-  image: { alt?: unknown } | null | undefined,
+  image: any,
   lang: Locale,
   { decorative, fallbackAlt }: { decorative?: boolean; fallbackAlt?: string } = {},
 ): string {
   if (decorative) return ''
-  const own = t(image?.alt as never, lang)
-  if (own) return own as unknown as string
+  const own = t<string>(image?.alt, lang)
+  if (own) return own
   return fallbackAlt ?? ''
 }
 
