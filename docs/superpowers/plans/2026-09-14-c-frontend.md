@@ -1566,7 +1566,7 @@ export function CardGridSection({ heading, subheading, cards = [], columns = 3, 
                   />
                 )}
                 <div className="p-6">
-                  <h3 className="font-display text-gold-deep mb-2 text-xl">
+                  <h3 className="font-display text-gold-text mb-2 text-xl">
                     {t(card.title, lang)}
                   </h3>
                   {card.description && (
@@ -1738,7 +1738,7 @@ export function RoomListSection({ heading, resolved = [], lang }: any & { lang: 
                   />
                 )}
                 <div className="p-6">
-                  <h3 className="font-display text-gold-deep text-xl">{t(room.title, lang)}</h3>
+                  <h3 className="font-display text-gold-text text-xl">{t(room.title, lang)}</h3>
                   <p className="text-gold-text mt-1 text-xs tracking-widest uppercase">
                     {[
                       room.areaSqm ? `${room.areaSqm} m²` : null,
@@ -1964,7 +1964,7 @@ export function PostListSection({
                         })}
                       </time>
                     )}
-                    <h3 className="font-display text-gold-deep mt-2 text-lg group-hover:underline">
+                    <h3 className="font-display text-gold-text mt-2 text-lg group-hover:underline">
                       {t(post.title, lang)}
                     </h3>
                     {post.excerpt && (
@@ -2332,7 +2332,7 @@ export function RoomPage({ doc, lang }: { doc: any; lang: Locale }) {
 
             {doc.features?.length > 0 && (
               <div className="bg-cream p-6">
-                <h2 className="font-display text-gold-deep mb-4 text-xl">Tiện nghi phòng</h2>
+                <h2 className="font-display text-gold-text mb-4 text-xl">Tiện nghi phòng</h2>
                 <ul className="space-y-3">
                   {doc.features.map((feature: any, index: number) => (
                     <li key={feature._key ?? index} className="flex items-center gap-3 text-sm">
