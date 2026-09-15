@@ -15,8 +15,17 @@ export function TableSection({
           <h2 className="font-display text-gold-deep mb-4 text-2xl">{t<string>(heading, lang)}</h2>
         )}
         {/* Bảng luật Baccarat rộng hơn màn hình điện thoại -> cuộn ngang riêng,
-            không để cả trang cuộn ngang. */}
-        <div className="overflow-x-auto">
+            không để cả trang cuộn ngang. `tabIndex=0` + `role="group"` để
+            vùng cuộn này vào được tab order — axe `scrollable-region-focusable`:
+            không có chúng, người dùng chỉ dùng bàn phím không cách nào cuộn
+            ngang tới phần bảng bị tràn (phát hiện thật trên /vi/casino ở khổ
+            điện thoại, nơi bảng min-w-[480px] tràn khỏi khung 390px). */}
+        <div
+          className="overflow-x-auto"
+          tabIndex={0}
+          role="group"
+          aria-label={t<string>(caption, lang) ?? t<string>(heading, lang) ?? 'Bảng dữ liệu, cuộn ngang'}
+        >
           <table className="border-line w-full min-w-[480px] border-collapse border text-sm">
             {caption && <caption className="mb-2 text-left text-xs">{t<string>(caption, lang)}</caption>}
             <thead>

@@ -12,6 +12,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "import:parse": "tsx scripts/import/parse.ts",
     "import:assets": "tsx scripts/import/assets.ts",
     "import:transform": "tsx scripts/import/transform.ts",
@@ -39,6 +40,8 @@
     "yet-another-react-lightbox": "3.32.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "1.63.0",
     "@portabletext/block-tools": "6.0.0",
     "@sanity/schema": "6.13.2",
     "@tailwindcss/postcss": "4.3.3",
