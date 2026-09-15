@@ -9,11 +9,14 @@ export function FaqSection({ heading, items = [], lang }: any & { lang: Locale }
         {heading && (
           <h2 className="font-display text-gold-deep mb-8 text-3xl">{t<string>(heading, lang)}</h2>
         )}
-        <dl className="divide-line divide-y">
+        {/* `<dl>` chỉ cho phép nhóm `<dt>`/`<dd>` (hoặc `<div>` bọc chúng) làm con
+            trực tiếp — `<details>` không hợp lệ ở đó. `<details>`/`<summary>` gốc
+            đã đủ ngữ nghĩa câu hỏi/trả lời, không cần thêm dl/dt/dd. */}
+        <div className="divide-line divide-y">
           {items.map((item: any, index: number) => (
             <details key={item._key ?? index} className="group py-4">
               <summary className="marker:content-none cursor-pointer list-none font-semibold">
-                <dt className="flex items-center justify-between">
+                <span className="flex items-center justify-between">
                   {t<string>(item.question, lang)}
                   <span
                     aria-hidden="true"
@@ -21,14 +24,14 @@ export function FaqSection({ heading, items = [], lang }: any & { lang: Locale }
                   >
                     +
                   </span>
-                </dt>
+                </span>
               </summary>
-              <dd className="mt-3 text-sm">
+              <div className="mt-3 text-sm">
                 <RichText value={item.answer} lang={lang} />
-              </dd>
+              </div>
             </details>
           ))}
-        </dl>
+        </div>
       </Container>
     </section>
   )

@@ -51,11 +51,17 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
                 className="focus-visible:outline-gold-deep min-w-0 shrink-0 basis-4/5 focus-visible:outline-2 md:basis-1/3 lg:basis-1/4"
               >
                 <span className="sr-only">Phóng to ảnh {index + 1}</span>
+                {/* Tên truy cập của nút đã có từ span sr-only ở trên. Accessible
+                    name của <button> nối cả text con lẫn alt của <img> bên trong
+                    nó — để ảnh có alt riêng ở đây sẽ đọc thành "Phóng to ảnh N"
+                    + toàn bộ mô tả ảnh, lặp lại thừa. Mô tả đầy đủ đã có ở
+                    lightbox (ảnh phóng to, nơi nó thực sự cần thiết) nên ảnh
+                    thumbnail này đặt decorative. */}
                 <SanityImage
                   image={image}
                   lang={lang}
                   sizes="(max-width: 768px) 80vw, 25vw"
-                  fallbackAlt={albumTitle}
+                  decorative
                   className="aspect-[4/3] w-full object-cover"
                 />
               </button>

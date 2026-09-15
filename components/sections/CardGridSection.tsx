@@ -42,7 +42,11 @@ export function CardGridSection({
                     />
                   )}
                   <div className="p-6">
-                    <h3 className="font-display text-gold-deep mb-2 text-xl">{cardTitle}</h3>
+                    {/* 20px, dưới ngưỡng gold-deep (>=24px) -> gold-text (5.32:1 trên
+                        trắng); không có instance thật hôm nay (0 cardGridSection), cùng
+                        khuôn mẫu "card title" với RoomListSection/PostListSection nên áp
+                        cùng cách sửa. */}
+                    <h3 className="font-display text-gold-text mb-2 text-xl">{cardTitle}</h3>
                     {card.description && (
                       <p className="text-sm leading-relaxed">{t<string>(card.description, lang)}</p>
                     )}

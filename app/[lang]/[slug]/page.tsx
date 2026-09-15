@@ -39,7 +39,12 @@ export default async function DynamicPage({ params }: PageProps<'/[lang]/[slug]'
     default: {
       const widgetId = (settings as any)?.secureBookingsWidgetId as string | undefined
       return (
-        <SectionRenderer sections={(doc.sections as unknown[]) ?? []} lang={lang} widgetId={widgetId} />
+        <SectionRenderer
+          sections={(doc.sections as unknown[]) ?? []}
+          lang={lang}
+          widgetId={widgetId}
+          siteSettings={settings}
+        />
       )
     }
   }

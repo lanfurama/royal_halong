@@ -4,6 +4,7 @@ import { Container } from '@/components/ui/Container'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { RichText } from '@/components/ui/PortableText'
 import { SmartLink } from '@/components/ui/SmartLink'
+import { CTA_BAND_BUTTON_CLASSES } from '@/components/ui/Button'
 
 export function OfferPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
   const offerTitle = t<string>(doc.title as any, lang)
@@ -31,11 +32,7 @@ export function OfferPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
           <RichText value={doc.body} lang={lang} />
         </div>
         {doc.cta != null && (
-          <SmartLink
-            link={doc.cta}
-            lang={lang}
-            className="bg-gold text-ink hover:bg-gold-hi mt-8 inline-block px-8 py-3 text-sm font-semibold tracking-wide uppercase"
-          />
+          <SmartLink link={doc.cta} lang={lang} className={CTA_BAND_BUTTON_CLASSES} />
         )}
       </Container>
     </article>

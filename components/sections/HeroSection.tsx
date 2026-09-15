@@ -2,6 +2,7 @@ import { t, type Locale } from '@/lib/i18n'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { Container } from '@/components/ui/Container'
 import { SmartLink } from '@/components/ui/SmartLink'
+import { CTA_BAND_BUTTON_CLASSES } from '@/components/ui/Button'
 
 const HEIGHTS = {
   full: 'min-h-[85vh]',
@@ -44,11 +45,7 @@ export function HeroSection({
           </p>
         )}
         {cta && (
-          <SmartLink
-            link={cta}
-            lang={lang}
-            className="bg-gold text-ink hover:bg-gold-hi mt-8 inline-block px-8 py-3 text-sm font-semibold tracking-wide uppercase"
-          />
+          <SmartLink link={cta} lang={lang} className={CTA_BAND_BUTTON_CLASSES} />
         )}
       </Container>
     </section>

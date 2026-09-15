@@ -12,5 +12,12 @@ export default async function HomePage({ params }: PageProps<'/[lang]'>) {
 
   const widgetId = (settings as any)?.secureBookingsWidgetId as string | undefined
 
-  return <SectionRenderer sections={(home.sections as unknown[]) ?? []} lang={lang} widgetId={widgetId} />
+  return (
+    <SectionRenderer
+      sections={(home.sections as unknown[]) ?? []}
+      lang={lang}
+      widgetId={widgetId}
+      siteSettings={settings}
+    />
+  )
 }

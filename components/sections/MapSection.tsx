@@ -10,10 +10,34 @@ const LeafletMap = dynamic(() => import('@/components/ui/LeafletMap').then((m) =
   loading: () => <div className="bg-cream h-96 w-full" aria-hidden="true" />,
 })
 
-export function MapSection({ heading, lat, lng, zoom = 15, lang }: any & { lang: Locale }) {
-  // Toạ độ Bãi Cháy làm mặc định nếu Cấu hình site chưa có.
-  const latitude = typeof lat === 'number' ? lat : 20.9538
-  const longitude = typeof lng === 'number' ? lng : 107.0435
+export function MapSection({
+  heading,
+  overrideCoords,
+  lat,
+  lng,
+  zoom = 15,
+  lang,
+  siteSettings,
+}: any & { lang: Locale; siteSettings?: any }) {
+  // Đúng theo mô tả trong schema (`overrideCoords`: "Tắt thì lấy toạ độ từ
+  // Cấu hình site"): overrideCoords bật -> dùng lat/lng riêng của khối; tắt
+  // (mặc định) -> dùng `siteSettings.lat/lng`. `siteSettings` hôm nay chưa có
+  // document nào (getSiteSettings() trả null), và không có instance
+  // `mapSection` thật nào trong dữ liệu để chạy thử — nhánh "lấy từ Cấu hình
+  // site" chưa được xác minh bằng dữ liệu thật, chỉ bằng cách đọc schema.
+  // Toạ độ Bãi Cháy làm mặc định cuối cùng nếu cả hai đều thiếu.
+  const latitude =
+    overrideCoords && typeof lat === 'number'
+      ? lat
+      : typeof siteSettings?.lat === 'number'
+        ? siteSettings.lat
+        : 20.9538
+  const longitude =
+    overrideCoords && typeof lng === 'number'
+      ? lng
+      : typeof siteSettings?.lng === 'number'
+        ? siteSettings.lng
+        : 107.0435
 
   return (
     <section className="py-16">
@@ -23,7 +47,7 @@ export function MapSection({ heading, lat, lng, zoom = 15, lang }: any & { lang:
             {t<string>(heading, lang)}
           </h2>
         )}
-        <LeafletMap lat={latitude} lng={longitude} zoom={zoom} />
+        <LeafletMap lat={latitude} lng={longitude} zoom={typeof zoom === 'number' ? zoom : 15} />
       </Container>
     </section>
   )

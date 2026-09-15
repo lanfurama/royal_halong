@@ -30,7 +30,9 @@ export function RoomListSection({ heading, resolved = [], lang }: any & { lang: 
                     />
                   )}
                   <div className="p-6">
-                    <h3 className="font-display text-gold-deep text-xl">{roomTitle}</h3>
+                    {/* 20px, không đạt ngưỡng "chữ lớn" của gold-deep (>=24px) ->
+                        dùng gold-text (5.32:1 trên trắng), vẫn giữ cỡ chữ card title. */}
+                    <h3 className="font-display text-gold-text text-xl">{roomTitle}</h3>
                     <p className="text-gold-text mt-1 text-xs tracking-widest uppercase">
                       {[
                         room.areaSqm ? `${room.areaSqm} m²` : null,
@@ -41,7 +43,7 @@ export function RoomListSection({ heading, resolved = [], lang }: any & { lang: 
                         .join(' | ')}
                     </p>
                     {room.summary && <p className="mt-3 text-sm">{t<string>(room.summary, lang)}</p>}
-                    <Button href={hrefFor(lang, room.slug)} variant="ghost" className="mt-4 px-0">
+                    <Button href={hrefFor(lang, room.slug)} variant="ghost" className="mt-4">
                       Xem chi tiết
                     </Button>
                   </div>

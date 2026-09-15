@@ -62,7 +62,9 @@ export function PostListSection({
                         })}
                       </time>
                     )}
-                    <h3 className="font-display text-gold-deep mt-2 text-lg group-hover:underline">
+                    {/* 18px, dưới ngưỡng gold-deep (>=24px) -> gold-text (5.32:1 trên
+                        trắng), giữ nguyên cỡ chữ tiêu đề thẻ bài viết. */}
+                    <h3 className="font-display text-gold-text mt-2 text-lg group-hover:underline">
                       {postTitle}
                     </h3>
                     {post.excerpt && (

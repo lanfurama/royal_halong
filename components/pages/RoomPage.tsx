@@ -51,7 +51,10 @@ export function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
 
             {Array.isArray(doc.features) && doc.features.length > 0 && (
               <div className="bg-cream p-6">
-                <h2 className="font-display text-gold-deep mb-4 text-xl">Tiện nghi phòng</h2>
+                {/* 20px trong khối phụ (aside) cạnh h1 lớn — giữ cỡ chữ nhỏ để không
+                    lấn tiêu đề trang, đổi màu sang gold-text (5.32:1 trên trắng) thay
+                    vì tăng lên 24px. */}
+                <h2 className="font-display text-gold-text mb-4 text-xl">Tiện nghi phòng</h2>
                 <ul className="space-y-3">
                   {(doc.features as any[]).map((feature: any, index: number) => (
                     <li key={feature._key ?? index} className="flex items-center gap-3 text-sm">
@@ -85,7 +88,10 @@ export function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
                     image={image}
                     lang={lang}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    fallbackAlt={roomTitle}
+                    // Vẫn dùng tên phòng làm gốc (dữ liệu liền kề duy nhất có ý
+                    // nghĩa), nhưng thêm số thứ tự để mỗi ảnh trong lưới có alt
+                    // riêng biệt thay vì N ảnh cùng đọc một câu giống hệt nhau.
+                    fallbackAlt={roomTitle ? `${roomTitle} — ảnh ${index + 1}` : undefined}
                     className="aspect-[4/3] w-full object-cover"
                   />
                 </Reveal>

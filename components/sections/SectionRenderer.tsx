@@ -37,10 +37,14 @@ export function SectionRenderer({
   sections,
   lang,
   widgetId,
+  siteSettings,
 }: {
   sections: any[]
   lang: Locale
   widgetId?: string
+  /** Truyền cho `mapSection` — dùng khi `overrideCoords` tắt (mặc định), lấy
+   * toạ độ từ `siteSettings.lat/lng/mapZoom` đúng như schema mô tả. */
+  siteSettings?: any
 }) {
   return (
     <>
@@ -59,6 +63,7 @@ export function SectionRenderer({
             lang={lang}
             isFirst={index === 0}
             {...(section._type === 'bookingWidgetSection' ? { widgetId } : {})}
+            {...(section._type === 'mapSection' ? { siteSettings } : {})}
           />
         )
       })}

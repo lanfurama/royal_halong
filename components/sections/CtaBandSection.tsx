@@ -2,6 +2,7 @@ import { t, type Locale } from '@/lib/i18n'
 import { Container } from '@/components/ui/Container'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { SmartLink } from '@/components/ui/SmartLink'
+import { CTA_BAND_BUTTON_CLASSES } from '@/components/ui/Button'
 
 export function CtaBandSection({
   heading,
@@ -28,11 +29,7 @@ export function CtaBandSection({
         <h2 className="font-display text-3xl">{t<string>(heading, lang)}</h2>
         {description && <p className="mx-auto mt-3 max-w-xl">{t<string>(description, lang)}</p>}
         {cta && (
-          <SmartLink
-            link={cta}
-            lang={lang}
-            className="bg-gold text-ink hover:bg-gold-hi mt-8 inline-block px-8 py-3 text-sm font-semibold tracking-wide uppercase"
-          />
+          <SmartLink link={cta} lang={lang} className={CTA_BAND_BUTTON_CLASSES} />
         )}
       </Container>
     </section>
