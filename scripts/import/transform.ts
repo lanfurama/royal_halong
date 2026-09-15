@@ -1,0 +1,299 @@
+import { readFile, writeFile, mkdir } from 'node:fs/promises'
+import { OUT_DIR } from './paths'
+import type {
+  ParsedDataset, ParsedImageRef, ParsedRoom, ParsedPost, ParsedOffer,
+  ParsedVenue, ParsedHall, ParsedAlbum, ParsedTestimonial, ParsedPage, ParsedSection,
+} from './types'
+import type { AssetCache } from './assets'
+
+/** _id tất định: chạy lại script không tạo document trùng. */
+export function docId(kind: string, slug: string): string {
+  const safe = slug.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '')
+  return safe ? `${kind}.${safe}` : kind
+}
+
+export function localeValue<T>(vi: T | undefined | null): { vi: T } | undefined {
+  if (vi === undefined || vi === null) return undefined
+  if (typeof vi === 'string' && vi.trim() === '') return undefined
+  if (Array.isArray(vi) && vi.length === 0) return undefined
+  return { vi }
+}
+
+export function imageValue(ref: ParsedImageRef | undefined, cache: AssetCache) {
+  if (!ref) return undefined
+  const assetId = cache[ref.filePath]
+  if (!assetId) return undefined
+  return {
+    _type: 'figure' as const,
+    asset: { _type: 'reference' as const, _ref: assetId },
+    ...(ref.alt ? { alt: { vi: ref.alt } } : {}),
+  }
+}
+
+function slugValue(slug: string) {
+  return { vi: { _type: 'slug', current: slug } }
+}
+
+function roomDoc(room: ParsedRoom, cache: AssetCache) {
+  return {
+    _id: docId('room', room.slug),
+    _type: 'room',
+    title: localeValue(room.title),
+    slug: slugValue(room.slug),
+    category: room.category,
+    areaSqm: room.areaSqm,
+    capacity: localeValue(room.capacity),
+    view: localeValue(room.view),
+    bedType: localeValue(room.bedType),
+    summary: localeValue(room.summary),
+    description: localeValue(room.description),
+    heroImage: imageValue(room.heroImage, cache),
+    // Mảng `figure` cần `_key` trên từng phần tử (không chỉ `_type`) để Studio
+    // theo dõi/kéo-thả được — thiếu `_key` từng làm mất 10 ảnh thư viện của
+    // phòng Deluxe (đã đo: 4/4 phòng đều có gallery, không phải trường hợp hiếm).
+    gallery: room.gallery
+      .map((g, i) => {
+        const value = imageValue(g, cache)
+        return value ? { _key: `img-${i}`, ...value } : undefined
+      })
+      .filter(Boolean),
+    features: room.features.map((f, i) => ({
+      _key: `feature-${i}`,
+      _type: 'feature',
+      label: localeValue(f.label),
+      ...(f.icon && cache[f.icon.filePath]
+        ? { icon: { _type: 'image', asset: { _type: 'reference', _ref: cache[f.icon.filePath] } } }
+        : {}),
+    })),
+    order: room.order,
+  }
+}
+
+function postDoc(post: ParsedPost, cache: AssetCache) {
+  return {
+    _id: docId('post', post.slug),
+    _type: 'post',
+    title: localeValue(post.title),
+    slug: slugValue(post.slug),
+    category: post.category,
+    publishedAt: post.publishedAt,
+    excerpt: localeValue(post.excerpt),
+    coverImage: imageValue(post.coverImage, cache),
+    body: localeValue(post.body),
+    author: post.author,
+  }
+}
+
+function offerDoc(offer: ParsedOffer, cache: AssetCache) {
+  return {
+    _id: docId('offer', offer.slug),
+    _type: 'offer',
+    title: localeValue(offer.title),
+    slug: slugValue(offer.slug),
+    excerpt: localeValue(offer.excerpt),
+    image: imageValue(offer.image, cache),
+    body: localeValue(offer.body),
+    priceNote: localeValue(offer.priceNote),
+    order: offer.order,
+  }
+}
+
+function venueDoc(venue: ParsedVenue, cache: AssetCache) {
+  return {
+    _id: docId('venue', venue.slug),
+    _type: 'venue',
+    name: localeValue(venue.name),
+    slug: slugValue(venue.slug),
+    // Trường schema tên là `kind`, KHÔNG phải `venueKind` (đó là tên field ở
+    // ParsedVenue) — dễ gõ nhầm vì hai bên khác tên.
+    kind: venue.venueKind,
+    location: localeValue(venue.location),
+    capacity: localeValue(venue.capacity),
+    hours: localeValue(venue.hours),
+    // Phần tử mảng thuộc kiểu object có tên (ở đây là localeString) PHẢI mang
+    // `_type`, nếu không Studio không biết render bằng gì.
+    highlights: venue.highlights.map((h, i) => ({
+      _key: `h-${i}`,
+      _type: 'localeString',
+      vi: h,
+    })),
+    description: localeValue(venue.description),
+    image: imageValue(venue.image, cache),
+    menuUrl: venue.menuUrl,
+    phone: venue.phone,
+    order: venue.order,
+  }
+}
+
+function hallDoc(hall: ParsedHall, cache: AssetCache) {
+  return {
+    _id: docId('hall', hall.slug),
+    _type: 'hall',
+    name: localeValue(hall.name),
+    slug: slugValue(hall.slug),
+    areaSqm: hall.areaSqm,
+    capacity: localeValue(hall.capacity),
+    description: localeValue(hall.description),
+    image: imageValue(hall.image, cache),
+    order: hall.order,
+  }
+}
+
+function albumDoc(album: ParsedAlbum, cache: AssetCache) {
+  return {
+    _id: docId('galleryAlbum', album.slug),
+    _type: 'galleryAlbum',
+    title: localeValue(album.title),
+    slug: slugValue(album.slug),
+    images: album.images
+      .map((img, i) => {
+        const value = imageValue(img, cache)
+        return value ? { _key: `img-${i}`, ...value } : undefined
+      })
+      .filter(Boolean),
+    order: album.order,
+  }
+}
+
+function testimonialDoc(item: ParsedTestimonial, index: number) {
+  return {
+    // testimonial không có slug trong schema lẫn dữ liệu nguồn — dùng chỉ số
+    // trong mảng (thứ tự cố định vì cùng đọc từ cùng một trang) làm phần định
+    // danh duy nhất. Vẫn tất định: chạy lại parse+transform luôn ra cùng thứ tự.
+    _id: docId('testimonial', `${index}`),
+    _type: 'testimonial',
+    heading: localeValue(item.heading),
+    quote: localeValue(item.quote),
+    author: item.author,
+    source: item.source,
+    order: item.order,
+  }
+}
+
+function sectionValue(section: ParsedSection, index: number, cache: AssetCache) {
+  const key = `sec-${index}`
+  switch (section._type) {
+    case 'heroSection':
+      return {
+        _key: key, _type: 'heroSection',
+        heading: localeValue(section.heading),
+        subheading: localeValue(section.subheading),
+        background: imageValue(section.background, cache),
+      }
+    case 'richTextSection':
+      return {
+        _key: key, _type: 'richTextSection',
+        heading: localeValue(section.heading),
+        content: localeValue(section.content),
+        // Field màu nền của richTextSection tên là `tone` (enum
+        // white/cream/ink) — KHÔNG phải `background` (đó là field ảnh, chỉ có
+        // ở heroSection/ctaBandSection).
+        tone: section.tone,
+      }
+    case 'tableSection':
+      return {
+        _key: key, _type: 'tableSection',
+        heading: localeValue(section.heading),
+        // Phần tử mảng thuộc kiểu object có tên PHẢI mang `_type`, nếu không
+        // Studio không biết render bằng gì.
+        headers: section.headers.map((h, i) => ({
+          _key: `th-${i}`,
+          _type: 'localeString',
+          vi: h,
+        })),
+        rows: section.rows.map((row, r) => ({
+          _key: `tr-${r}`,
+          _type: 'row',
+          cells: row.map((cell, c) => ({
+            _key: `td-${c}`,
+            _type: 'localeString',
+            vi: cell,
+          })),
+        })),
+      }
+    case 'bookingWidgetSection':
+      return { _key: key, _type: 'bookingWidgetSection' }
+    case 'postListSection':
+      return {
+        _key: key, _type: 'postListSection',
+        heading: localeValue(section.heading),
+        category: section.category,
+        limit: section.limit,
+      }
+    case 'galleryCarouselSection':
+      return {
+        _key: key, _type: 'galleryCarouselSection',
+        heading: localeValue(section.heading),
+        album: { _type: 'reference', _ref: docId('galleryAlbum', section.albumSlug) },
+      }
+    default: {
+      // Đảm bảo tại thời điểm biên dịch: nếu ParsedSection có thêm biến thể
+      // mới mà switch chưa xử lý, tsc báo lỗi ở đây thay vì âm thầm bỏ sót.
+      const exhaustive: never = section
+      throw new Error(`Loại section chưa được transform: ${JSON.stringify(exhaustive)}`)
+    }
+  }
+}
+
+function pageDoc(page: ParsedPage, cache: AssetCache) {
+  const isHome = page.slug === ''
+  const sections = page.sections
+    .map((s, i) => sectionValue(s, i, cache))
+    .filter(Boolean)
+
+  if (isHome) {
+    return {
+      _id: 'homePage',
+      _type: 'homePage',
+      title: localeValue(page.title),
+      sections,
+    }
+  }
+  return {
+    _id: docId('page', page.slug),
+    _type: 'page',
+    title: localeValue(page.title),
+    slug: slugValue(page.slug),
+    sections,
+    ...(page.metaDescription
+      ? { seo: { _type: 'seo', metaDescription: localeValue(page.metaDescription) } }
+      : {}),
+  }
+}
+
+export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unknown[] {
+  return [
+    ...dataset.rooms.map((r) => roomDoc(r, cache)),
+    ...dataset.posts.map((p) => postDoc(p, cache)),
+    ...dataset.offers.map((o) => offerDoc(o, cache)),
+    ...dataset.venues.map((v) => venueDoc(v, cache)),
+    ...dataset.halls.map((h) => hallDoc(h, cache)),
+    ...dataset.albums.map((a) => albumDoc(a, cache)),
+    ...dataset.testimonials.map(testimonialDoc),
+    ...dataset.pages.map((p) => pageDoc(p, cache)),
+  ]
+}
+
+async function main() {
+  await mkdir(OUT_DIR, { recursive: true })
+  const dataset: ParsedDataset = JSON.parse(await readFile(`${OUT_DIR}/parsed.json`, 'utf-8'))
+
+  let cache: AssetCache = {}
+  try {
+    cache = JSON.parse(await readFile(`${OUT_DIR}/assets.json`, 'utf-8'))
+  } catch {
+    console.warn('Chưa có out/assets.json — document sẽ không có ảnh. Chạy pnpm import:assets trước.')
+  }
+
+  const documents = buildDocuments(dataset, cache)
+  const ndjson = documents.map((d) => JSON.stringify(d)).join('\n')
+  await writeFile(`${OUT_DIR}/documents.ndjson`, ndjson, 'utf-8')
+  console.log(`Đã dựng ${documents.length} document -> out/documents.ndjson`)
+}
+
+if (process.argv[1]?.endsWith('transform.ts')) {
+  main().catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })
+}
