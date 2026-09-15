@@ -176,4 +176,68 @@ describe('buildDocuments()', () => {
     const allowed = ['room', 'post', 'offer', 'venue', 'hall', 'galleryAlbum', 'testimonial', 'page', 'homePage']
     for (const d of docs) expect(allowed).toContain(d._type)
   })
+
+  it('room.gallery[] mỗi phần tử mang _key riêng biệt (mảng object luôn cần _key)', () => {
+    const dataset: ParsedDataset = {
+      ...emptyDataset,
+      rooms: [{
+        kind: 'room', slug: 'deluxe', title: 'Deluxe', category: 'hotel',
+        description: [], features: [], order: 0,
+        gallery: [{ filePath: '/u/a.jpg' }, { filePath: '/u/b.jpg' }],
+      }],
+    }
+    const cache = { '/u/a.jpg': 'image-a', '/u/b.jpg': 'image-b' }
+    const [doc] = buildDocuments(dataset, cache) as any[]
+    expect(doc.gallery).toHaveLength(2)
+    for (const item of doc.gallery) expect(typeof item._key).toBe('string')
+    expect(new Set(doc.gallery.map((g: any) => g._key)).size).toBe(2)
+  })
+
+  it('galleryAlbum.images[] mỗi phần tử mang _key riêng biệt', () => {
+    const dataset: ParsedDataset = {
+      ...emptyDataset,
+      albums: [{
+        kind: 'album', slug: 'khach-san', title: 'Khách sạn', order: 0,
+        images: [{ filePath: '/u/a.jpg' }, { filePath: '/u/b.jpg' }],
+      }],
+    }
+    const cache = { '/u/a.jpg': 'image-a', '/u/b.jpg': 'image-b' }
+    const [doc] = buildDocuments(dataset, cache) as any[]
+    expect(doc.images).toHaveLength(2)
+    for (const item of doc.images) expect(typeof item._key).toBe('string')
+    expect(new Set(doc.images.map((im: any) => im._key)).size).toBe(2)
+  })
+
+  it('homePage.testimonials tham chiếu đúng _id mà testimonialDoc() sinh ra, không tự suy luận lại', () => {
+    const dataset: ParsedDataset = {
+      ...emptyDataset,
+      testimonials: [
+        { kind: 'testimonial', heading: 'A', quote: 'Tốt', author: 'X', source: 'TripAdvisor', order: 0 },
+        { kind: 'testimonial', heading: 'B', quote: 'Rất tốt', author: 'Y', source: 'TripAdvisor', order: 1 },
+      ],
+      pages: [{ kind: 'page', slug: '', title: 'Trang chủ', sections: [] }],
+    }
+    const docs = buildDocuments(dataset, {}) as any[]
+    const testimonialIds = docs.filter((d) => d._type === 'testimonial').map((d) => d._id)
+    const home = docs.find((d) => d._type === 'homePage')
+    expect(testimonialIds).toEqual(['testimonial.0', 'testimonial.1'])
+    expect(home.testimonials.map((t: any) => t._ref)).toEqual(testimonialIds)
+    for (const t of home.testimonials) {
+      expect(t._type).toBe('reference')
+      expect(typeof t._key).toBe('string')
+    }
+  })
+
+  it('homePage nhận seo.metaDescription giống hệt nhánh page', () => {
+    const dataset: ParsedDataset = {
+      ...emptyDataset,
+      pages: [{
+        kind: 'page', slug: '', title: 'Trang chủ', sections: [],
+        metaDescription: 'Mô tả trang chủ',
+      }],
+    }
+    const [doc] = buildDocuments(dataset, {}) as any[]
+    expect(doc._type).toBe('homePage')
+    expect(doc.seo).toEqual({ _type: 'seo', metaDescription: { vi: 'Mô tả trang chủ' } })
+  })
 })

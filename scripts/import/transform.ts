@@ -235,11 +235,14 @@ function sectionValue(section: ParsedSection, index: number, cache: AssetCache) 
   }
 }
 
-function pageDoc(page: ParsedPage, cache: AssetCache) {
+function pageDoc(page: ParsedPage, cache: AssetCache, testimonialIds: string[]) {
   const isHome = page.slug === ''
   const sections = page.sections
     .map((s, i) => sectionValue(s, i, cache))
     .filter(Boolean)
+  const seo = page.metaDescription
+    ? { seo: { _type: 'seo', metaDescription: localeValue(page.metaDescription) } }
+    : {}
 
   if (isHome) {
     return {
@@ -247,6 +250,16 @@ function pageDoc(page: ParsedPage, cache: AssetCache) {
       _type: 'homePage',
       title: localeValue(page.title),
       sections,
+      // Tham chiếu tới CHÍNH `_id` mà `testimonialDoc()` đã sinh ra (nhận từ
+      // tham số, không tự gọi lại `docId()` ở đây) — nếu không, hai nơi tính id
+      // độc lập có thể lệch nhau và tạo reference treo mà không cách nào phát
+      // hiện qua test đơn thuần so sánh chuỗi.
+      testimonials: testimonialIds.map((id, i) => ({
+        _key: `testimonial-${i}`,
+        _type: 'reference' as const,
+        _ref: id,
+      })),
+      ...seo,
     }
   }
   return {
@@ -255,13 +268,13 @@ function pageDoc(page: ParsedPage, cache: AssetCache) {
     title: localeValue(page.title),
     slug: slugValue(page.slug),
     sections,
-    ...(page.metaDescription
-      ? { seo: { _type: 'seo', metaDescription: localeValue(page.metaDescription) } }
-      : {}),
+    ...seo,
   }
 }
 
 export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unknown[] {
+  const testimonialDocs = dataset.testimonials.map(testimonialDoc)
+  const testimonialIds = testimonialDocs.map((t) => t._id)
   return [
     ...dataset.rooms.map((r) => roomDoc(r, cache)),
     ...dataset.posts.map((p) => postDoc(p, cache)),
@@ -269,8 +282,8 @@ export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unkno
     ...dataset.venues.map((v) => venueDoc(v, cache)),
     ...dataset.halls.map((h) => hallDoc(h, cache)),
     ...dataset.albums.map((a) => albumDoc(a, cache)),
-    ...dataset.testimonials.map(testimonialDoc),
-    ...dataset.pages.map((p) => pageDoc(p, cache)),
+    ...testimonialDocs,
+    ...dataset.pages.map((p) => pageDoc(p, cache, testimonialIds)),
   ]
 }
 

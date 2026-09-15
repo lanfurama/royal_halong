@@ -6,12 +6,16 @@
 
 ```bash
 cp .env.example .env.local   # điền project id + SANITY_API_WRITE_TOKEN
-pnpm run import              # chạy cả 4 pha
+pnpm import:all               # chạy cả 4 pha (KHÔNG gõ `pnpm import`, xem bên dưới)
 ```
 
-`pnpm import` (không có `run`) sẽ bị `pnpm` nuốt mất — `import` là tên lệnh nội
-bộ của chính pnpm (chuyển `package-lock.json`/`yarn.lock` sang `pnpm-lock.yaml`),
-nên phải gọi `pnpm run import` để chạy đúng script trong `package.json`.
+Script CỐ TÌNH không tên là `import` (kể cả không đặt alias `import` trỏ tới
+`import:all`) — `import` là tên lệnh nội bộ của chính pnpm (chuyển
+`package-lock.json`/`yarn.lock` sang `pnpm-lock.yaml`). Gõ `pnpm import` sẽ chạy
+lệnh CLI đó chứ không phải script này, và nó từng xoá mất `pnpm-lock.yaml` của
+repo trong lúc tìm lockfile npm/yarn để chuyển đổi rồi báo lỗi
+`ERR_PNPM_LOCKFILE_NOT_FOUND`. Đặt một alias tên `import` sẽ tái tạo đúng va chạm
+này, nên đừng làm vậy.
 
 Từng pha chạy riêng được:
 
@@ -41,7 +45,7 @@ viên bắt đầu làm việc thật thì đừng chạy lại toàn bộ.
 ## Không nằm trong phạm vi Plan B
 
 **Script import KHÔNG ghi `siteSettings` và `navigation`.** `buildDocuments()` không sinh hai
-singleton đó. Nghĩa là sau khi `pnpm run import` chạy xong, những thứ sau vẫn **trống** và phải
+singleton đó. Nghĩa là sau khi `pnpm import:all` chạy xong, những thứ sau vẫn **trống** và phải
 nhập tay trong Studio trước khi frontend của Plan C hiển thị được:
 
 - menu đầu trang và các cột chân trang (`navigation`)
@@ -53,8 +57,9 @@ nhập tay trong Studio trước khi frontend của Plan C hiển thị được
 ## Hoàn thành Plan B
 
 - Sanity có đủ nội dung 22 trang và ~216 ảnh, mọi field `vi` đầy, `en` trống.
-- `pnpm run import` chạy lại được bất cứ lúc nào.
-- 120 unit test xanh.
+- `pnpm import:all` chạy lại được bất cứ lúc nào.
+- Trang chủ tham chiếu đủ 4 cảm nhận khách hàng qua `homePage.testimonials`.
+- 124 unit test xanh.
 
 **Tiếp theo:** Plan C dựng frontend. Điều kiện tiên quyết đã thoả — Sanity có dữ liệu
 nên `generateStaticParams` sẽ không trả mảng rỗng.
