@@ -1,14 +1,16 @@
 import { notFound } from 'next/navigation'
 import { isLocale } from '@/lib/i18n'
-import { getHome } from '@/sanity/lib/fetchers'
+import { getHome, getSiteSettings } from '@/sanity/lib/fetchers'
 import { SectionRenderer } from '@/components/sections/SectionRenderer'
 
 export default async function HomePage({ params }: PageProps<'/[lang]'>) {
   const { lang } = await params
   if (!isLocale(lang)) notFound()
 
-  const home = await getHome()
+  const [home, settings] = await Promise.all([getHome(), getSiteSettings()])
   if (!home) notFound()
 
-  return <SectionRenderer sections={home.sections ?? []} lang={lang} />
+  const widgetId = (settings as any)?.secureBookingsWidgetId as string | undefined
+
+  return <SectionRenderer sections={(home.sections as unknown[]) ?? []} lang={lang} widgetId={widgetId} />
 }

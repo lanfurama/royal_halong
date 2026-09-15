@@ -33,7 +33,15 @@ const REGISTRY: Record<string, React.ComponentType<any>> = {
   postListSection: PostListSection,
 }
 
-export function SectionRenderer({ sections, lang }: { sections: any[]; lang: Locale }) {
+export function SectionRenderer({
+  sections,
+  lang,
+  widgetId,
+}: {
+  sections: any[]
+  lang: Locale
+  widgetId?: string
+}) {
   return (
     <>
       {(sections ?? []).map((section, index) => {
@@ -45,7 +53,13 @@ export function SectionRenderer({ sections, lang }: { sections: any[]; lang: Loc
           return null
         }
         return (
-          <Component key={section._key ?? index} {...section} lang={lang} isFirst={index === 0} />
+          <Component
+            key={section._key ?? index}
+            {...section}
+            lang={lang}
+            isFirst={index === 0}
+            {...(section._type === 'bookingWidgetSection' ? { widgetId } : {})}
+          />
         )
       })}
     </>

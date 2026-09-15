@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { isLocale } from '@/lib/i18n'
-import { getAllRoutes, getDocBySlug } from '@/sanity/lib/fetchers'
+import { getAllRoutes, getDocBySlug, getSiteSettings } from '@/sanity/lib/fetchers'
 import { SectionRenderer } from '@/components/sections/SectionRenderer'
 import { RoomPage } from '@/components/pages/RoomPage'
 import { PostPage } from '@/components/pages/PostPage'
@@ -26,7 +26,7 @@ export default async function DynamicPage({ params }: PageProps<'/[lang]/[slug]'
   const { lang, slug } = await params
   if (!isLocale(lang)) notFound()
 
-  const doc = await getDocBySlug(slug)
+  const [doc, settings] = await Promise.all([getDocBySlug(slug), getSiteSettings()])
   if (!doc) notFound()
 
   switch (doc._type) {
@@ -36,7 +36,11 @@ export default async function DynamicPage({ params }: PageProps<'/[lang]/[slug]'
       return <PostPage doc={doc} lang={lang} />
     case 'offer':
       return <OfferPage doc={doc} lang={lang} />
-    default:
-      return <SectionRenderer sections={doc.sections ?? []} lang={lang} />
+    default: {
+      const widgetId = (settings as any)?.secureBookingsWidgetId as string | undefined
+      return (
+        <SectionRenderer sections={(doc.sections as unknown[]) ?? []} lang={lang} widgetId={widgetId} />
+      )
+    }
   }
 }
