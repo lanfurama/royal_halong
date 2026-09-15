@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { leadSchema, newsletterSchema, isHoneypotFilled } from '@/lib/validation'
+import { leadSchema, newsletterSchema, isHoneypotFilled, errorMessage, ERROR_MESSAGES } from '@/lib/validation'
 
 const valid = {
   type: 'wedding',
@@ -73,5 +73,34 @@ describe('isHoneypotFilled()', () => {
   it('false khi trường bẫy rỗng hoặc không có', () => {
     expect(isHoneypotFilled({ company: '' })).toBe(false)
     expect(isHoneypotFilled({})).toBe(false)
+  })
+})
+
+describe('thông điệp lỗi song ngữ', () => {
+  it('lỗi zod mang KHOÁ ổn định, không phải chuỗi đã ghép hai thứ tiếng', () => {
+    const r = leadSchema.safeParse({ type: 'wedding', name: '', email: 'a@b.co', phone: '0900000000' })
+    expect(r.success).toBe(false)
+    const issue = r.error!.issues.find((i) => i.path[0] === 'name')!
+    expect(issue.message).toBe('name_required')
+    expect(issue.message).not.toMatch(/ \/ /)
+  })
+
+  // Đây chính là lỗi hiển thị mà thiết kế khoá sinh ra để tránh.
+  it('cùng một khoá cho ra câu khác nhau theo ngôn ngữ, không lẫn hai thứ tiếng', () => {
+    expect(errorMessage('name_required', 'vi')).toBe('Vui lòng nhập họ tên')
+    expect(errorMessage('name_required', 'en')).toBe('Please enter your full name')
+    expect(errorMessage('name_required', 'vi')).not.toMatch(/Please/)
+    expect(errorMessage('name_required', 'en')).not.toMatch(/Vui lòng/)
+  })
+
+  it('mọi khoá đều có đủ cả vi lẫn en', () => {
+    for (const [key, value] of Object.entries(ERROR_MESSAGES)) {
+      expect(value.vi, key).toBeTruthy()
+      expect(value.en, key).toBeTruthy()
+    }
+  })
+
+  it('khoá lạ trả về chính nó, không trả chuỗi rỗng', () => {
+    expect(errorMessage('khong_ton_tai', 'vi')).toBe('khong_ton_tai')
   })
 })

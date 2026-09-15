@@ -1,32 +1,53 @@
 import { z } from 'zod'
-import { t, type LocaleField } from '@/lib/i18n'
+import { t, type Locale, type LocaleField } from '@/lib/i18n'
 
 /**
- * Ghép thông điệp lỗi song ngữ vi/en thành một chuỗi hiển thị "vi / en", lấy
- * qua t() của lib/i18n.ts để tôn trọng hợp đồng fallback một chiều (en trống
- * -> dùng vi) của module đó thay vì tự đọc field.vi / field.en trực tiếp.
+ * Thông điệp lỗi KHÔNG phải chuỗi hiển thị, mà là KHOÁ ổn định.
+ *
+ * Bản đầu ghép hai ngôn ngữ vào một chuỗi ("vi / en") rồi đưa thẳng cho zod.
+ * Cách đó làm khách Việt luôn thấy thừa một câu tiếng Anh, còn khách Anh thì
+ * thấy tiếng Việt đứng trước — không phải song ngữ mà là lỗi hiển thị, và
+ * không thể sửa ở tầng UI vì thông điệp đã bị đóng cứng thành chuỗi.
+ *
+ * Zod chỉ nhận message kiểu string, nên ta cho nó cái KHOÁ; phần dịch nằm ở
+ * ERROR_MESSAGES và được phân giải bằng t() ĐÚNG ngôn ngữ người xem tại nơi
+ * render (Server Action biết `locale` từ formData trước khi parse).
  */
-function bilingual(field: LocaleField<string>): string {
-  const vi = t(field, 'vi')
-  const en = t(field, 'en')
-  return [vi, en].filter((value): value is string => Boolean(value)).join(' / ')
+export const ERROR_MESSAGES = {
+  name_required: { vi: 'Vui lòng nhập họ tên', en: 'Please enter your full name' },
+  email_invalid: { vi: 'Email không hợp lệ', en: 'Invalid email address' },
+  phone_required: { vi: 'Vui lòng nhập số điện thoại', en: 'Please enter your phone number' },
+  phone_invalid: { vi: 'Số điện thoại không hợp lệ', en: 'Invalid phone number' },
+  type_invalid: { vi: 'Loại yêu cầu không hợp lệ', en: 'Invalid request type' },
+  guest_count_invalid: {
+    vi: 'Số khách phải là số dương',
+    en: 'Guest count must be a positive number',
+  },
+  locale_invalid: { vi: 'Ngôn ngữ không hợp lệ', en: 'Invalid locale' },
+} as const satisfies Record<string, LocaleField<string>>
+
+export type ErrorKey = keyof typeof ERROR_MESSAGES
+
+/**
+ * Khoá lỗi -> câu hiển thị theo ngôn ngữ người xem. Khoá lạ (zod tự sinh
+ * message riêng, ví dụ `max(200)`) trả về chính nó thay vì chuỗi rỗng — thà
+ * hiện một chuỗi kỹ thuật còn hơn hiện ô lỗi trống không giải thích gì.
+ */
+export function errorMessage(key: string, lang: Locale): string {
+  const entry = (ERROR_MESSAGES as Record<string, LocaleField<string>>)[key]
+  if (!entry) return key
+  return t(entry, lang) ?? key
 }
 
 const messages = {
-  nameRequired: bilingual({ vi: 'Vui lòng nhập họ tên', en: 'Please enter your full name' }),
-  emailInvalid: bilingual({ vi: 'Email không hợp lệ', en: 'Invalid email address' }),
-  phoneRequired: bilingual({
-    vi: 'Vui lòng nhập số điện thoại',
-    en: 'Please enter your phone number',
-  }),
-  phoneInvalid: bilingual({ vi: 'Số điện thoại không hợp lệ', en: 'Invalid phone number' }),
-  typeInvalid: bilingual({ vi: 'Loại yêu cầu không hợp lệ', en: 'Invalid request type' }),
-  guestCountInvalid: bilingual({
-    vi: 'Số khách phải là số dương',
-    en: 'Guest count must be a positive number',
-  }),
-  localeInvalid: bilingual({ vi: 'Ngôn ngữ không hợp lệ', en: 'Invalid locale' }),
-}
+  nameRequired: 'name_required',
+  emailInvalid: 'email_invalid',
+  phoneRequired: 'phone_required',
+  phoneInvalid: 'phone_invalid',
+  typeInvalid: 'type_invalid',
+  guestCountInvalid: 'guest_count_invalid',
+  localeInvalid: 'locale_invalid',
+} as const satisfies Record<string, ErrorKey>
 
 /** Chuỗi rỗng của field tuỳ chọn -> undefined, để không ghi '' vào DB. */
 const optionalText = z

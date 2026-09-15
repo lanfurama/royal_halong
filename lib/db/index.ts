@@ -26,9 +26,30 @@ function getDb(): NeonHttpDatabase<typeof schema> {
   return cached
 }
 
+// Proxy phải TRONG SUỐT với introspection, không chỉ với `get`. Target là `{}`
+// trơn, nên thiếu trap thì `'select' in db` -> false và
+// `Object.getPrototypeOf(db)` -> Object.prototype, khiến mọi kiểm tra kiểu
+// (`is(db, PgDatabase)`, `instanceof`) trả sai dù `db` đúng là instance đó.
+// Hôm nay drizzle-orm 0.45.2 không dựa vào các phép này trên `db` nên chưa
+// hỏng, nhưng nó sẽ hỏng lặng lẽ khi nâng version hoặc dùng API batch/replica.
 export const db: NeonHttpDatabase<typeof schema> = new Proxy({} as NeonHttpDatabase<typeof schema>, {
   get(_target, prop, receiver) {
     return Reflect.get(getDb(), prop, receiver)
+  },
+  has(_target, prop) {
+    return Reflect.has(getDb(), prop)
+  },
+  getPrototypeOf() {
+    return Reflect.getPrototypeOf(getDb())
+  },
+  ownKeys() {
+    return Reflect.ownKeys(getDb())
+  },
+  getOwnPropertyDescriptor(_target, prop) {
+    const desc = Reflect.getOwnPropertyDescriptor(getDb(), prop)
+    // `ownKeys` chỉ hợp lệ khi mọi khoá trả về đều configurable trên target
+    // trơn — không có dòng này thì `Object.keys(db)` ném TypeError.
+    return desc && { ...desc, configurable: true }
   },
 })
 
