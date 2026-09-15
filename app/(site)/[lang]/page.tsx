@@ -44,6 +44,7 @@ export default async function HomePage({ params }: PageProps<'/[lang]'>) {
         lang={lang}
         widgetId={widgetId}
         siteSettings={settings}
+        currentSlug=""
       />
       <TestimonialsBlock testimonials={home.testimonials as unknown[]} lang={lang} />
       <SectionRenderer
@@ -51,6 +52,7 @@ export default async function HomePage({ params }: PageProps<'/[lang]'>) {
         lang={lang}
         widgetId={widgetId}
         siteSettings={settings}
+        currentSlug=""
       />
     </SiteChrome>
   )

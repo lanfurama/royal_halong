@@ -2,6 +2,7 @@ import { t, type Locale } from '@/lib/i18n'
 import { Container } from '@/components/ui/Container'
 import { SmartLink } from '@/components/ui/SmartLink'
 import { SanityImage } from '@/components/ui/SanityImage'
+import { NewsletterForm } from '@/components/forms/NewsletterForm'
 
 // Cùng fallback với Header — `siteSettings` chưa có document nào hôm nay.
 const BRAND_FALLBACK = 'Royal Halong Hotel'
@@ -55,6 +56,13 @@ export function Footer({
                 ))}
               </address>
             )}
+          </div>
+
+          <div>
+            <h2 className="mb-4 text-xs font-semibold tracking-widest uppercase">
+              {lang === 'vi' ? 'Nhận ưu đãi' : 'Get offers'}
+            </h2>
+            <NewsletterForm lang={lang} />
           </div>
 
           {columns.map((column: any, index: number) => {

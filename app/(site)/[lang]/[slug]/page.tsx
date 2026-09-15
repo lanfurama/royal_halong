@@ -73,6 +73,7 @@ export default async function DynamicPage({ params }: PageProps<'/[lang]/[slug]'
             lang={lang}
             widgetId={widgetId}
             siteSettings={settings}
+            currentSlug={slug}
           />
         </SiteChrome>
       )
