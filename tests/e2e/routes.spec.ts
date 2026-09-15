@@ -68,6 +68,25 @@ test('trang EN fallback về nội dung tiếng Việt khi EN trống', async ({
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
 })
 
+// `page.locator('html')` ở test trên đọc DOM SAU khi hydrate — một cơ chế
+// phía client (vd: script sửa `document.documentElement.lang` sau khi tải)
+// có thể làm DOM đúng trong khi HTML server trả về vẫn sai, và test đó vẫn
+// xanh. Đã xảy ra thật: bản trước dùng `next/script` `beforeInteractive` để
+// sửa `lang`, DOM cuối cùng đúng, nhưng response gốc (curl, không chạy JS)
+// luôn là `lang="vi"` kể cả `/en/*` — screen reader áp quy tắc phát âm theo
+// tài liệu ban đầu, và Google thấy `lang="vi"` cạnh `hreflang="en"` ngược
+// nhau. Test này gọi thẳng `request` (không phải `page`) để đọc chuỗi HTML
+// thô, y hệt cách kiểm chứng bằng `curl` ở NOTES.
+test('<html lang> đúng theo locale ngay trong HTML server trả về, không qua JS', async ({
+  request,
+}) => {
+  const vi = await (await request.get('/vi/casino')).text()
+  expect(vi).toMatch(/<html[^>]*\slang="vi"/)
+
+  const en = await (await request.get('/en/casino')).text()
+  expect(en).toMatch(/<html[^>]*\slang="en"/)
+})
+
 test('trang tin tức liệt kê được bài viết', async ({ page }) => {
   await page.goto('/vi/news')
   // 3 bài trong bản clone gốc. Nếu là 0 -> thiếu postListSection trong Sanity
