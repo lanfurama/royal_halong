@@ -10,6 +10,7 @@ import { parseTestimonials } from './parsers/testimonial'
 import { parsePage } from './parsers/page'
 import { parseNavigation, parseSiteSettings } from './parsers/settings'
 import { parseHome } from './parsers/home'
+import { LEAD_FORM_PAGES, leadFormSection } from './parsers/lead-form'
 import type { ParsedDataset } from './types'
 
 // Xuất khẩu (export) để tests/unit/import-page.test.ts tự suy ra 15 route "page"
@@ -73,7 +74,14 @@ async function main() {
   const handled = new Set([...ROOM_SLUGS, ...POST_SLUGS])
   for (const route of ROUTES) {
     if (handled.has(route)) continue
-    dataset.pages.push(route === '' ? home.page : parsePage(await read(route), route))
+    const page = route === '' ? home.page : parsePage(await read(route), route)
+    // Form liên hệ là thứ DUY NHẤT bản gốc không có bản chạy được (endpoint
+    // admin-ajax của WordPress đã chết), nên không parser nào suy ra được nó
+    // từ HTML — phải gắn tường minh, nếu không form dựng xong mà không trang
+    // nào hiển thị.
+    const form = LEAD_FORM_PAGES[route]
+    if (form) page.sections.push(leadFormSection(form))
+    dataset.pages.push(page)
   }
 
   const outFile = `${OUT_DIR}/parsed.json`
@@ -91,6 +99,7 @@ async function main() {
     pages: dataset.pages.length,
     'menu (mục cấp 1)': dataset.navigation.header.length,
     'section trang chủ': home.page.sections.length,
+    'trang có form liên hệ': Object.keys(LEAD_FORM_PAGES).length,
     'ảnh album trang chủ': home.album.images.length,
     'cột chân trang': dataset.navigation.footerColumns.length,
   })

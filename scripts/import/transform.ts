@@ -239,6 +239,14 @@ function sectionValue(
         heading: localeValue(section.heading),
         zoom: section.zoom,
       }
+    case 'leadFormSection':
+      return {
+        _key: key, _type: 'leadFormSection',
+        heading: localeValue(section.heading),
+        description: localeValue(section.description),
+        formType: section.formType,
+        successMessage: localeValue(section.successMessage),
+      }
     case 'richTextSection':
       return {
         _key: key, _type: 'richTextSection',

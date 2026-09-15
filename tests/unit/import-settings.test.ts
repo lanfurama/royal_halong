@@ -4,7 +4,7 @@ import { routeToHtmlPath } from '@/scripts/import/paths'
 import { hrefToTarget, parseNavigation, parseSiteSettings } from '@/scripts/import/parsers/settings'
 import { navigationDoc, siteSettingsDoc } from '@/scripts/import/transform'
 import type { ParsedDataset } from '@/scripts/import/types'
-import { parseOnlyFilter } from '@/scripts/import/run'
+import { parseOnlyFilter, parseIdsFilter } from '@/scripts/import/run'
 
 const home = () => readFile(routeToHtmlPath(''), 'utf-8')
 const reservation = () => readFile(routeToHtmlPath('reservation'), 'utf-8')
@@ -305,5 +305,21 @@ describe('parseOnlyFilter()', () => {
   it('cờ rỗng thì ném lỗi chứ không hiểu thành ghi tất cả', () => {
     expect(() => parseOnlyFilter(['--only='])).toThrow()
     expect(() => parseOnlyFilter(['--only=,,'])).toThrow()
+  })
+})
+
+describe('parseIdsFilter()', () => {
+  it('không có cờ -> không lọc theo _id', () => {
+    expect(parseIdsFilter(['node', 'run.ts'])).toBeUndefined()
+  })
+
+  it('tách danh sách _id', () => {
+    expect(parseIdsFilter(['--ids=page.wedding,page.casino'])).toEqual(
+      new Set(['page.wedding', 'page.casino']),
+    )
+  })
+
+  it('cờ rỗng thì ném lỗi', () => {
+    expect(() => parseIdsFilter(['--ids='])).toThrow()
   })
 })

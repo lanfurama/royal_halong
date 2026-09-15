@@ -11,15 +11,31 @@ const BATCH_SIZE = 50
  * trỏ về domain cũ) và đưa nội dung về đúng trạng thái của bản clone.
  */
 export function parseOnlyFilter(argv: string[]): Set<string> | undefined {
-  const flag = argv.find((a) => a.startsWith('--only='))
+  return parseListFlag(argv, '--only=')
+}
+
+/**
+ * `--ids=<_id[,_id...]>`: chỉ ghi đúng những document được nêu.
+ *
+ * `--only=page` ghi cả 14 document `page`, trong đó có những document đã được
+ * sửa TAY trên dataset sống sau khi import (đợt gỡ link trỏ về domain cũ).
+ * Muốn thêm một section vào đúng hai trang thì cần lọc theo `_id`, không phải
+ * theo `_type`.
+ */
+export function parseIdsFilter(argv: string[]): Set<string> | undefined {
+  return parseListFlag(argv, '--ids=')
+}
+
+function parseListFlag(argv: string[], prefix: string): Set<string> | undefined {
+  const flag = argv.find((a) => a.startsWith(prefix))
   if (!flag) return undefined
   const types = flag
-    .slice('--only='.length)
+    .slice(prefix.length)
     .split(',')
     .map((t) => t.trim())
     .filter((t) => t !== '')
   if (types.length === 0) {
-    throw new Error('--only= rỗng: nêu ít nhất một _type, ví dụ --only=navigation,siteSettings')
+    throw new Error(`${prefix} rỗng: nêu ít nhất một giá trị, ví dụ --only=navigation,siteSettings`)
   }
   return new Set(types)
 }
@@ -27,20 +43,35 @@ export function parseOnlyFilter(argv: string[]): Set<string> | undefined {
 async function main() {
   const dryRun = process.argv.includes('--dry-run')
   const only = parseOnlyFilter(process.argv)
+  const ids = parseIdsFilter(process.argv)
   const raw = await readFile(`${OUT_DIR}/documents.ndjson`, 'utf-8')
   const all = raw
     .split('\n')
     .filter((line) => line.trim() !== '')
     .map((line) => JSON.parse(line))
-  const documents = only ? all.filter((d) => only.has(d._type)) : all
+  const documents = all
+    .filter((d) => (only ? only.has(d._type) : true))
+    .filter((d) => (ids ? ids.has(d._id) : true))
 
-  if (only) {
+  if (only || ids) {
+    const label = [
+      only ? `--only=${[...only].join(',')}` : '',
+      ids ? `--ids=${[...ids].join(',')}` : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
     if (documents.length === 0) {
-      throw new Error(
-        `--only=${[...only].join(',')} không khớp document nào trong ${all.length} document đã dựng.`,
-      )
+      throw new Error(`${label} không khớp document nào trong ${all.length} document đã dựng.`)
     }
-    console.log(`Lọc --only=${[...only].join(',')}: ${documents.length}/${all.length} document.`)
+    if (ids) {
+      // Gõ sai một _id mà vẫn ghi phần còn lại là âm thầm bỏ sót đúng thứ
+      // mình định sửa.
+      const missing = [...ids].filter((id) => !documents.some((d) => d._id === id))
+      if (missing.length > 0) {
+        throw new Error(`--ids: không tìm thấy document ${missing.join(', ')}`)
+      }
+    }
+    console.log(`Lọc ${label}: ${documents.length}/${all.length} document.`)
   }
   console.log(`${documents.length} document sẵn sàng.`)
   if (dryRun) {

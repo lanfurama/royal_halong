@@ -141,6 +141,13 @@ export type ParsedSection =
     }
   | { _type: 'mapSection'; heading?: string; zoom: number }
   | {
+      _type: 'leadFormSection'
+      heading: string
+      description?: string
+      formType: 'wedding' | 'mice' | 'general'
+      successMessage?: string
+    }
+  | {
       _type: 'richTextSection'
       heading?: string
       content: PortableTextBlock[]
