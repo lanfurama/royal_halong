@@ -1,5 +1,5 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
-import { OUT_DIR, ROUTES, routeToHtmlPath } from './paths'
+import { OUT_DIR, ROOT, ROUTES, routeToHtmlPath } from './paths'
 import { parseRoom } from './parsers/room'
 import { parsePost } from './parsers/post'
 import { parseOffers } from './parsers/offer'
@@ -9,6 +9,7 @@ import { parseGalleryAlbums } from './parsers/gallery'
 import { parseTestimonials } from './parsers/testimonial'
 import { parsePage } from './parsers/page'
 import { parseNavigation, parseSiteSettings } from './parsers/settings'
+import { parseHome } from './parsers/home'
 import type { ParsedDataset } from './types'
 
 // Xuất khẩu (export) để tests/unit/import-page.test.ts tự suy ra 15 route "page"
@@ -31,6 +32,9 @@ async function main() {
   const read = (r: string) => readFile(routeToHtmlPath(r), 'utf-8')
 
   const homeHtml = await read('')
+  // Trang chủ dùng parser RIÊNG: `parsePage()` tổng quát chỉ bắt được hero +
+  // 2 đoạn chữ, mất 7/10 khối (thư viện ảnh, 4 thẻ, bản đồ, tiệc cưới, ưu đãi).
+  const home = parseHome(homeHtml, ROOT)
   const dataset: ParsedDataset = {
     navigation: parseNavigation(homeHtml),
     settings: parseSiteSettings(homeHtml, await read('reservation')),
@@ -57,7 +61,7 @@ async function main() {
     ...parseVenues(await read('experiences'), 'experiences', 'facility'),
   ]
   dataset.halls = parseHalls(await read('royal-international-convention-palace'))
-  dataset.albums = parseGalleryAlbums(await read('our-gallery'))
+  dataset.albums = [...parseGalleryAlbums(await read('our-gallery')), home.album]
   dataset.testimonials = parseTestimonials(await read(''))
 
   // Mọi route còn lại thành `page` — kể cả culinary/experiences/royal-international-
@@ -69,7 +73,7 @@ async function main() {
   const handled = new Set([...ROOM_SLUGS, ...POST_SLUGS])
   for (const route of ROUTES) {
     if (handled.has(route)) continue
-    dataset.pages.push(parsePage(await read(route), route))
+    dataset.pages.push(route === '' ? home.page : parsePage(await read(route), route))
   }
 
   const outFile = `${OUT_DIR}/parsed.json`
@@ -86,6 +90,8 @@ async function main() {
     testimonials: dataset.testimonials.length,
     pages: dataset.pages.length,
     'menu (mục cấp 1)': dataset.navigation.header.length,
+    'section trang chủ': home.page.sections.length,
+    'ảnh album trang chủ': home.album.images.length,
     'cột chân trang': dataset.navigation.footerColumns.length,
   })
 }

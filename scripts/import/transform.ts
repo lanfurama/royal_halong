@@ -3,7 +3,7 @@ import { OUT_DIR } from './paths'
 import type {
   ParsedDataset, ParsedImageRef, ParsedRoom, ParsedPost, ParsedOffer,
   ParsedVenue, ParsedHall, ParsedAlbum, ParsedTestimonial, ParsedPage, ParsedSection,
-  ParsedNavigation, ParsedSiteSettings, NavTarget,
+  ParsedNavigation, ParsedSiteSettings, NavTarget, ParsedCta,
 } from './types'
 import type { AssetCache } from './assets'
 
@@ -171,7 +171,32 @@ function testimonialDoc(item: ParsedTestimonial, index: number) {
   }
 }
 
-function sectionValue(section: ParsedSection, index: number, cache: AssetCache) {
+/** Link trong section -> object `link` của schema, reference tới document thật. */
+function ctaValue(cta: ParsedCta | undefined, routes: Map<string, string>, key: string) {
+  if (!cta) return undefined
+  const id = routes.get(cta.route)
+  if (!id) {
+    // Cùng nguyên tắc với linkValue() của navigation: một nút bấm vào thì 404
+    // phải làm FAIL lúc dựng, không phải lúc khách bấm.
+    throw new Error(
+      `ctaValue(): nút "${cta.label}" trỏ route "${cta.route}" nhưng không document nào có route đó.`,
+    )
+  }
+  return {
+    _key: key,
+    _type: 'link',
+    kind: 'internal',
+    label: localeValue(cta.label),
+    reference: { _type: 'reference', _ref: id },
+  }
+}
+
+function sectionValue(
+  section: ParsedSection,
+  index: number,
+  cache: AssetCache,
+  routes: Map<string, string>,
+) {
   const key = `sec-${index}`
   switch (section._type) {
     case 'heroSection':
@@ -180,6 +205,39 @@ function sectionValue(section: ParsedSection, index: number, cache: AssetCache) 
         heading: localeValue(section.heading),
         subheading: localeValue(section.subheading),
         background: imageValue(section.background, cache),
+        videoUrl: section.videoUrl,
+      }
+    case 'cardGridSection':
+      return {
+        _key: key, _type: 'cardGridSection',
+        heading: localeValue(section.heading),
+        subheading: localeValue(section.subheading),
+        columns: section.columns,
+        cards: section.cards.map((card, i) => ({
+          _key: `card-${i}`,
+          _type: 'card',
+          title: localeValue(card.title),
+          description: localeValue(card.description),
+          image: imageValue(card.image, cache),
+          cta: ctaValue(card.cta, routes, `cta-${i}`),
+        })),
+      }
+    case 'imageTextSection':
+      return {
+        _key: key, _type: 'imageTextSection',
+        heading: localeValue(section.heading),
+        eyebrow: localeValue(section.eyebrow),
+        content: localeValue(section.content),
+        image: imageValue(section.image, cache),
+        imageSide: section.imageSide,
+        tone: section.tone,
+        cta: ctaValue(section.cta, routes, 'cta'),
+      }
+    case 'mapSection':
+      return {
+        _key: key, _type: 'mapSection',
+        heading: localeValue(section.heading),
+        zoom: section.zoom,
       }
     case 'richTextSection':
       return {
@@ -260,10 +318,15 @@ function sectionValue(section: ParsedSection, index: number, cache: AssetCache) 
   }
 }
 
-function pageDoc(page: ParsedPage, cache: AssetCache, testimonialIds: string[]) {
+function pageDoc(
+  page: ParsedPage,
+  cache: AssetCache,
+  testimonialIds: string[],
+  routes: Map<string, string>,
+) {
   const isHome = page.slug === ''
   const sections = page.sections
-    .map((s, i) => sectionValue(s, i, cache))
+    .map((s, i) => sectionValue(s, i, cache, routes))
     .filter(Boolean)
   const seo = page.metaDescription
     ? { seo: { _type: 'seo', metaDescription: localeValue(page.metaDescription) } }
@@ -412,6 +475,7 @@ export function siteSettingsDoc(settings: ParsedSiteSettings, cache: AssetCache)
 }
 
 export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unknown[] {
+  const routes = routeDocIds(dataset)
   const testimonialDocs = dataset.testimonials.map(testimonialDoc)
   const testimonialIds = testimonialDocs.map((t) => t._id)
   const documents = [
@@ -422,7 +486,7 @@ export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unkno
     ...dataset.halls.map((h) => hallDoc(h, cache)),
     ...dataset.albums.map((a) => albumDoc(a, cache)),
     ...testimonialDocs,
-    ...dataset.pages.map((p) => pageDoc(p, cache, testimonialIds)),
+    ...dataset.pages.map((p) => pageDoc(p, cache, testimonialIds, routes)),
     navigationDoc(dataset.navigation, dataset),
     siteSettingsDoc(dataset.settings, cache),
   ]

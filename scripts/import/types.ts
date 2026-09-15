@@ -101,8 +101,45 @@ export interface ParsedTestimonial {
   order: number
 }
 
+/** Liên kết trong section, trỏ tới một route của bản gốc (resolve ở transform). */
+export interface ParsedCta {
+  label: string
+  route: string
+}
+
+export interface ParsedCard {
+  title: string
+  description?: string
+  image?: ParsedImageRef
+  cta?: ParsedCta
+}
+
 export type ParsedSection =
-  | { _type: 'heroSection'; heading: string; subheading?: string; background?: ParsedImageRef }
+  | {
+      _type: 'heroSection'
+      heading: string
+      subheading?: string
+      background?: ParsedImageRef
+      videoUrl?: string
+    }
+  | {
+      _type: 'cardGridSection'
+      heading?: string
+      subheading?: string
+      cards: ParsedCard[]
+      columns: number
+    }
+  | {
+      _type: 'imageTextSection'
+      heading?: string
+      eyebrow?: string
+      content: PortableTextBlock[]
+      image: ParsedImageRef
+      imageSide: 'left' | 'right'
+      tone: 'white' | 'cream' | 'ink'
+      cta?: ParsedCta
+    }
+  | { _type: 'mapSection'; heading?: string; zoom: number }
   | {
       _type: 'richTextSection'
       heading?: string
