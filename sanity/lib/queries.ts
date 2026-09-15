@@ -11,6 +11,14 @@ const LINK = `{
 }`
 
 /** Mở đủ tham chiếu cho 14 loại section. */
+// Ba nhánh `roomListSection`/`hallListSection`/`venueListSection` dưới đây
+// chạy `select(...)` rồi chiếu (project) kết quả bằng `{...}`. `select()` trả
+// một MẢNG (dù nhánh nào khớp), và một object-projection trần áp thẳng lên
+// mảng đó không map qua từng phần tử — nó trả `null`. Phải có `[]` ngay sau
+// `select(...)` trước dấu `{` để chiếu lên từng phần tử của mảng kết quả.
+// Thiếu `[]` từng khiến `resolved` là `null` với MỌI trang có dữ liệu thật
+// (đã kiểm bằng `groq-js` chạy trên `documents.ndjson`, xem
+// `tests/unit/queries.projection.test.ts`) dù test string-match vẫn xanh.
 // `background` CHỈ là ảnh (heroSection, ctaBandSection). Nền màu của
 // richTextSection/imageTextSection là field riêng tên `tone` (chuỗi enum) —
 // hai thứ này từng trùng tên, và projection ảnh bên dưới sẽ phá giá trị chuỗi
@@ -26,13 +34,13 @@ const SECTIONS = `sections[]{
     "resolved": select(
       count(rooms) > 0 => rooms[]->,
       *[_type == "room"] | order(order asc)
-    ){ _id, title, slug, summary, areaSqm, capacity, view, heroImage ${IMAGE} }
+    )[]{ _id, title, slug, summary, areaSqm, capacity, view, heroImage ${IMAGE} }
   },
   _type == "hallListSection" => {
     "resolved": select(
       count(halls) > 0 => halls[]->,
       *[_type == "hall"] | order(order asc)
-    ){ _id, name, slug, areaSqm, capacity, image ${IMAGE} }
+    )[]{ _id, name, slug, areaSqm, capacity, description, image ${IMAGE} }
   },
   _type == "postListSection" => {
     "resolved": *[
@@ -45,7 +53,7 @@ const SECTIONS = `sections[]{
     "resolved": select(
       filterKind == "manual" => venues[]->,
       *[_type == "venue" && kind == ^.filterKind] | order(order asc)
-    ){ _id, name, slug, location, capacity, hours, highlights, menuUrl, phone, description, image ${IMAGE} }
+    )[]{ _id, name, slug, location, capacity, hours, highlights, menuUrl, phone, description, image ${IMAGE} }
   }
 }`
 

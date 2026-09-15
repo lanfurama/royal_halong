@@ -44,6 +44,7 @@
     "@vitejs/plugin-react": "5.2.0",
     "cheerio": "1.2.0",
     "dotenv": "17.4.2",
+    "groq-js": "2.0.0",
     "jsdom": "26.1.0",
     "postcss": "8.5.23",
     "tailwindcss": "4.3.3",

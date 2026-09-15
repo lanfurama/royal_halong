@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { LOCALES, DEFAULT_LOCALE } from './lib/i18n'
 
-const SKIP = /^\/(?:studio|api|_next|favicon\.ico|robots\.txt|sitemap\.xml)/
+// `(?=\/|$)` chặn biên: không có nó, `/studio-tour` hay `/apiary` cũng khớp
+// vì chỉ so khớp tiền tố, không phải toàn bộ segment đầu tiên.
+const SKIP = /^\/(?:studio|api|_next|favicon\.ico|robots\.txt|sitemap\.xml)(?=\/|$)/
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
