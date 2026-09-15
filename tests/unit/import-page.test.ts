@@ -281,3 +281,111 @@ describe('trang our-gallery gắn đúng 5 album vào trang bằng galleryCarous
     }
   })
 })
+
+// Fix 5 — trước bản sửa này, page.ts gộp section theo LOẠI (hero -> mọi bảng
+// -> bookingWidget -> danh sách -> mọi richText) thay vì theo thứ tự thật của
+// tài liệu nguồn. Trên /casino, thứ tự thật là: đoạn văn giới thiệu Baccarat
+// rồi mới tới 2 bảng luật rút bài — bản cũ đẩy CẢ 2 bảng lên NGAY dưới hero,
+// phía TRÊN đoạn văn giới thiệu.
+describe('Fix 5 — section xếp theo thứ tự tài liệu nguồn, không gộp theo loại', () => {
+  it('/casino: richTextSection đầu tiên đứng TRƯỚC tableSection đầu tiên', async () => {
+    const page = await read('casino').then((h) => parsePage(h, 'casino'))
+    const firstRichIndex = page.sections.findIndex((s) => s._type === 'richTextSection')
+    const firstTableIndex = page.sections.findIndex((s) => s._type === 'tableSection')
+    expect(firstRichIndex, 'phải có ít nhất 1 richTextSection').toBeGreaterThanOrEqual(0)
+    expect(firstTableIndex, 'phải có ít nhất 1 tableSection').toBeGreaterThanOrEqual(0)
+    expect(firstRichIndex).toBeLessThan(firstTableIndex)
+  })
+})
+
+// Fix 6 — trước bản sửa này, KHÔNG richTextSection nào từng có `heading` dù
+// field đã tồn tại trong type/schema. Trên /culinary, nguồn có 4 heading thật
+// (NHÀ HÀNG PHÚC VIÊN, PIANO BAR, POOL BAR, LA TERRASSE) đứng trước 6 đoạn
+// văn — bản cũ bỏ hết, ra 6 đoạn không nhãn.
+describe('Fix 6 — richTextSection.heading lấy từ heading THẬT đứng trước nó', () => {
+  it('/culinary: mỗi đoạn mô tả nhà hàng/quầy bar mang đúng heading của nó', async () => {
+    const page = await read('culinary').then((h) => parsePage(h, 'culinary'))
+    const rich = page.sections.filter((s) => s._type === 'richTextSection') as any[]
+    const headings = rich.map((s) => s.heading)
+    expect(headings).toContain('NHÀ HÀNG PHÚC VIÊN')
+    expect(headings).toContain('PIANO BAR')
+    expect(headings).toContain('POOL BAR')
+    expect(headings).toContain('LA TERRASSE')
+    // Cả 3 đoạn của Phúc Viên đều mang CÙNG heading — heading áp dụng cho MỌI
+    // đoạn văn cho tới khi gặp heading tiếp theo trong nguồn, không chỉ đoạn
+    // đầu tiên.
+    const phucVienCount = headings.filter((h) => h === 'NHÀ HÀNG PHÚC VIÊN').length
+    expect(phucVienCount).toBe(3)
+  })
+
+  it('heroSection.heading KHÔNG bị gán lại làm heading của đoạn văn đầu tiên', async () => {
+    const page = await read('wedding').then((h) => parsePage(h, 'wedding'))
+    const hero = page.sections.find((s) => s._type === 'heroSection') as any
+    const rich = page.sections.filter((s) => s._type === 'richTextSection') as any[]
+    for (const s of rich) {
+      expect(s.heading).not.toBe(hero.heading)
+    }
+  })
+})
+
+// Fix 2 — 8 document venue + 3 document hall (và 4 document room) trước bản
+// sửa này không được section nào trên trang trỏ tới — không route nào trong
+// Plan C tới được, dù document tồn tại trong dataset.
+describe('Fix 2 — venueListSection/hallListSection/roomListSection chỉ ở đúng 4 route', () => {
+  const LIST_TYPES = ['venueListSection', 'hallListSection', 'roomListSection']
+
+  it('culinary có venueListSection filterKind=dining, experiences có filterKind=facility', async () => {
+    const culinary = await read('culinary').then((h) => parsePage(h, 'culinary'))
+    const experiences = await read('experiences').then((h) => parsePage(h, 'experiences'))
+    const culinaryList = culinary.sections.find((s) => s._type === 'venueListSection') as any
+    const experiencesList = experiences.sections.find((s) => s._type === 'venueListSection') as any
+    expect(culinaryList?.filterKind).toBe('dining')
+    expect(experiencesList?.filterKind).toBe('facility')
+  })
+
+  it('royal-international-convention-palace có hallListSection', async () => {
+    const page = await read('royal-international-convention-palace').then((h) =>
+      parsePage(h, 'royal-international-convention-palace'),
+    )
+    expect(page.sections.some((s) => s._type === 'hallListSection')).toBe(true)
+  })
+
+  it('luu-tru-phong-khach-san-villas có roomListSection', async () => {
+    const page = await read('luu-tru-phong-khach-san-villas').then((h) =>
+      parsePage(h, 'luu-tru-phong-khach-san-villas'),
+    )
+    expect(page.sections.some((s) => s._type === 'roomListSection')).toBe(true)
+  })
+
+  it('KHÔNG route "page" nào khác có 3 loại danh sách này', async () => {
+    const exempt = new Set([
+      'culinary',
+      'experiences',
+      'royal-international-convention-palace',
+      'luu-tru-phong-khach-san-villas',
+    ])
+    for (const route of PAGE_ROUTES) {
+      if (exempt.has(route)) continue
+      const page = await read(route).then((h) => parsePage(h, route))
+      const found = page.sections.filter((s) => LIST_TYPES.includes(s._type as any))
+      expect(found, `${route || '(home)'}: không được có ${LIST_TYPES.join('/')}`).toHaveLength(0)
+    }
+  })
+})
+
+// Fix 3 — `htmlToBlocks()` mặc định sinh `_key` ngẫu nhiên; `parseAnnouncementList()`
+// cũng từng gọi `randomKey(12)` trực tiếp. `out/documents.ndjson` khác nhau ở
+// MỌI lần chạy dù HTML nguồn không đổi, phá cơ chế "xuất NDJSON ra soát trước
+// khi ghi" của spec (không thể diff hai lần chạy).
+describe('Fix 3 — parsePage() tất định: cùng input, hai lần gọi cho kết quả HỆT NHAU', () => {
+  it.each(['casino', 'our-announcement', 'wedding', 'terms-and-conditions'])(
+    'route "%s": parsePage() hai lần liên tiếp ra JSON giống hệt (kể cả mọi _key)',
+    async (route) => {
+      const html = await read(route)
+      const a = parsePage(html, route)
+      const b = parsePage(html, route)
+      expect(a).toEqual(b)
+      expect(JSON.stringify(a)).toBe(JSON.stringify(b))
+    },
+  )
+})

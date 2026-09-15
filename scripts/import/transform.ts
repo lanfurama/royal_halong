@@ -226,6 +226,30 @@ function sectionValue(section: ParsedSection, index: number, cache: AssetCache) 
         heading: localeValue(section.heading),
         album: { _type: 'reference', _ref: docId('galleryAlbum', section.albumSlug) },
       }
+    case 'venueListSection':
+      return {
+        _key: key, _type: 'venueListSection',
+        heading: localeValue(section.heading),
+        filterKind: section.filterKind,
+        // `venues` (chọn tay) cố tình để trống — schema coi mảng rỗng/vắng
+        // mặt là "lọc tự động theo filterKind", không phải "rỗng thì hiện 0
+        // venue" (xem venueListSection.ts: field `venues` chỉ hiện trong
+        // Studio khi filterKind === 'manual').
+      }
+    case 'hallListSection':
+      return {
+        _key: key, _type: 'hallListSection',
+        heading: localeValue(section.heading),
+        // `halls` để trống — theo đúng mô tả field trong hallListSection.ts:
+        // "Để trống thì hiển thị tất cả."
+      }
+    case 'roomListSection':
+      return {
+        _key: key, _type: 'roomListSection',
+        heading: localeValue(section.heading),
+        // `rooms` để trống — theo đúng mô tả field trong roomListSection.ts:
+        // "Để trống thì hiển thị tất cả loại phòng theo thứ tự."
+      }
     default: {
       // Đảm bảo tại thời điểm biên dịch: nếu ParsedSection có thêm biến thể
       // mới mà switch chưa xử lý, tsc báo lỗi ở đây thay vì âm thầm bỏ sót.
@@ -275,7 +299,7 @@ function pageDoc(page: ParsedPage, cache: AssetCache, testimonialIds: string[]) 
 export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unknown[] {
   const testimonialDocs = dataset.testimonials.map(testimonialDoc)
   const testimonialIds = testimonialDocs.map((t) => t._id)
-  return [
+  const documents = [
     ...dataset.rooms.map((r) => roomDoc(r, cache)),
     ...dataset.posts.map((p) => postDoc(p, cache)),
     ...dataset.offers.map((o) => offerDoc(o, cache)),
@@ -285,6 +309,25 @@ export function buildDocuments(dataset: ParsedDataset, cache: AssetCache): unkno
     ...testimonialDocs,
     ...dataset.pages.map((p) => pageDoc(p, cache, testimonialIds)),
   ]
+
+  // `_id` của galleryAlbum/venue/hall/offer đến từ slugify() của một tiêu đề —
+  // hai tiêu đề khác nhau slugify ra CÙNG một chuỗi sẽ âm thầm collapse thành
+  // MỘT document qua createOrReplace (số lượng document ghi ra vẫn "hợp lý",
+  // không có gì báo lỗi). Hiện tại 45/45 _id là duy nhất, nhưng đó là một sự
+  // kiện quan sát được, không phải điều gì được đảm bảo về cấu trúc — chặn
+  // tường minh ở đây để một va chạm slug trong tương lai làm build FAIL ngay,
+  // thay vì âm thầm mất một document.
+  const seenIds = new Set<string>()
+  for (const doc of documents as Array<{ _id: string }>) {
+    if (seenIds.has(doc._id)) {
+      throw new Error(
+        `buildDocuments(): trùng _id "${doc._id}" — hai document khác nhau sẽ collapse thành một qua createOrReplace.`,
+      )
+    }
+    seenIds.add(doc._id)
+  }
+
+  return documents
 }
 
 async function main() {

@@ -1,24 +1,39 @@
 import * as cheerio from 'cheerio'
 import { resolve, dirname } from 'node:path'
-import { randomKey } from '@portabletext/block-tools'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
-import { toImageRef, realSrc } from './shared'
+import { toImageRef, realSrc, isCrossSellBlock } from './shared'
 import { parseGalleryAlbums } from './gallery'
 import type { ParsedPage, ParsedSection } from '../types'
 
 /**
- * Đẩy một bảng vào `sections` nếu có cả tiêu đề lẫn dữ liệu — bảng rỗng
- * (một `<table>` trang trí không có hàng nào) không sinh ra section thừa.
+ * Dựng một `tableSection` nếu có cả tiêu đề lẫn dữ liệu — bảng rỗng (một
+ * `<table>` trang trí không có hàng nào) không sinh ra section thừa. Trả về
+ * `undefined` thay vì tự đẩy vào `sections`: từ bản sửa order-preserving (xem
+ * comment ở `parsePage()`), bảng phải xếp hàng CHUNG với richText theo vị trí
+ * trong tài liệu nguồn, không thể đẩy thẳng ngay lúc duyệt.
  */
-function pushTable(
-  sections: ParsedSection[],
+function buildTableSection(
   headers: string[],
   rows: string[][],
   heading?: string,
-): void {
-  if (headers.length === 0 || rows.length === 0) return
-  sections.push({ _type: 'tableSection', heading, headers, rows })
+): ParsedSection | undefined {
+  if (headers.length === 0 || rows.length === 0) return undefined
+  return { _type: 'tableSection', heading, headers, rows }
+}
+
+/**
+ * Bộ đếm tăng dần dùng làm `_key` — THAY cho `randomKey(12)` của
+ * `@portabletext/block-tools`. `_key` ngẫu nhiên làm `out/documents.ndjson`
+ * khác nhau ở MỌI lần chạy dù HTML nguồn không đổi, phá cơ chế an toàn "xuất
+ * NDJSON ra soát trước khi ghi" của spec (không thể diff hai lần chạy).
+ * `_key` chỉ cần duy nhất TRONG một mảng — bộ đếm reset về 0 ở đầu mỗi lần
+ * gọi `parsePage()`/`parseAnnouncementList()` là đủ, vì cùng một HTML đầu vào
+ * luôn tạo ra CÙNG một dãy lời gọi theo CÙNG một thứ tự.
+ */
+function createKeyGenerator(prefix: string): () => string {
+  let counter = 0
+  return () => `${prefix}${(counter++).toString(36)}`
 }
 
 /**
@@ -45,6 +60,7 @@ function pushTable(
 function parseAnnouncementList($: cheerio.CheerioAPI, main: ReturnType<typeof $>) {
   const blocks: any[] = []
   const seen = new Set<string>()
+  const nextKey = createKeyGenerator('ann')
 
   main.find('.nectar-hor-list-item').each((_, row) => {
     const $row = $(row)
@@ -65,17 +81,17 @@ function parseAnnouncementList($: cheerio.CheerioAPI, main: ReturnType<typeof $>
     if (seen.has(key)) return
     seen.add(key)
 
-    const linkKey = randomKey(12)
+    const linkKey = nextKey()
     blocks.push({
       _type: 'block',
-      _key: randomKey(12),
+      _key: nextKey(),
       style: 'normal',
       listItem: 'bullet',
       level: 1,
       markDefs: [{ _type: 'link', _key: linkKey, href }],
       children: [
-        { _type: 'span', _key: randomKey(12), text: `${date} — `, marks: [] },
-        { _type: 'span', _key: randomKey(12), text: title, marks: [linkKey] },
+        { _type: 'span', _key: nextKey(), text: `${date} — `, marks: [] },
+        { _type: 'span', _key: nextKey(), text: title, marks: [linkKey] },
       ],
     })
   })
@@ -98,6 +114,17 @@ export function parsePage(html: string, slug: string): ParsedPage {
   // trên cả 15 route.
   const main = $('.container.main-content')
 
+  // Vị trí tài liệu của MỌI phần tử trong `main`, dùng để xếp bảng/richText/
+  // danh sách theo ĐÚNG thứ tự xuất hiện trong nguồn thay vì gộp theo loại
+  // (xem bug đã sửa: /casino trước đây bị đẩy 3 bảng luật Baccarat lên NGAY
+  // dưới hero, phía trên đoạn văn giới thiệu, dù nguồn thật là văn xuôi rồi
+  // mới tới bảng). `main.find('*')` duyệt theo đúng thứ tự tài liệu (DFS,
+  // như trình duyệt render) nên chỉ số trong mảng này CHÍNH LÀ thứ tự.
+  const allNodesInOrder = main.find('*').toArray()
+  const positionOf = new Map<unknown, number>()
+  allNodesInOrder.forEach((n, i) => positionOf.set(n, i))
+  const posOf = (el: unknown): number => positionOf.get(el) ?? Number.MAX_SAFE_INTEGER
+
   // Hàng "hero" luôn là `.wpb_row.top-level` ĐẦU TIÊN trong nội dung chính —
   // chứa cả ảnh nền (`.row-bg-wrap` đứng trước) lẫn tiêu đề overlay (nếu có)
   // trong `.nectar-split-heading`. KHÔNG dùng `<h1>` đầu trang làm tiêu đề: đã
@@ -113,12 +140,15 @@ export function parsePage(html: string, slug: string): ParsedPage {
   // ô nội dung của hàng `.top-level` rỗng thật trên nguồn (đã xác minh bằng
   // cách đọc trực tiếp offers/index.html quanh `id="intro"`). Khi đó lấy tiêu đề
   // THẬT đầu tiên của trang, bỏ qua `<h1>` site-wide ở trên.
+  let fallbackHeadingEl: unknown
   if (!heading) {
     // Quét trong `main`, không phải `$` toàn văn kiện — `before-footer`/footer
     // có tới 18 thẻ heading giống nhau trên MỌI route (đã đo); nếu quét toàn
     // văn kiện và một trang tương lai không còn heading nào trong nội dung
     // chính, fallback này sẽ lấy nhầm heading của khối dùng chung.
-    heading = textOf(main.find('h2, h3, h4, h5, h6').first().html() ?? '')
+    const fallbackEl = main.find('h2, h3, h4, h5, h6').first()
+    heading = textOf(fallbackEl.html() ?? '')
+    fallbackHeadingEl = fallbackEl.get(0)
     subheading = undefined
   }
 
@@ -128,6 +158,18 @@ export function parsePage(html: string, slug: string): ParsedPage {
     subheading,
     background: toImageRef(realSrc(introRow.find('[data-nectar-img-src]').first()), routeDir),
   })
+
+  // Mọi nội dung THÂN trang (bảng, văn bản, danh sách) được thu thập vào
+  // `items` kèm vị trí tài liệu `pos`, rồi SẮP THEO `pos` một lần duy nhất ở
+  // cuối — thay vì đẩy thẳng vào `sections` theo từng loại như bản trước
+  // (hero -> mọi bảng -> bookingWidget -> danh sách -> mọi richText), vốn làm
+  // mất thứ tự thật của nguồn bất cứ khi nào một trang xen kẽ văn xuôi và
+  // bảng (casino) hoặc văn xuôi và danh sách venue/hall/room (Fix 2).
+  // `tone` của richTextSection chưa biết được ngay lúc thu thập (chỉ tính
+  // được SAU KHI đã sắp toàn bộ `items` theo `pos`) — gán tạm `'white'`, ghi
+  // đè giá trị thật ở vòng lặp cuối cùng bên dưới.
+  type ContentItem = { pos: number; section: ParsedSection; isRichText: boolean }
+  const items: ContentItem[] = []
 
   // `<table>` thật, nếu có — không trang nào trong 22 route dùng thẻ này (đã
   // grep `<table` = 0 trên toàn bộ 15 route "page"), nhưng giữ nhánh này để
@@ -155,7 +197,8 @@ export function parsePage(html: string, slug: string): ParsedPage {
         rows.push(cells.slice(0, headers.length))
       })
 
-    pushTable(sections, headers, rows)
+    const section = buildTableSection(headers, rows)
+    if (section) items.push({ pos: posOf(el), section, isRichText: false })
   })
 
   // Bảng luật Baccarat trên casino KHÔNG dùng `<table>` — dựng bằng lưới div:
@@ -186,11 +229,15 @@ export function parsePage(html: string, slug: string): ParsedPage {
 
     const tableHeading =
       textOf($wrap.closest('.toggle').find('h3.toggle-title').first().html() ?? '') || undefined
-    pushTable(sections, headers, rows, tableHeading)
+    const section = buildTableSection(headers, rows, tableHeading)
+    if (section) items.push({ pos: posOf(wrap), section, isRichText: false })
   })
 
   // Widget đặt phòng của SecureBookings — chỉ trang reservation nhúng script
-  // này (đã grep xác nhận trên cả 22 route, chỉ reservation có).
+  // này (đã grep xác nhận trên cả 22 route, chỉ reservation có). Không có vị
+  // trí DOM cụ thể để neo (đây là cờ toàn trang, không phải một phần tử thật),
+  // nên vẫn giữ ngay sau hero như bản trước — trang reservation gần như chỉ
+  // có hero + widget, không có nội dung nào khác để lệch thứ tự.
   if (html.includes('securebookings.net')) {
     sections.push({ _type: 'bookingWidgetSection' })
   }
@@ -274,15 +321,71 @@ export function parsePage(html: string, slug: string): ParsedPage {
   // CẢ hai điều kiện (wrapper có cta + nằm ở hàng cuối) tách sạch: kiểm trên
   // mọi khối bị loại lẫn mọi khối giữ lại trên cả 15 route, khớp 100% với
   // danh sách rò rỉ đã xác nhận (0 false positive, 0 false negative).
-  const topLevelRows = main.children('.row').children('.wpb_row').toArray()
-  const lastTopLevelRow = topLevelRows[topLevelRows.length - 1]
-  const bodyNodes = topLevelNodes.filter((el) => {
-    if (!lastTopLevelRow) return true
-    const wrapper = $(el).closest('.wpb_wrapper')
-    const hasCta = wrapper.length > 0 && wrapper.find('.nectar-cta').length > 0
-    if (!hasCta) return true
-    return !$.contains(lastTopLevelRow, el)
-  })
+  //
+  // Vị từ này (`isCrossSellBlock`) giờ sống ở `shared.ts` — dùng LẠI y hệt bởi
+  // hall.ts/venue.ts/offer.ts để thay các blocklist chuỗi chữ Việt cứng của
+  // chúng (Fix 7): rewording câu CTA không né được vị từ cấu trúc này.
+  const bodyNodes = topLevelNodes.filter((el) => !isCrossSellBlock($, main, el))
+
+  // Fix 6 — heading của từng richTextSection: lấy heading THẬT gần nhất đứng
+  // TRƯỚC khối văn bản trong tài liệu nguồn (nếu có), áp dụng cho MỌI khối văn
+  // bản cho tới khi gặp heading tiếp theo — cùng quy ước "heading rồi tới nội
+  // dung cho tới heading kế" mà hall.ts/venue.ts/offer.ts đã dùng (`nextUntil`),
+  // chỉ khác là ở đây phải LÀM LẠI quan hệ đó từ vị trí tài liệu vì các khối
+  // văn bản không được duyệt theo từng "chunk" gắn với 1 heading.
+  //
+  // Loại trừ heading của CHÍNH hero (introRow, hoặc heading dự phòng khi
+  // introRow rỗng) — heading đó đã dùng cho `heroSection.heading`, gán lại
+  // cho đoạn văn đầu tiên là trùng lặp sai. Loại trừ heading thuộc card CTA
+  // quảng bá chéo (cùng vị từ `isCrossSellBlock`) — nếu không, "Lưu trú"/"Tiệc
+  // cưới" ở cuối trang có thể bị gán nhầm làm heading cho một đoạn văn nào đó
+  // (dù trên thực tế không có bodyNode nào đứng SAU nó, vì card đó luôn ở hàng
+  // cuối — chặn thêm cho chắc, không dựa vào "chưa gặp thì chưa cần").
+  const headingEls = main
+    .find('h1, h2, h3, h4, h5, h6')
+    .toArray()
+    .filter((h) => {
+      if (introRow.length > 0 && $.contains(introRow[0], h)) return false
+      if (fallbackHeadingEl && h === fallbackHeadingEl) return false
+      if (isCrossSellBlock($, main, h)) return false
+      // Nhãn metadata "DIỆN TÍCH: … | SỨC CHỨA: …" (h5) đứng NGAY SAU heading
+      // tên phòng/hall thật (vd h4 "PHÒNG SUITE" -> h5 "DIỆN TÍCH: 95 M2 |
+      // HƯỚNG BIỂN" -> đoạn mô tả) — cùng quy ước metadata mà hall.ts/room.ts
+      // đã tách riêng thành field areaSqm/capacity. Không loại trừ heading
+      // này thì nó "đè" lên heading tên thật ngay trước nó (heading gần nhất
+      // luôn thắng), làm mọi đoạn mô tả phòng trên luu-tru-phong-khach-san-
+      // villas và royal-international-convention-palace mang heading kiểu
+      // "DIỆN TÍCH: 39 M2 | HƯỚNG BIỂN" thay vì "PHÒNG DELUXE"/"HA LONG". Đo
+      // trực tiếp: mẫu này CHỈ xuất hiện ở đúng hai route đó (đã grep xác
+      // nhận trên cả 15 route "page"), không loại nhầm heading thật nào khác.
+      const text = textOf($(h).html() ?? '')
+      if (/^DIỆN TÍCH\s*:/i.test(text)) return false
+      return true
+    })
+    .sort((a, b) => posOf(a) - posOf(b))
+
+  const headingByBodyNode = new Map<unknown, string | undefined>()
+  {
+    type Marker = { pos: number; order: number; kind: 'heading' | 'body'; el: unknown }
+    const markers: Marker[] = [
+      ...headingEls.map((el, i) => ({ pos: posOf(el), order: i, kind: 'heading' as const, el })),
+      ...bodyNodes.map((el, i) => ({ pos: posOf(el), order: i, kind: 'body' as const, el })),
+    ]
+    // `order` phá vỡ đồng hạng khi hai phần tử trùng `pos` (không xảy ra với
+    // `main.find('*')` — mỗi phần tử một vị trí riêng — nhưng giữ ổn định nếu
+    // giả định đó sai trong tương lai).
+    markers.sort((a, b) => a.pos - b.pos || (a.kind === 'heading' ? -1 : 1) - (b.kind === 'heading' ? -1 : 1))
+
+    let currentHeading: string | undefined
+    for (const m of markers) {
+      if (m.kind === 'heading') {
+        const text = textOf($(m.el as any).html() ?? '')
+        if (text) currentHeading = text
+      } else {
+        headingByBodyNode.set(m.el, currentHeading)
+      }
+    }
+  }
 
   // Chặn nhân đôi #2 — NỘI DUNG giống hệt lặp lại ở hai node độc lập (không
   // phải quan hệ lồng nhau): gặp THẬT trên wedding — cùng một khối
@@ -291,7 +394,6 @@ export function parsePage(html: string, slug: string): ParsedPage {
   // lập nên chặn #1 (theo quan hệ tổ tiên) không bắt được — phải khử theo văn
   // bản thuần.
   const seenText = new Set<string>()
-  let richIndex = 0
   for (const el of bodyNodes) {
     const rawHtml = $(el).html() ?? ''
     const plainText = textOf(rawHtml)
@@ -300,12 +402,63 @@ export function parsePage(html: string, slug: string): ParsedPage {
 
     const content = toPortableText(rawHtml)
     if (content.length === 0) continue
-    sections.push({
-      _type: 'richTextSection',
-      content,
-      tone: richIndex % 2 === 1 ? 'cream' : 'white',
+    items.push({
+      pos: posOf(el),
+      isRichText: true,
+      // `tone` gán tạm 'white' — giá trị THẬT (xen kẽ trắng/kem) chỉ tính
+      // được sau khi `items` đã sắp theo `pos`, ghi đè ở vòng lặp cuối.
+      section: { _type: 'richTextSection', heading: headingByBodyNode.get(el), content, tone: 'white' },
     })
-    richIndex += 1
+  }
+
+  // Fix 2 — venue/hall/room "danh sách": 8 document venue + 3 document hall
+  // trước bản sửa này không được section nào trên trang trỏ tới (không route
+  // nào tới được từ Plan C dù document tồn tại trong dataset). Route → loại
+  // danh sách khớp đúng bảng ánh xạ của spec. Để trống mảng tham chiếu
+  // (venues/halls/rooms) — ĐÚNG quy ước của schema (`hallListSection.ts`,
+  // `roomListSection.ts`: "Để trống thì hiển thị tất cả"; `venueListSection.ts`:
+  // mảng `venues` chỉ dùng khi `filterKind === 'manual'`, còn lại tự lọc theo
+  // `filterKind`) — nên transform.ts không cần render gì thêm ngoài
+  // heading/filterKind.
+  //
+  // Vị trí: đặt tại vị trí heading THẬT ĐẦU TIÊN sau hero (đầu mục "PIANO
+  // BAR"/"HA LONG"/"PHÒNG KHÁCH SẠN"…) — đúng chỗ mà cụm thẻ venue/hall/room
+  // bắt đầu trong nguồn, không phải xén cứng vào đầu hay cuối trang.
+  const firstBodyHeadingPos = headingEls.length > 0 ? posOf(headingEls[0]) : -1
+  if (slug === 'culinary') {
+    items.push({
+      pos: firstBodyHeadingPos,
+      isRichText: false,
+      section: { _type: 'venueListSection', filterKind: 'dining' },
+    })
+  } else if (slug === 'experiences') {
+    items.push({
+      pos: firstBodyHeadingPos,
+      isRichText: false,
+      section: { _type: 'venueListSection', filterKind: 'facility' },
+    })
+  } else if (slug === 'royal-international-convention-palace') {
+    items.push({ pos: firstBodyHeadingPos, isRichText: false, section: { _type: 'hallListSection' } })
+  } else if (slug === 'luu-tru-phong-khach-san-villas') {
+    items.push({ pos: firstBodyHeadingPos, isRichText: false, section: { _type: 'roomListSection' } })
+  }
+
+  // Sắp toàn bộ nội dung thân trang (bảng + richText + danh sách) theo ĐÚNG
+  // thứ tự xuất hiện trong tài liệu nguồn — thay vì gộp theo loại như bản
+  // trước (mọi bảng rồi mới tới mọi richText). `tone` (nền trắng/kem xen kẽ)
+  // vẫn chỉ đếm trên các richTextSection, không tính bảng/danh sách xen giữa.
+  items.sort((a, b) => a.pos - b.pos)
+  let richIndex = 0
+  for (const item of items) {
+    if (item.isRichText) {
+      sections.push({
+        ...(item.section as Extract<ParsedSection, { _type: 'richTextSection' }>),
+        tone: richIndex % 2 === 1 ? 'cream' : 'white',
+      })
+      richIndex += 1
+    } else {
+      sections.push(item.section)
+    }
   }
 
   return {

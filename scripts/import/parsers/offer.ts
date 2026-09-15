@@ -2,27 +2,36 @@ import * as cheerio from 'cheerio'
 import { resolve, dirname } from 'node:path'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
-import { slugify, toImageRef, realSrc } from './shared'
+import { slugify, toImageRef, realSrc, isCrossSellBlock } from './shared'
 import type { ParsedOffer } from '../types'
 
-/** h4 không phải tiêu đề ưu đãi — là khối CTA/điều hướng lặp ở cuối mọi trang. */
-const NOT_AN_OFFER = [
-  'Thông tin liên lạc',
-  'Tiệc cưới',
-  'Chương trình ưu đãi',
-  'Lưu trú',
-  'Cung Hội Nghị',
-]
+/**
+ * "Thông tin liên lạc" là một h4 THẬT trên trang offers — một tiểu mục thông
+ * tin liên hệ đặt chỗ nằm NGAY TRONG chunk của offer "BUFFET MỪNG ĐẠI LỄ…",
+ * không phải card CTA quảng bá chéo lặp lại ở cuối trang (đo trực tiếp: nằm ở
+ * hàng top-level ĐẦU, không phải hàng cuối, và wrapper của nó không có
+ * `.nectar-cta`) — `isCrossSellBlock()` không bắt được ca này (đúng, vì nó
+ * không PHẢI card quảng bá chéo), nên vẫn cần loại trừ bằng tên tường minh ở
+ * đây để nó không trở thành offer giả thứ 4.
+ */
+const NOT_AN_OFFER = ['Thông tin liên lạc']
 
 export function parseOffers(html: string, route = 'offers'): ParsedOffer[] {
   const $ = cheerio.load(html)
   const routeDir = dirname(resolve(ROOT, route, 'index.html'))
+  const main = $('.container.main-content')
   const offers: ParsedOffer[] = []
 
   $('h4').each((index, el) => {
     const title = textOf($(el).html() ?? '')
     if (!title) return
     if (NOT_AN_OFFER.some((skip) => title.toLowerCase().includes(skip.toLowerCase()))) return
+    // Card CTA quảng bá chéo dùng chung ("Tiệc cưới", "Chương trình ưu đãi",
+    // "Lưu trú", "Cung Hội Nghị…") — trước đây chặn bằng danh sách chuỗi chữ
+    // Việt cứng, đổi câu CTA là né được ngay (đã được reviewer chứng minh
+    // trực tiếp: đổi chữ sinh ra document offer giả tên "Ưu đãi đặc biệt").
+    // Thay bằng vị từ CẤU TRÚC dùng chung với page.ts/hall.ts/venue.ts.
+    if (isCrossSellBlock($, main, el)) return
 
     // h4 thật bị bọc trong div .nectar-split-heading — bản thân h4 không còn anh em
     // nào (nội dung thật là anh em của WRAPPER, không phải của h4). Nếu heading nằm

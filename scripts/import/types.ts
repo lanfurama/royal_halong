@@ -113,6 +113,17 @@ export type ParsedSection =
   | { _type: 'bookingWidgetSection' }
   | { _type: 'galleryCarouselSection'; heading?: string; albumSlug: string }
   | { _type: 'postListSection'; heading?: string; category: 'news' | 'announcement'; limit: number }
+  // Ba loại "danh sách" — schema đã có (sanity/schemaTypes/sections/), nhưng
+  // trước bản sửa này KHÔNG parser nào sinh ra chúng: 8 document venue + 3
+  // document hall không được section nào trên trang trỏ tới (không thể truy
+  // cập từ Plan C). Để trống mảng tham chiếu (venues/halls/rooms) — quy ước
+  // của CHÍNH schema (xem trường `description`/`hidden` trong
+  // sections/hallListSection.ts, roomListSection.ts, venueListSection.ts):
+  // để trống nghĩa là "hiển thị tất cả", nên transform.ts không cần render gì
+  // thêm ngoài `heading`/`filterKind`.
+  | { _type: 'venueListSection'; heading?: string; filterKind: 'dining' | 'facility' }
+  | { _type: 'hallListSection'; heading?: string }
+  | { _type: 'roomListSection'; heading?: string }
 
 export interface ParsedPage {
   kind: 'page'

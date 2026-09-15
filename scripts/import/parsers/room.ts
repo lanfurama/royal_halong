@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio'
 import { resolve, dirname } from 'node:path'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
-import { toImageRef, realSrc } from './shared'
+import { toImageRef, realSrc, isCrossSellBlock } from './shared'
 import type { ParsedRoom, ParsedRoomFeature } from '../types'
 
 const ORDER: Record<string, number> = {
@@ -41,8 +41,33 @@ export function parseRoom(html: string, slug: string): ParsedRoom {
   const areaLabel = findFeature('Diện tích')
   const areaMatch = areaLabel?.match(/(\d+(?:[.,]\d+)?)/)
 
-  // Mô tả: các <p> trong khối nội dung chính, trước phần "TÍNH NĂNG PHÒNG"
-  const bodyHtml = $('.wpb_text_column').slice(0, 2).html() ?? ''
+  // Mô tả: đoạn văn thân trang thật, KHÔNG PHẢI `$('.wpb_text_column').slice(0,
+  // 2).html()` như bản trước — selector đó có BA lỗi cùng lúc, đo trực tiếp
+  // trên cả 4 route phòng:
+  //  1. Thiếu `p.vc_custom_heading` — đây MỚI là nơi chứa văn xuôi thật của
+  //     phòng (vd "Phòng Deluxe hướng biển tại khách sạn có diện tích 39
+  //     m2…" + đoạn bàn làm việc/wifi/TV), giống hệt phát hiện đã áp dụng ở
+  //     page.ts (`textSelector`) nhưng CHƯA lan sang parser này.
+  //  2. `.slice(0, 2).html()` — cheerio `.html()` LUÔN chỉ trả về phần tử ĐẦU
+  //     TIÊN của tập chọn dù `.slice()` giữ 2 phần tử; `.slice(0, 2)` là code
+  //     chết.
+  //  3. Không giới hạn phạm vi vào `.container.main-content` — trên toàn văn
+  //     kiện `.wpb_text_column` xuất hiện 2 lần: câu khẩu hiệu chung của site
+  //     ("Chúng tôi mang đến sự trải nghiệm…") và khối công ty ở chân trang.
+  //     Không scope nghĩa là một lần đảo DOM có thể đổi document.html()
+  //     thành văn bản pháp lý ở footer.
+  //
+  // Scope vào main-content, RỘNG selector như page.ts, rồi lọc bỏ card CTA
+  // quảng bá chéo dùng chung (câu khẩu hiệu + "Tận hưởng tối đa kỳ nghỉ…")
+  // bằng CÙNG vị từ cấu trúc `isCrossSellBlock()` — đo trực tiếp: nếu không
+  // lọc, khẩu hiệu chung và card quảng bá vẫn lọt vào vì chúng cũng khớp
+  // `p.vc_custom_heading`/`.wpb_text_column`, tái tạo đúng lỗi cũ.
+  const main = $('.container.main-content')
+  const bodyNodes = main
+    .find('.wpb_text_column, .nectar-responsive-text, p.vc_custom_heading')
+    .toArray()
+    .filter((el) => !isCrossSellBlock($, main, el))
+  const bodyHtml = bodyNodes.map((el) => $.html(el)).join('')
 
   const gallery: ParsedRoom['gallery'] = []
   $('.wpb_gallery img, .nectar-flickity img').each((_, el) => {

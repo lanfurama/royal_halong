@@ -40,11 +40,17 @@ export function parsePost(html: string, slug: string): ParsedPost {
     category: 'news',
     publishedAt: datePublishedFrom(html),
     excerpt,
-    coverImage: toImageRef(
-      $('meta[property="og:image"]').attr('content') ??
-        realSrc($('.post-featured-img img').first()),
-      routeDir,
-    ),
+    // `toImageRef()` trả `undefined` cho bất cứ chuỗi nào bắt đầu bằng `http`
+    // (ảnh ngoài, không phải file trên đĩa) — nhưng TRƯỚC bản sửa này, `??`
+    // được tính TRƯỚC khi lọc đó chạy: nếu og:image là URL tuyệt đối,
+    // `?? realSrc(...)` không bao giờ rơi xuống nhánh dự phòng (chuỗi og:image
+    // đã là truthy), rồi `toImageRef()` loại chuỗi đó và trả `undefined` — bài
+    // viết mất cover image dù `.post-featured-img img` có ảnh thật. Gọi
+    // `toImageRef()` trên TỪNG ứng viên rồi mới `??` giữa hai KẾT QUẢ để nhánh
+    // dự phòng thật sự được thử khi ứng viên đầu bị loại.
+    coverImage:
+      toImageRef($('meta[property="og:image"]').attr('content'), routeDir) ??
+      toImageRef(realSrc($('.post-featured-img img').first()), routeDir),
     body: toPortableText(bodyHtml),
     author: textOf($('.meta-author a').html() ?? '') || undefined,
   }

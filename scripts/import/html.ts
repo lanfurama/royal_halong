@@ -123,11 +123,29 @@ const blockContentType = compiled
   .get('wrapper')
   .fields.find((f: { name: string }) => f.name === 'content')!.type
 
+/**
+ * `htmlToBlocks()` mặc định sinh `_key` NGẪU NHIÊN cho mỗi block/span/markDef —
+ * nghĩa là `out/documents.ndjson` khác nhau ở MỌI lần chạy dù HTML nguồn không
+ * đổi, phá cơ chế an toàn "xuất NDJSON ra soát trước khi ghi" của chính spec
+ * (không thể diff hai lần chạy để biết cái gì thật sự thay đổi). Đếm tăng dần
+ * riêng cho MỖI lần gọi `toPortableText()` là đủ tất định: `_key` chỉ cần duy
+ * nhất TRONG một mảng (một field `content`/`description`/`body`...), không cần
+ * duy nhất toàn tài liệu — và với cùng một HTML đầu vào, thứ tự các lời gọi
+ * `keyGenerator()` bên trong `htmlToBlocks()` luôn giống hệt nhau giữa các lần
+ * chạy (duyệt DOM tất định), nên bộ đếm reset về 0 mỗi lần gọi luôn cho cùng
+ * một dãy `_key`.
+ */
+function createKeyGenerator(): () => string {
+  let counter = 0
+  return () => `k${(counter++).toString(36)}`
+}
+
 export function toPortableText(html: string): PortableTextBlock[] {
   const cleaned = cleanHtml(html)
   if (textOf(cleaned) === '') return []
   const blocks = htmlToBlocks(cleaned, blockContentType, {
     parseHtml: (h: string) => new JSDOM(h).window.document,
+    keyGenerator: createKeyGenerator(),
   })
   return blocks as PortableTextBlock[]
 }

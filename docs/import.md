@@ -54,12 +54,27 @@ nhập tay trong Studio trước khi frontend của Plan C hiển thị được
 
 Đừng tuyên bố "import xong" khi chưa nhập hai cái này — Plan C sẽ render header và footer rỗng.
 
+**Script import CHỈ sinh 9 trong 15 loại section** (`heroSection`, `richTextSection`,
+`tableSection`, `bookingWidgetSection`, `postListSection`, `galleryCarouselSection`,
+`venueListSection`, `hallListSection`, `roomListSection`). Sáu loại còn lại —
+`cardGridSection`, `mapSection`, `ctaBandSection`, `imageTextSection`, `faqSection`,
+`leadFormSection` — **CỐ TÌNH không được sinh ra**. Đây là quyết định biên tập/bố cục
+trang (chọn ảnh nào lên card, bản đồ đặt ở đâu, CTA viết gì, FAQ nào đáng hỏi…), không
+phải nội dung có thể bóc thẳng từ bản clone HTML — bịa ra từ đó là đoán, không phải trích
+xuất. Biên tập viên tự thêm các section này trong Studio khi cần.
+
 ## Hoàn thành Plan B
 
 - Sanity có đủ nội dung 22 trang và ~216 ảnh, mọi field `vi` đầy, `en` trống.
-- `pnpm import:all` chạy lại được bất cứ lúc nào.
+- `pnpm import:all` chạy lại được bất cứ lúc nào — cả nội dung document lẫn `_key` bên
+  trong Portable Text đều tất định (`out/documents.ndjson` byte-giống-hệt giữa hai lần
+  chạy liên tiếp trên cùng dữ liệu nguồn).
 - Trang chủ tham chiếu đủ 4 cảm nhận khách hàng qua `homePage.testimonials`.
-- 124 unit test xanh.
+- 8 document venue + 3 document hall + 4 document room đều được gắn vào đúng 1 trong 4
+  route (`culinary`/`experiences` → `venueListSection`, `royal-international-convention-palace`
+  → `hallListSection`, `luu-tru-phong-khach-san-villas` → `roomListSection`) — không còn
+  document nào "mồ côi", không route nào trỏ tới.
+- 148 unit test xanh.
 
 **Tiếp theo:** Plan C dựng frontend. Điều kiện tiên quyết đã thoả — Sanity có dữ liệu
 nên `generateStaticParams` sẽ không trả mảng rỗng.

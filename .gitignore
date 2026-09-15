@@ -18,7 +18,7 @@ dist/
 # sanity
 .sanity/
 
-# import script artefacts (sinh lại được bằng `pnpm import`)
+# import script artefacts (sinh lại được bằng `pnpm run import:all`)
 scripts/import/out/
 
 # test

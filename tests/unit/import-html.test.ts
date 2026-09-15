@@ -76,4 +76,23 @@ describe('toPortableText()', () => {
   it('trả mảng rỗng khi HTML không có chữ', () => {
     expect(toPortableText('<div class="divider-border"></div>')).toEqual([])
   })
+
+  // Fix 3 — `htmlToBlocks()` mặc định sinh `_key` NGẪU NHIÊN cho mỗi
+  // block/span/markDef, nên `out/documents.ndjson` khác nhau ở MỌI lần chạy
+  // dù HTML nguồn không đổi — phá cơ chế "xuất NDJSON ra soát trước khi ghi"
+  // của spec (không thể diff hai lần chạy để biết cái gì thật sự thay đổi).
+  it('tất định: cùng một HTML đầu vào, hai lần gọi cho CÙNG một dãy _key', () => {
+    const html =
+      '<h2>Luật chơi</h2><p>Đoạn <strong>một</strong>.</p><ul><li>A</li><li>B</li></ul>'
+    const a = toPortableText(html)
+    const b = toPortableText(html)
+    expect(a).toEqual(b)
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b))
+  })
+
+  it('_key vẫn duy nhất trong cùng một mảng (không phải hằng số cố định)', () => {
+    const blocks = toPortableText('<p>Một</p><p>Hai</p><p>Ba</p>') as Array<{ _key: string }>
+    const keys = blocks.map((b) => b._key)
+    expect(new Set(keys).size).toBe(keys.length)
+  })
 })

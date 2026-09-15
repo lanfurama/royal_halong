@@ -2,21 +2,27 @@ import * as cheerio from 'cheerio'
 import { resolve, dirname } from 'node:path'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
-import { slugify, toImageRef, realSrc } from './shared'
+import { slugify, toImageRef, realSrc, isCrossSellBlock, descriptionChunkHtml } from './shared'
 import type { ParsedHall } from '../types'
 
 const ROUTE = 'royal-international-convention-palace'
-const NOT_A_HALL = ['Lưu trú', 'Chương trình ưu đãi', 'Tiệc cưới']
 
 export function parseHalls(html: string): ParsedHall[] {
   const $ = cheerio.load(html)
   const routeDir = dirname(resolve(ROOT, ROUTE, 'index.html'))
+  const main = $('.container.main-content')
   const halls: ParsedHall[] = []
 
   $('h4').each((index, el) => {
     const name = textOf($(el).html() ?? '')
     if (!name) return
-    if (NOT_A_HALL.some((s) => name.toLowerCase().includes(s.toLowerCase()))) return
+    // Card CTA quảng bá chéo dùng chung ("Lưu trú", "Tiệc cưới", "Chương
+    // trình ưu đãi"…) trước đây bị chặn bằng danh sách chuỗi chữ Việt cứng
+    // (NOT_A_HALL) — đổi câu CTA (rewording) né được ngay, sinh document hall
+    // giả (đã được reviewer chứng minh trực tiếp). Thay bằng vị từ CẤU TRÚC
+    // dùng chung với page.ts: card này luôn nằm trong hàng `.wpb_row` cấp cao
+    // nhất CUỐI CÙNG của main-content — không phụ thuộc chữ.
+    if (isCrossSellBlock($, main, el)) return
 
     // h5 ngay sau h4 chứa "DIỆN TÍCH: 762 M2 | SỨC CHỨA: 1.000"
     const meta = textOf($(el).next('h5').html() ?? '')
@@ -36,12 +42,12 @@ export function parseHalls(html: string): ParsedHall[] {
       name,
       areaSqm: areaMatch ? Number(areaMatch[1].replace(/[.,]/g, '')) : undefined,
       capacity: capMatch ? capMatch[1] : undefined,
-      description: toPortableText(
-        chunk
-          .map((_, n) => $.html(n))
-          .get()
-          .join(''),
-      ),
+      // `chunk` thô gồm CẢ ba: h5 metadata (đã bóc riêng thành areaSqm/capacity
+      // ở trên — giữ lại sẽ lặp lại y hệt field cấu trúc) + đoạn văn thật + nút
+      // CTA `.nectar-cta` ("YÊU CẦU", chữ nút chứ không phải mô tả). Loại cả
+      // hai, chỉ giữ đoạn văn thật — đo trực tiếp trên cả 3 hall: sau khi lọc
+      // chỉ còn đúng 1 khối, đúng đoạn văn thân trang.
+      description: toPortableText(descriptionChunkHtml($, chunk)),
       image: toImageRef(realSrc(imageEl), routeDir),
       order: index,
     })

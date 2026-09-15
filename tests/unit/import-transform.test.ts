@@ -162,6 +162,43 @@ describe('buildDocuments()', () => {
     expect(doc.sections[0].album).toEqual({ _type: 'reference', _ref: 'galleryAlbum.khach-san-villas' })
   })
 
+  // Fix 2 — venueListSection/hallListSection/roomListSection giờ được
+  // transform.ts biến thành document con của `page`. Mảng tham chiếu
+  // (venues/halls/rooms) CỐ TÌNH không render — quy ước của chính schema là
+  // "để trống thì hiển thị tất cả" (hallListSection.ts/roomListSection.ts) /
+  // "tự lọc theo filterKind khi không phải manual" (venueListSection.ts).
+  it('venueListSection giữ heading + filterKind, không tự bịa mảng venues', () => {
+    const dataset: ParsedDataset = {
+      ...emptyDataset,
+      pages: [{
+        kind: 'page', slug: 'culinary', title: 'Ẩm thực',
+        sections: [{ _type: 'venueListSection', filterKind: 'dining' }],
+      }],
+    }
+    const [doc] = buildDocuments(dataset, {}) as any[]
+    expect(doc.sections[0]._type).toBe('venueListSection')
+    expect(doc.sections[0].filterKind).toBe('dining')
+    expect(doc.sections[0].venues).toBeUndefined()
+  })
+
+  it('hallListSection và roomListSection giữ heading, không tự bịa mảng tham chiếu', () => {
+    const dataset: ParsedDataset = {
+      ...emptyDataset,
+      pages: [{
+        kind: 'page', slug: 'royal-international-convention-palace', title: 'Cung hội nghị',
+        sections: [{ _type: 'hallListSection' }],
+      }, {
+        kind: 'page', slug: 'luu-tru-phong-khach-san-villas', title: 'Lưu trú',
+        sections: [{ _type: 'roomListSection' }],
+      }],
+    }
+    const [hallPage, roomPage] = buildDocuments(dataset, {}) as any[]
+    expect(hallPage.sections[0]._type).toBe('hallListSection')
+    expect(hallPage.sections[0].halls).toBeUndefined()
+    expect(roomPage.sections[0]._type).toBe('roomListSection')
+    expect(roomPage.sections[0].rooms).toBeUndefined()
+  })
+
   it('mỗi document có _type nằm trong 33 loại schema đã định nghĩa', () => {
     const dataset: ParsedDataset = {
       ...emptyDataset,
@@ -226,6 +263,35 @@ describe('buildDocuments()', () => {
       expect(t._type).toBe('reference')
       expect(typeof t._key).toBe('string')
     }
+  })
+
+  // Fix 10 — `_id` của galleryAlbum/venue/hall/offer đến từ `slugify()` của
+  // một tiêu đề; hai tiêu đề khác nhau slugify ra CÙNG một chuỗi trước đây sẽ
+  // âm thầm collapse thành MỘT document qua `createOrReplace` (số document
+  // ghi ra vẫn "hợp lý", không có gì báo lỗi). 45/45 _id hiện tại là duy
+  // nhất — đây là quan sát, không phải điều gì được đảm bảo — nên
+  // `buildDocuments()` giờ phải THROW ngay khi phát hiện trùng, thay vì chờ
+  // phát hiện muộn qua đếm số lượng document.
+  it('throw khi hai document khác nhau có cùng _id (vd hai hall trùng slug)', () => {
+    const dataset: ParsedDataset = {
+      ...emptyDataset,
+      halls: [
+        { kind: 'hall', slug: 'ha-long', name: 'Hạ Long A', description: [], order: 0 },
+        { kind: 'hall', slug: 'ha-long', name: 'Hạ Long B', description: [], order: 1 },
+      ],
+    }
+    expect(() => buildDocuments(dataset, {})).toThrow(/trùng _id/)
+  })
+
+  it('không throw khi mọi _id duy nhất (trường hợp bình thường)', () => {
+    const dataset: ParsedDataset = {
+      ...emptyDataset,
+      halls: [
+        { kind: 'hall', slug: 'ha-long', name: 'Hạ Long', description: [], order: 0 },
+        { kind: 'hall', slug: 'hoang-gia', name: 'Hoàng Gia', description: [], order: 1 },
+      ],
+    }
+    expect(() => buildDocuments(dataset, {})).not.toThrow()
   })
 
   it('homePage nhận seo.metaDescription giống hệt nhánh page', () => {

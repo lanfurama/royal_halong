@@ -39,6 +39,32 @@ describe('parsePost()', () => {
     const html = await readFile(routeToHtmlPath(RIC_Q2), 'utf-8')
     expect(parsePost(html, RIC_Q2).category).toBe('news')
   })
+
+  // Fix 10 — `toImageRef()` trả `undefined` cho chuỗi bắt đầu bằng `http` (ảnh
+  // ngoài, không phải file trên đĩa). TRƯỚC bản sửa này, code viết
+  // `toImageRef(ogImage ?? realSrc(...))` — `??` được tính TRƯỚC khi lọc đó
+  // chạy, nên nếu og:image là URL TUYỆT ĐỐI (trường hợp phổ biến của Yoast),
+  // `?? realSrc(...)` không bao giờ rơi xuống nhánh dự phòng (chuỗi og:image
+  // đã truthy), rồi `toImageRef()` loại chuỗi đó — bài viết mất cover image dù
+  // `.post-featured-img img` có ảnh thật. 3 bài viết thật trong dataset không
+  // lộ lỗi này (og:image của chúng tình cờ là đường dẫn TƯƠNG ĐỐI, không phải
+  // URL tuyệt đối) — test này dựng HTML tổng hợp có og:image tuyệt đối để bắt
+  // đúng nhánh lỗi mà dữ liệu thật không chạm tới.
+  it('og:image là URL TUYỆT ĐỐI vẫn rơi xuống .post-featured-img img làm cover image', () => {
+    const html = `
+      <html><head>
+        <meta property="og:image" content="https://cdn.example.com/abs-image.jpg">
+      </head><body>
+        <div class="post-featured-img">
+          <img src="data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E"
+               data-nectar-img-src="../wp-content/uploads/2023/01/local-800x600.jpg">
+        </div>
+        <div class="post-content"><div class="content-inner"><p>Nội dung.</p></div></div>
+      </body></html>`
+    const post = parsePost(html, 'bai-tong-hop')
+    expect(post.coverImage?.filePath).toBeTruthy()
+    expect(post.coverImage?.filePath).toMatch(/wp-content[/\\]uploads[/\\]2023[/\\]01[/\\]local\.jpg$/)
+  })
 })
 
 // Heading ưu đãi thật nằm trong div .nectar-split-heading — nội dung thật là anh em

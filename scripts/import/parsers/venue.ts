@@ -2,25 +2,19 @@ import * as cheerio from 'cheerio'
 import { resolve, dirname } from 'node:path'
 import { ROOT } from '../paths'
 import { toPortableText, textOf } from '../html'
-import { slugify, toImageRef, realSrc } from './shared'
+import { slugify, toImageRef, realSrc, isCrossSellBlock, descriptionChunkHtml } from './shared'
 import type { ParsedVenue } from '../types'
 
 /**
- * h4/h5 không phải tên venue: khối CTA/điều hướng lặp ở cuối mọi trang, cộng
- * các nhãn phụ (ĐỊA ĐIỂM/SỨC CHỨA/MỞ CỬA/CÁC MÓN ĐẶC TRƯNG) nằm trong khối chi
+ * Các NHÃN PHỤ (ĐỊA ĐIỂM/SỨC CHỨA/MỞ CỬA/CÁC MÓN ĐẶC TRƯNG) nằm trong khối chi
  * tiết của nhà hàng chính trên trang culinary — cũng viết hoa toàn bộ như tên
- * venue thật nên lọt qua heuristic "tên viết hoa" nếu không loại trừ tường minh.
+ * venue thật nên lọt qua heuristic "tên viết hoa" nếu không loại trừ tường
+ * minh. KHÁC LOẠI với card CTA quảng bá chéo dùng chung (Lưu trú/Tiệc cưới…):
+ * đây không phải nội dung LẶP LẠI ở cuối trang mà là nhãn THẬT của chính venue
+ * này, nên không thể thay bằng vị từ cấu trúc `isCrossSellBlock()` — vẫn cần
+ * danh sách chuỗi riêng cho đúng nhóm này.
  */
-const NOT_A_VENUE = [
-  'Tiệc cưới',
-  'Chương trình ưu đãi',
-  'Lưu trú',
-  'Cung Hội Nghị',
-  'Địa điểm',
-  'Sức chứa',
-  'Mở cửa',
-  'Các món đặc trưng',
-]
+const NOT_A_VENUE_LABEL = ['Địa điểm', 'Sức chứa', 'Mở cửa', 'Các món đặc trưng']
 
 /** Chuỗi không chứa chữ cái nào (vd "24/7") chắc chắn không phải tên venue. */
 const HAS_LETTER = /[A-Za-zÀ-ỹ]/
@@ -32,6 +26,7 @@ export function parseVenues(
 ): ParsedVenue[] {
   const $ = cheerio.load(html)
   const routeDir = dirname(resolve(ROOT, route, 'index.html'))
+  const main = $('.container.main-content')
   const venues: ParsedVenue[] = []
 
   // Nhãn (ĐỊA ĐIỂM/SỨC CHỨA/MỞ CỬA) và giá trị đi kèm không phải hai h5 anh em như
@@ -50,6 +45,23 @@ export function parseVenues(
     return found
   }
 
+  // Như `valueAfterLabel()` nhưng giữ NGUYÊN khoảng trắng/dòng — dùng riêng
+  // cho "CÁC MÓN ĐẶC TRƯNG": giá trị nguồn là một `<h5>` với các dòng ngăn
+  // bằng `<br>`, và `.text()` của cheerio giữ lại ký tự xuống dòng thật giữa
+  // các dòng đó (đo trực tiếp trên culinary/index.html). `valueAfterLabel()`
+  // dùng `textOf()` — gộp MỌI khoảng trắng thành một dấu cách, xoá mất ranh
+  // giới giữa các món ăn, không thể split lại được nữa.
+  const rawValueAfterLabel = (scope: ReturnType<typeof $>, label: string): string | undefined => {
+    let found: string | undefined
+    scope.find('.nectar-list-item').each((_, el) => {
+      if (textOf($(el).html() ?? '').toUpperCase().includes(label.toUpperCase())) {
+        const next = $(el).next('.nectar-list-item')
+        if (next.length) found = next.text()
+      }
+    })
+    return found
+  }
+
   // Nhà hàng chính nằm ở h5, các outlet còn lại ở h4.
   $('h4, h5').each((index, el) => {
     const name = textOf($(el).html() ?? '')
@@ -59,7 +71,12 @@ export function parseVenues(
     // nên lọt qua heuristic nếu chỉ giới hạn 60 như brief ban đầu.
     if (!name || name.length > 35) return
     if (!HAS_LETTER.test(name)) return
-    if (NOT_A_VENUE.some((s) => name.toLowerCase().includes(s.toLowerCase()))) return
+    if (NOT_A_VENUE_LABEL.some((s) => name.toLowerCase().includes(s.toLowerCase()))) return
+    // Card CTA quảng bá chéo dùng chung ("Tiệc cưới", "Chương trình ưu đãi",
+    // "Lưu trú", "Cung Hội Nghị…") — trước đây chặn bằng danh sách chuỗi chữ
+    // Việt cứng, đổi câu CTA là né được ngay. Thay bằng vị từ CẤU TRÚC dùng
+    // chung với page.ts/hall.ts/offer.ts.
+    if (isCrossSellBlock($, main, el)) return
     // Chỉ nhận tên viết hoa — quy ước của bản gốc cho tên outlet.
     if (name !== name.toUpperCase()) return
     if (venues.some((v) => v.name === name)) return
@@ -71,10 +88,13 @@ export function parseVenues(
     // chính heading như cũ.
     const container = $(el).parent().hasClass('nectar-split-heading') ? $(el).parent() : $(el)
     const chunk = container.nextUntil('h4, h5, .nectar-split-heading:has(h4, h5)')
-    const bodyHtml = chunk
-      .map((_, n) => $.html(n))
-      .get()
-      .join('')
+    // `chunk` thô còn lẫn lưới nhãn/giá trị `.nectar-hor-list-item` (ĐỊA
+    // ĐIỂM/SỨC CHỨA/MỞ CỬA/CÁC MÓN ĐẶC TRƯNG — đã bóc riêng thành field cấu
+    // trúc hoặc `highlights` bên dưới) — loại khỏi mô tả để không lặp lại.
+    // Đo trực tiếp trên NHÀ HÀNG PHÚC VIÊN: description từ 14 khối (8 khối
+    // cuối là lưới nhãn/giá trị lặp lại location/capacity/hours + món ăn)
+    // xuống còn đúng phần văn xuôi + số hotline.
+    const bodyHtml = descriptionChunkHtml($, chunk)
 
     // Ảnh venue là <div class="column-image-bg" data-nectar-img-src="..."> ở cột
     // anh em trong cùng .wpb_row — không phải <img> trong chunk. Tìm trong chunk
@@ -94,6 +114,26 @@ export function parseVenues(
     let imageEl = chunk.find('[data-nectar-img-src]').first()
     if (!imageEl.length) imageEl = $(el).closest('.wpb_row').find('[data-nectar-img-src]').first()
 
+    // "CÁC MÓN ĐẶC TRƯNG" (chỉ có trên NHÀ HÀNG PHÚC VIÊN) là một `<h5>` với
+    // các món ngăn bằng `<br>` — KHÔNG PHẢI `<li>` như code cũ giả định (nên
+    // `highlights` trước đây LUÔN rỗng cho cả 8 venue, không chỉ thiếu — món
+    // ăn vẫn còn nguyên trong nguồn, chỉ là parser đọc sai chỗ). Giá trị thô
+    // (`rawValueAfterLabel`, giữ nguyên `\n`) split theo dòng ra từng món.
+    // Vẫn giữ nhánh `<li>` làm dự phòng cho venue khác nếu tương lai đổi sang
+    // danh sách `<ul>` thật — hiện tại 0 venue nào dùng `<li>` (đã grep xác
+    // nhận cả culinary lẫn experiences).
+    const highlightsRaw = rawValueAfterLabel(chunk, 'CÁC MÓN ĐẶC TRƯNG')
+    const highlights = highlightsRaw
+      ? highlightsRaw
+          .split('\n')
+          .map((s) => s.replace(/\s+/g, ' ').trim())
+          .filter(Boolean)
+      : chunk
+          .find('li')
+          .map((_, li) => textOf($(li).html() ?? ''))
+          .get()
+          .filter(Boolean)
+
     venues.push({
       kind: 'venue',
       slug: slugify(name),
@@ -102,11 +142,7 @@ export function parseVenues(
       location: valueAfterLabel(chunk, 'ĐỊA ĐIỂM'),
       capacity: valueAfterLabel(chunk, 'SỨC CHỨA'),
       hours: valueAfterLabel(chunk, 'MỞ CỬA'),
-      highlights: chunk
-        .find('li')
-        .map((_, li) => textOf($(li).html() ?? ''))
-        .get()
-        .filter(Boolean),
+      highlights,
       description: toPortableText(bodyHtml),
       image: toImageRef(realSrc(imageEl), routeDir),
       menuUrl: chunk.find('a[href*="drive.google.com"]').first().attr('href'),
