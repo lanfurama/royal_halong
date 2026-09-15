@@ -39,20 +39,34 @@ test('điều hướng bàn phím: skip link đưa tới nội dung chính', asy
   await expect(page.locator('#main')).toBeVisible()
 })
 
-// `navigation.header` rỗng trong Sanity hôm nay -> Header không render
-// <nav> và MobileMenu không render nút hamburger (`MobileMenu.tsx`: `if
-// (items.length === 0) return null`). Test gốc trong task-8-brief.md giả
-// định có menu để bấm — chạy trên dữ liệu thật hôm nay nó sẽ fail vì
-// `getByRole('button', { name: 'Mở menu' })` không khớp gì cả. Hành vi
-// mở/đóng/bẫy focus/Escape của MobileMenu đã được test đầy đủ với dữ liệu
-// giả lập ở tests/unit/mobile-menu.test.tsx; ở đây chỉ xác nhận component
-// không render gì khi navigation rỗng — đúng yêu cầu "test không được
-// assert menu tồn tại" khi dữ liệu chưa có.
-test('không có navigation -> không render nút menu mobile', async ({ page }) => {
+// `navigation.header` từng rỗng trong Sanity lúc test này được viết (xem Plan
+// D task-6: đo lại bằng GROQ trực tiếp — `count(header)` nay ra 9, không còn
+// 0) -> giờ MobileMenu ĐÃ render nút hamburger (`MobileMenu.tsx`: `if
+// (items.length === 0) return null` không còn nhánh trúng). Test bản trước
+// khẳng định điều ngược lại (không render gì) đã lỗi thời so với dữ liệu
+// sống — sửa lại đúng chiều "có navigation -> có menu, mở/đóng được", gần
+// với ý định gốc ở task-8-brief.md hơn. Hành vi bẫy focus/Tab vòng đã test
+// đầy đủ với dữ liệu giả lập ở tests/unit/mobile-menu.test.tsx; ở đây chỉ
+// xác nhận tích hợp thật trên dữ liệu Sanity thật: render, mở bằng click,
+// đóng bằng Escape, trả focus về đúng nút bấm.
+test('có navigation -> nút menu mobile mở/đóng được, Escape trả focus về nút bấm', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/vi')
-  await expect(page.getByRole('button', { name: 'Mở menu' })).toHaveCount(0)
-  await expect(page.locator('#mobile-menu')).toHaveCount(0)
+
+  const button = page.getByRole('button', { name: 'Mở menu' })
+  await expect(button).toBeVisible()
+  await expect(button).toHaveAttribute('aria-expanded', 'false')
+
+  await button.click()
+  const panel = page.locator('#mobile-menu')
+  await expect(panel).toBeVisible()
+  await expect(button).toHaveAttribute('aria-expanded', 'true')
+
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+  await expect(button).toBeFocused()
 })
 
 test('lightbox thư viện ảnh mở và đóng được', async ({ page }) => {

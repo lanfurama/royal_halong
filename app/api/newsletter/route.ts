@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { newsletterSchema, isHoneypotFilled } from '@/lib/validation'
 import { rateLimit } from '@/lib/rate-limit'
 
-export const runtime = 'nodejs'
-
+// KHÔNG khai báo `export const runtime` — xem giải thích trong
+// app/api/leads/route.ts (cacheComponents từ chối build nếu có).
 export async function POST(request: NextRequest) {
   const clientKey =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'

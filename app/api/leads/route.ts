@@ -2,8 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { handleLead, insertLead } from '@/app/actions/lead'
 import { sendLeadNotification } from '@/lib/mail'
 
-export const runtime = 'nodejs'
-
+// KHÔNG khai báo `export const runtime` — Next 16 với `cacheComponents` bật
+// (xem next.config.ts) từ chối build nếu route segment config `runtime` có
+// mặt, kể cả giá trị 'nodejs' (đã là default): "Route segment config
+// 'runtime' is not compatible with nextConfig.cacheComponents. Please remove
+// it." Handler này vẫn chạy Node.js runtime (mặc định), chỉ là không còn
+// khai báo tường minh được nữa.
 export async function POST(request: NextRequest) {
   const clientKey =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
