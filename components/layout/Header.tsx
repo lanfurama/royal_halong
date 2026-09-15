@@ -61,7 +61,7 @@ export function Header({
                     lang={lang}
                     className="hover:text-gold-hi py-2 text-xs tracking-widest uppercase transition-colors"
                   >
-                    {t(item.label, lang)}
+                    {t<string>(item.label, lang)}
                   </SmartLink>
                   {item.children?.length > 0 && (
                     <ul className="bg-ink invisible absolute top-full left-0 min-w-56 py-2 opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
@@ -72,7 +72,7 @@ export function Header({
                             lang={lang}
                             className="hover:text-gold-hi block px-4 py-2 text-xs tracking-wide uppercase"
                           >
-                            {t(child.label, lang)}
+                            {t<string>(child.label, lang)}
                           </SmartLink>
                         </li>
                       ))}

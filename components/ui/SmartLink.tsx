@@ -24,7 +24,7 @@ export function SmartLink({
   children?: React.ReactNode
 }) {
   if (!link) return null
-  const label = children ?? t(link.label, lang)
+  const label = children ?? t<string>(link.label, lang)
   if (!label) return null
 
   if (link.kind === 'external' && link.href) {

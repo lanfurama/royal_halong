@@ -22,6 +22,9 @@ export function Footer({
   const addressFull = t<string>(settings?.addressFull, lang)
   const licenseIssuer = t<string>(settings?.licenseIssuer, lang)
   const copyright = t<string>(settings?.copyright, lang)
+  const emails: string[] = settings?.emails ?? []
+  // Không render <address> rỗng khi settings null/thiếu hết liên hệ.
+  const hasAddressDetails = Boolean(addressShort || settings?.tel || settings?.mobile || emails.length > 0)
 
   return (
     <footer className="bg-gold text-ink mt-20">
@@ -29,38 +32,45 @@ export function Footer({
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <h2 className="font-display mb-4 text-xl">{companyName}</h2>
-            <address className="space-y-1 text-sm not-italic">
-              {addressShort && <p>{addressShort}</p>}
-              {settings?.tel && (
-                <p>
-                  Tel: <a href={`tel:${settings.tel.replace(/\s/g, '')}`}>{settings.tel}</a>
-                </p>
-              )}
-              {settings?.mobile && (
-                <p>
-                  Mobile:{' '}
-                  <a href={`tel:${settings.mobile.replace(/\s/g, '')}`}>{settings.mobile}</a>
-                </p>
-              )}
-              {settings?.emails?.map((email: string) => (
-                <p key={email}>
-                  <a href={`mailto:${email}`} className="underline underline-offset-2">
-                    {email}
-                  </a>
-                </p>
-              ))}
-            </address>
+            {hasAddressDetails && (
+              <address className="space-y-1 text-sm not-italic">
+                {addressShort && <p>{addressShort}</p>}
+                {settings?.tel && (
+                  <p>
+                    Tel: <a href={`tel:${settings.tel.replace(/\s/g, '')}`}>{settings.tel}</a>
+                  </p>
+                )}
+                {settings?.mobile && (
+                  <p>
+                    Mobile:{' '}
+                    <a href={`tel:${settings.mobile.replace(/\s/g, '')}`}>{settings.mobile}</a>
+                  </p>
+                )}
+                {emails.map((email: string) => (
+                  <p key={email}>
+                    <a href={`mailto:${email}`} className="underline underline-offset-2">
+                      {email}
+                    </a>
+                  </p>
+                ))}
+              </address>
+            )}
           </div>
 
           {columns.map((column: any, index: number) => {
             const title = t<string>(column.title, lang)
+            const links: any[] = column.links ?? []
+            // Không có link nào thì không có gì để điều hướng — bỏ luôn cả
+            // cột, không render <nav> bọc <ul> rỗng (cùng nguyên tắc với
+            // Header khi navigation.header rỗng).
+            if (links.length === 0) return null
             return (
               <nav key={index} aria-label={title ?? `Cột liên kết ${index + 1}`}>
                 {title && (
                   <h2 className="mb-4 text-xs font-semibold tracking-widest uppercase">{title}</h2>
                 )}
                 <ul className="space-y-2 text-sm">
-                  {column.links?.map((link: any, linkIndex: number) => (
+                  {links.map((link: any, linkIndex: number) => (
                     <li key={linkIndex}>
                       <SmartLink link={link} lang={lang} className="hover:underline" />
                     </li>

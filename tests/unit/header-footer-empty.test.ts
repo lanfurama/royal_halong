@@ -78,11 +78,48 @@ describe('Footer — settings/navigation rỗng (trạng thái thực tế hôm 
     expect(collectTags(tree).has('nav')).toBe(false)
   })
 
-  it('vẫn có <footer>, không render tiêu đề/badge rỗng khi thiếu dữ liệu', () => {
+  it('bỏ qua cả cột khi có tiêu đề nhưng không có link nào — không render <nav> bọc <ul> rỗng', () => {
+    const tree = Footer({
+      lang: 'vi',
+      navigation: { footerColumns: [{ title: { vi: 'Khám phá' }, links: [] }] },
+      settings: null,
+    })
+    expect(collectTags(tree).has('nav')).toBe(false)
+  })
+
+  it('render <nav> khi cột có ít nhất một link', () => {
+    const tree = Footer({
+      lang: 'vi',
+      navigation: {
+        footerColumns: [
+          {
+            title: { vi: 'Khám phá' },
+            links: [{ kind: 'external', href: 'https://example.com', label: { vi: 'Ví dụ' } }],
+          },
+        ],
+      },
+      settings: null,
+    })
+    expect(collectTags(tree).has('nav')).toBe(true)
+  })
+
+  it('vẫn có <footer>, không render <address>/badge/liên hệ rỗng khi thiếu dữ liệu', () => {
     const tree = Footer({ lang: 'vi', navigation: null, settings: null })
     const tags = collectTags(tree)
     expect(tags.has('footer')).toBe(true)
-    // motBadge/motBadgeUrl thiếu -> không có <a> nào bọc badge được tạo ra
-    expect(tags.has('address')).toBe(true)
+    // Không có tel/mobile/email -> <address> không render (thay vì render rỗng).
+    expect(tags.has('address')).toBe(false)
+    // motBadge/motBadgeUrl thiếu, socials thiếu, contact links thiếu ->
+    // không có <a> nào được tạo ra trong toàn bộ Footer.
+    expect(tags.has('a')).toBe(false)
+  })
+
+  it('có <address> khi có ít nhất một chi tiết liên hệ', () => {
+    const tree = Footer({
+      lang: 'vi',
+      navigation: null,
+      settings: { tel: '0203 3123 456' },
+    })
+    expect(collectTags(tree).has('address')).toBe(true)
   })
 })

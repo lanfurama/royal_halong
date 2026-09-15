@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { SmartLink } from '@/components/ui/SmartLink'
 import { t, type Locale } from '@/lib/i18n'
 
@@ -8,6 +9,16 @@ export function MobileMenu({ lang, items }: { lang: Locale; items: any[] }) {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const pathname = usePathname()
+
+  // Đóng khi điều hướng sang trang khác. `app/[lang]/layout.tsx` — nơi
+  // Header/MobileMenu sống — không remount giữa các lần chuyển trang trong
+  // /[lang]/*, chỉ `children` đổi. Không có effect này thì bấm một link
+  // trong panel sẽ điều hướng trong khi overlay `fixed inset-0` và khoá
+  // cuộn nền vẫn còn nguyên, che mất trang mới.
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
 
   // Đóng bằng Escape và khoá cuộn nền khi mở.
   useEffect(() => {
@@ -91,7 +102,7 @@ export function MobileMenu({ lang, items }: { lang: Locale; items: any[] }) {
           </svg>
         </button>
 
-        <nav aria-label="Menu chính">
+        <nav aria-label="Menu chính (di động)">
           <ul className="space-y-1">
             {items.map((item, index) => (
               <li key={index}>
@@ -100,7 +111,7 @@ export function MobileMenu({ lang, items }: { lang: Locale; items: any[] }) {
                   lang={lang}
                   className="text-gold-hi block py-3 text-lg tracking-wide uppercase"
                 >
-                  {t(item.label, lang)}
+                  {t<string>(item.label, lang)}
                 </SmartLink>
                 {item.children?.length > 0 && (
                   <ul className="mb-2 ml-4 space-y-1">
@@ -111,7 +122,7 @@ export function MobileMenu({ lang, items }: { lang: Locale; items: any[] }) {
                           lang={lang}
                           className="block py-2 text-sm text-white/80"
                         >
-                          {t(child.label, lang)}
+                          {t<string>(child.label, lang)}
                         </SmartLink>
                       </li>
                     ))}
