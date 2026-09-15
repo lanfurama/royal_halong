@@ -1,10 +1,19 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { isLocale } from '@/lib/i18n'
+import { buildMetadata } from '@/lib/seo'
 import { getAllRoutes, getDocBySlug, getSiteSettings } from '@/sanity/lib/fetchers'
 import { SectionRenderer } from '@/components/sections/SectionRenderer'
 import { RoomPage } from '@/components/pages/RoomPage'
 import { PostPage } from '@/components/pages/PostPage'
 import { OfferPage } from '@/components/pages/OfferPage'
+
+export async function generateMetadata({ params }: PageProps<'/[lang]/[slug]'>): Promise<Metadata> {
+  const { lang, slug } = await params
+  if (!isLocale(lang)) return {}
+  const [doc, settings] = await Promise.all([getDocBySlug(slug), getSiteSettings()])
+  return buildMetadata({ doc, lang, settings })
+}
 
 export async function generateStaticParams() {
   const routes = await getAllRoutes()
