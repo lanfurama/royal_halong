@@ -23,8 +23,20 @@ export async function POST(request: NextRequest) {
     notify: sendLeadNotification,
   })
 
+  if (result.status === 'success') {
+    return NextResponse.json({ ok: true, message: result.message })
+  }
+
+  // Bị chặn spam KHÔNG phải lỗi dữ liệu: trả 429 + Retry-After để client tự
+  // động lùi đúng nhịp, giống hệt cách /api/newsletter đang làm.
+  const status = result.code === 'rate_limited' ? 429 : 400
+  const headers =
+    result.code === 'rate_limited' && result.retryAfterSeconds
+      ? { 'Retry-After': String(result.retryAfterSeconds) }
+      : undefined
+
   return NextResponse.json(
-    { ok: result.status === 'success', message: result.message, errors: result.fieldErrors },
-    { status: result.status === 'success' ? 200 : 400 },
+    { ok: false, message: result.message, errors: result.fieldErrors },
+    { status, headers },
   )
 }

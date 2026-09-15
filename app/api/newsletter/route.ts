@@ -21,8 +21,12 @@ export async function POST(request: NextRequest) {
   if (isHoneypotFilled(body as { company?: unknown })) {
     return NextResponse.json({ ok: true })
   }
-  if (!rateLimit(clientKey).allowed) {
-    return NextResponse.json({ ok: false, message: 'Quá nhiều yêu cầu' }, { status: 429 })
+  const limit = rateLimit(clientKey)
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { ok: false, message: 'Quá nhiều yêu cầu' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } },
+    )
   }
 
   const parsed = newsletterSchema.safeParse(body)

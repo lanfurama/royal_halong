@@ -10,6 +10,15 @@ export interface FormState {
   status: 'idle' | 'success' | 'error'
   message?: string
   fieldErrors?: Record<string, string>
+  /**
+   * Phân biệt LÝ DO lỗi cho tầng gọi. Form trong trang chỉ cần `message`, nhưng
+   * Route Handler phải map ra mã HTTP khác nhau: bị chặn spam là 429 (kèm
+   * Retry-After) chứ không phải 400 — client tự động không thể lùi đúng nhịp
+   * nếu mọi lỗi đều là 400.
+   */
+  code?: 'rate_limited' | 'invalid' | 'failed'
+  /** Giây cần chờ, chỉ có khi `code === 'rate_limited'`. */
+  retryAfterSeconds?: number
 }
 
 interface Deps {
@@ -48,7 +57,14 @@ export async function handleLead(
 
   const limit = rateLimit(clientKey)
   if (!limit.allowed) {
-    return { status: 'error', message: text.rateLimited }
+    // `retryAfterSeconds` đã được tính sẵn — trước đây bị vứt đi, nên client
+    // không có cách nào biết phải chờ bao lâu.
+    return {
+      status: 'error',
+      message: text.rateLimited,
+      code: 'rate_limited',
+      retryAfterSeconds: limit.retryAfterSeconds,
+    }
   }
 
   const parsed = leadSchema.safeParse(raw)
@@ -63,14 +79,14 @@ export async function handleLead(
         fieldErrors[field] = errorMessage(issue.message, locale)
       }
     }
-    return { status: 'error', message: text.invalid, fieldErrors }
+    return { status: 'error', message: text.invalid, code: 'invalid', fieldErrors }
   }
 
   try {
     await deps.insert(parsed.data)
   } catch (error) {
     console.error('Ghi lead thất bại:', error)
-    return { status: 'error', message: text.failed }
+    return { status: 'error', message: text.failed, code: 'failed' }
   }
 
   // Mail hỏng không được làm hỏng kết quả — lead đã nằm an toàn trong DB.
