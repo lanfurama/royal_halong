@@ -131,3 +131,20 @@ describe('POST /api/newsletter', () => {
     expect(Number(res.headers.get('Retry-After'))).toBeGreaterThan(0)
   })
 })
+
+// Server Action newsletter bọc try/catch quanh bước ghi DB, route handler thì
+// không — thiếu DATABASE_URL hoặc Neon lỗi sẽ ném ra ngoài và Next trả 500 với
+// body RỖNG, client không có gì để hiển thị.
+describe('POST /api/newsletter — lỗi tầng DB', () => {
+  it('ghi DB ném lỗi -> 500 kèm JSON có message, không phải body rỗng', async () => {
+    onConflict.mockImplementationOnce(async () => {
+      throw new Error('Thiếu DATABASE_URL — xem .env.example')
+    })
+    const { POST } = await import('@/app/api/newsletter/route')
+    const res = await POST(post('http://x/api/newsletter', { email: 'a@example.com', locale: 'vi' }))
+    expect(res.status).toBe(500)
+    const body = await res.json()
+    expect(body.ok).toBe(false)
+    expect(body.message).toBeTruthy()
+  })
+})

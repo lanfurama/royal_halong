@@ -34,11 +34,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Email không hợp lệ' }, { status: 400 })
   }
 
-  const { db, newsletterSubscribers } = await import('@/lib/db')
-  await db
-    .insert(newsletterSubscribers)
-    .values({ email: parsed.data.email, locale: parsed.data.locale })
-    .onConflictDoNothing({ target: newsletterSubscribers.email })
+  // Server Action tương ứng (`app/actions/newsletter.ts`) đã bọc try/catch
+  // quanh bước ghi DB, route này thì chưa: thiếu `DATABASE_URL` hoặc Neon lỗi
+  // sẽ ném ra ngoài và Next trả 500 với body RỖNG — client gọi API không có
+  // gì để hiển thị, cũng không phân biệt được với lỗi mạng.
+  try {
+    const { db, newsletterSubscribers } = await import('@/lib/db')
+    await db
+      .insert(newsletterSubscribers)
+      .values({ email: parsed.data.email, locale: parsed.data.locale })
+      .onConflictDoNothing({ target: newsletterSubscribers.email })
+  } catch (error) {
+    console.error('[api/newsletter] ghi DB thất bại:', error)
+    return NextResponse.json(
+      { ok: false, message: 'Không lưu được đăng ký. Vui lòng thử lại sau.' },
+      { status: 500 },
+    )
+  }
 
   return NextResponse.json({ ok: true })
 }
