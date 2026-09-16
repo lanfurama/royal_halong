@@ -42,6 +42,19 @@
      breakpoint còn lại. */
   --breakpoint-nav: 73.75rem;
 
+  /* --- Chiều cao thanh header ---
+     Header nay là `fixed` (trôi trên ảnh hero), tức NẰM NGOÀI luồng: nó
+     không còn tự chừa chỗ cho chính mình. Một con số duy nhất, ba nơi dùng:
+     `<main>` của trang KHÔNG mở đầu bằng hero, `padding-top` của `.rhl-hero`,
+     và `scroll-margin-top` của neo cuộn. Đổi chiều cao header mà quên một
+     trong ba chỗ là chữ chui xuống dưới thanh — nên đừng viết lại con số.
+
+     Hai giá trị vì header cao khác nhau ở hai dải: dưới `nav` là 100px (nút
+     menu · ngôn ngữ · logo 84px), từ `nav` trở lên là 128px — cùng MỘT hàng,
+     nhưng logo lên 120px và menu ngang xuất hiện, nằm hai bên logo. Khai ở
+     `:root` ngay dưới `@theme` vì media query không viết được trong `@theme`. */
+  --header-h: 6.25rem;
+
   /* --- Trục vàng đồng --- */
   /* Vàng chủ đạo: viền, nền nhỏ, icon, và (theo chỉ đạo) cả nhãn eyebrow. */
   --color-gold: #b8892b;
@@ -134,7 +147,19 @@
   --shadow-lift: 0 2px 6px rgb(120 90 30 / 0.1), 0 24px 56px -22px rgb(120 90 30 / 0.3);
   /* Bóng sâu riêng cho form đặt phòng đè lên hero — nó phải trông như nổi
      hẳn trên ảnh, không phải dán phẳng lên. */
-  --shadow-float: 0 40px 80px rgb(120 90 30 / 0.22);
+  /* Bóng của thanh đặt phòng đè lên ảnh banner. Trước đây là bóng NÂU VÀNG
+     (`rgb(120 90 30 / .22)`) toả 80px — trên nền ảnh nó đọc thành một quầng
+     vàng loang quanh thanh chứ không ra bóng đổ. Đổi sang bóng trung tính,
+     bán kính ngắn hơn: thanh vẫn nổi hẳn khỏi ảnh mà không nhuộm vàng bức
+     ảnh phía sau. */
+  --shadow-float: 0 18px 44px -20px rgb(18 14 8 / 0.45);
+}
+
+/* Xem ghi chú ở `--header-h` trong `@theme` ngay trên. */
+@media (min-width: 73.75rem) {
+  :root {
+    --header-h: 8rem;
+  }
 }
 
 @layer base {
@@ -177,9 +202,12 @@
     font-weight: 700;
   }
 
-  /* Neo cuộn: header dính cao 76px che mất đầu section khi nhảy tới anchor. */
+  /* Neo cuộn: header `fixed` nằm đè lên đầu section khi nhảy tới anchor.
+     Bám `--header-h` chứ không phải một con số chép tay — header đổi chiều
+     cao theo breakpoint, và khi đã cuộn nó còn tự thu gọn thêm, nên lấy
+     chiều cao LỚN NHẤT làm chuẩn là đủ an toàn cho mọi trạng thái. */
   :where(section, h2, h3) {
-    scroll-margin-top: 5.5rem;
+    scroll-margin-top: calc(var(--header-h) + 0.5rem);
   }
 
   /* Viền focus mặc định cho MỌI control — link chân trang, chấm carousel,
@@ -199,6 +227,284 @@
   ::selection {
     background: var(--color-gold);
     color: var(--color-cream-hi);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Header trôi trên ảnh hero.
+
+   Trước bản này header là `sticky` NGAY TRÊN hero: một thanh kem đặc cắt
+   ngang đỉnh trang, ảnh banner bắt đầu bên dưới nó. Bản này đưa header ra
+   khỏi luồng (`fixed`) để nó nằm ĐÈ lên ảnh — đúng thứ mà bố cục hero vốn đã
+   chuẩn bị sẵn (`pt-28` ở cả `HomeHero` lẫn `HeroSection` là phần chừa cho
+   một header đè lên, không bao giờ dùng tới khi header còn nằm bên trên).
+
+   Hai trạng thái:
+   - Trên ảnh hero, chưa cuộn -> nền gần như trong suốt, chữ và logo màu kem.
+   - Đã cuộn, hoặc trang không mở đầu bằng hero -> thanh kính kem, chữ nâu mực.
+
+   Vì sao phân biệt bằng CSS `:has()` chứ không bằng JS: JS chỉ chạy sau khi
+   hydrate xong, nên header sẽ loé một nhịp nền kem rồi mới đổi sang trong
+   suốt — thấy rõ ở mạng chậm. `:has()` đúng ngay từ khung hình ĐẦU TIÊN
+   trình duyệt vẽ, kể cả khi JS chưa tải. Phần JS (`HeaderShell`) chỉ còn lo
+   đúng một việc mà CSS không biết được: đã cuộn hay chưa.
+--------------------------------------------------------------------------- */
+@layer components {
+  /* Toàn bộ MÀU của header nằm ở sáu biến dưới đây, và chỉ ở đây. Các
+     component con (`NavDisclosure`, `LangSwitcher`, `MobileMenu`) đọc biến
+     qua `.rhl-navlink` / `.rhl-chip` / `.rhl-cta` / `.rhl-burger`, không tự
+     biết mình đang nằm trên nền kem hay trên ảnh tối — nhờ vậy hai trạng
+     thái sáng/tối được khai đúng MỘT chỗ, thay vì rải điều kiện vào từng
+     file như cách `on-dark` bắt buộc. */
+  .rhl-header {
+    --hdr-fg: var(--color-ink);
+    --hdr-accent: var(--color-gold);
+    /* Vàng dùng làm CHỮ (nhãn nút đặt phòng, nhãn ngôn ngữ khi hover) phải
+       là `gold-deep` 4.59:1, không phải `gold` 2.92:1 — xem ghi chú tương
+       phản ở đầu file. */
+    --hdr-accent-text: var(--color-gold-deep);
+    --hdr-line: rgb(184 137 43 / 0.34);
+    --hdr-hover: rgb(184 137 43 / 0.1);
+    --hdr-logo-h: 5.25rem;
+    --hdr-row: 6.25rem;
+
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    z-index: 40;
+  }
+
+  /* Hai lớp nền chồng nhau, chuyển qua lại bằng `opacity`: gradient KHÔNG
+     transition được, opacity thì có. `z-index: -1` giữ chúng dưới nội dung
+     header — `position: fixed` + `z-index` đã làm header thành stacking
+     context, nên -1 không thoát ra ngoài phần tử.
+
+     `backdrop-filter` nằm ở ĐÂY chứ không ở chính `<header>`, và đó là bắt
+     buộc chứ không phải sở thích: một phần tử có `backdrop-filter` trở thành
+     containing block cho MỌI con `position: fixed`. Panel menu điện thoại
+     (`MobileMenu`, `fixed inset-y-0 right-0`) là con của header — đặt bộ lọc
+     lên header thì panel bị neo vào khung 88px của header thay vì vào
+     viewport, tức tụt xuống thành một dải cao 88px ở đỉnh màn hình. Pseudo
+     element không thể chứa con nên bẫy đó biến mất. */
+  .rhl-header::before,
+  .rhl-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    transition: opacity 0.45s ease;
+  }
+
+  /* Lớp 1 — thanh kính kem. Nhạt hơn hẳn bản trước (0.82/0.66 thay cho
+     0.95/0.85): nội dung cuộn qua bên dưới hiện ra thành một vệt mờ thay vì
+     biến mất sau một mảng kem đặc. Đường kẻ đáy là `inset` shadow chứ không
+     phải `border` để không cộng thêm 1px vào chiều cao đang được animate. */
+  .rhl-header::before {
+    background-image: linear-gradient(180deg, rgb(250 246 238 / 0.82), rgb(250 246 238 / 0.66));
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow:
+      inset 0 -1px 0 rgb(184 137 43 / 0.22),
+      0 20px 44px -36px rgb(42 33 16 / 0.85);
+    opacity: 1;
+  }
+
+  /* Lớp 2 — màn nâu mỏng, nhạt dần xuống đáy, chỉ có mặt khi header trôi
+     trên ảnh. KHÔNG phải trang trí: chữ kem đặt thẳng lên một bức ảnh bất kỳ
+     không có gì bảo đảm tương phản, biên tập viên đổi ảnh hero sang một
+     khung trời sáng là chữ biến mất. Dải 0.52 -> 0 giữ chữ đọc được ở mọi
+     khung hình mà vẫn thấy rõ ảnh phía sau. */
+  .rhl-header::after {
+    background-image: linear-gradient(
+      180deg,
+      rgb(22 16 5 / 0.52) 0%,
+      rgb(22 16 5 / 0.3) 58%,
+      rgb(22 16 5 / 0) 100%
+    );
+    opacity: 0;
+  }
+
+  /* Trạng thái trôi trên ảnh KHÔNG blur ảnh hero. Cố ý: làm mờ đúng dải trên
+     cùng của một bức ảnh mà phần còn lại vẫn nét thì thành một vệt nhoè cắt
+     ngang, chứ không ra hiệu ứng kính. Chỗ này cần thấy rõ ảnh — đó mới là
+     "trong suốt". Phần bảo đảm chữ đọc được là màn nâu ở `::after`. */
+
+  /* Trang mở đầu bằng hero tối + người dùng chưa cuộn -> header trôi trên
+     ảnh. `main > .rhl-hero:first-child` là điều kiện THẬT, không phải một cờ
+     truyền tay: trang nào đổi section đầu tiên thì header tự đổi theo, không
+     ai phải nhớ sửa prop ở `SiteChrome`. */
+  body:has(main > .rhl-hero:first-child) .rhl-header:not([data-scrolled]) {
+    --hdr-fg: var(--color-cream-hi);
+    --hdr-accent: var(--color-gold-hi);
+    --hdr-accent-text: var(--color-gold-hi);
+    --hdr-line: rgb(255 248 232 / 0.44);
+    --hdr-hover: rgb(255 248 232 / 0.14);
+  }
+
+  body:has(main > .rhl-hero:first-child) .rhl-header:not([data-scrolled])::before {
+    opacity: 0;
+  }
+
+  body:has(main > .rhl-hero:first-child) .rhl-header:not([data-scrolled])::after {
+    opacity: 1;
+  }
+
+  /* Không có `backdrop-filter` (Firefox cũ, vài webview): bù bằng nền đặc
+     hơn — thiếu blur thì chữ nằm thẳng trên nội dung đang cuộn qua. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .rhl-header::before {
+      background-image: linear-gradient(180deg, rgb(250 246 238 / 0.97), rgb(250 246 238 / 0.93));
+    }
+  }
+
+  /* --- Hàng duy nhất của header ---
+     Chiều cao đặt ở CSS chứ không phải class Tailwind vì nó đổi theo trạng
+     thái cuộn — và vì nó phải khớp `--header-h` (chỗ mà `<main>` chừa ra),
+     giữ hai con số cạnh nhau thì khó lệch hơn là rải ra hai file. */
+  .rhl-header-top {
+    min-height: var(--hdr-row);
+    display: flex;
+    align-items: center;
+    transition: min-height 0.35s ease;
+  }
+
+  @media (min-width: 73.75rem) {
+    .rhl-header {
+      --hdr-logo-h: 7.5rem;
+      --hdr-row: 8rem;
+    }
+  }
+
+  /* Đã cuộn -> thu gọn. Header `fixed` nên đổi chiều cao KHÔNG đẩy nội dung
+     trang; `--header-h` (chỗ mà `<main>` và `.rhl-hero` chừa ra) đứng yên,
+     nên không có cú giật bố cục nào khi trạng thái đổi. */
+  .rhl-header[data-scrolled] {
+    --hdr-logo-h: 4rem;
+    --hdr-row: 5rem;
+  }
+
+  @media (min-width: 73.75rem) {
+    .rhl-header[data-scrolled] {
+      --hdr-logo-h: 5rem;
+      --hdr-row: 5.75rem;
+    }
+  }
+
+  /* --- Logo ---
+     Cao 120px ở desktop (bản gốc 52px), nằm CHÍNH GIỮA header và CHÍNH GIỮA
+     menu ngang — menu bị cắt làm đôi, mỗi nửa ôm một bên. Cột trái và cột
+     phải của hàng đều là `minmax(0,1fr)`, nên logo được căn giữa theo KHUNG
+     chứ không phải theo phần còn lại sau khi trừ các nút: nhãn ngôn ngữ và
+     nhãn nút đặt phòng dài ngắn khác nhau giữa sáu thứ tiếng cũng không kéo
+     nó lệch. */
+  .rhl-logo {
+    height: var(--hdr-logo-h);
+    width: auto;
+    transition: height 0.35s ease;
+  }
+
+  /* `siteSettings.logoLight` là bản logo TRẮNG (chân trang đã dùng). Trên
+     ảnh hero, bản vàng chìm vào những khung hình sáng; bản trắng thì không.
+     Cả hai cùng được render rồi ẩn/hiện bằng CSS thay vì chọn ở JS, để trạng
+     thái đúng ngay từ khung hình đầu tiên — cùng lý do với `:has()` ở trên.
+     Nhánh `:has(.rhl-logo--light)` là điều kiện "có logo trắng trong Sanity
+     hay không": thiếu nó thì bản vàng vẫn ở lại, không thành khoảng trống. */
+  .rhl-logo--light {
+    display: none;
+  }
+
+  body:has(main > .rhl-hero:first-child) .rhl-header:not([data-scrolled]) .rhl-logo--light {
+    display: block;
+  }
+
+  body:has(main > .rhl-hero:first-child)
+    .rhl-header:not([data-scrolled]):has(.rhl-logo--light)
+    .rhl-logo--dark {
+    display: none;
+  }
+
+  /* --- Các control trong header ---
+     Tất cả chỉ đọc biến màu ở `.rhl-header`, không control nào tự khai màu. */
+  .rhl-navlink {
+    color: var(--hdr-fg);
+    transition: color 0.25s ease;
+  }
+
+  .rhl-navlink:hover {
+    color: var(--hdr-accent-text);
+  }
+
+  /* Nút chuyển ngôn ngữ. Bản trước là chữ `--color-muted` mờ cộng một mũi
+     tên, không viền — trên nền kem nó đọc thành nhãn trang trí chứ không
+     phải một nút bấm được. Giờ là chip có viền thật, icon quả địa cầu và mã
+     ngôn ngữ, chữ dùng `--hdr-fg` (nâu mực / kem) thay cho màu mờ. */
+  .rhl-chip {
+    color: var(--hdr-fg);
+    border: 1px solid var(--hdr-line);
+    transition:
+      color 0.25s ease,
+      border-color 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+  .rhl-chip:hover,
+  .rhl-chip[aria-expanded='true'] {
+    color: var(--hdr-accent-text);
+    border-color: var(--hdr-accent);
+    background-color: var(--hdr-hover);
+  }
+
+  .rhl-cta {
+    color: var(--hdr-accent-text);
+    border: 1px solid var(--hdr-accent);
+    transition:
+      color 0.25s ease,
+      border-color 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+  .rhl-cta:hover {
+    color: var(--color-ink);
+    background-color: var(--hdr-accent);
+  }
+
+  .rhl-burger {
+    color: var(--hdr-accent);
+    border: 1px solid var(--hdr-line);
+    transition:
+      color 0.25s ease,
+      border-color 0.25s ease;
+  }
+
+  .rhl-burger:hover {
+    border-color: var(--hdr-accent);
+  }
+
+  /* --- Chỗ mà header `fixed` không còn tự chừa ---
+     Trang mở đầu bằng hero tối thì hero CỐ Ý chui xuống dưới header — đó là
+     cả điểm của bản này. Mọi trang khác (bài viết, ưu đãi, trang chỉ có chữ)
+     phải tự chừa đúng chiều cao header, nếu không dòng đầu nằm khuất sau
+     thanh. `:has()` phân biệt hai trường hợp ngay trong CSS, không page nào
+     phải truyền cờ xuống `SiteChrome`. */
+  main {
+    padding-top: var(--header-h);
+  }
+
+  body:has(main > .rhl-hero:first-child) main {
+    padding-top: 0;
+  }
+
+  /* Hero tự chừa phần bị header che. Với hero căn đáy (`HomeHero`,
+     `HeroSection`) đây là vùng đệm an toàn; với hero căn GIỮA (`RoomPage`)
+     nó là thứ duy nhất giữ tiêu đề nằm giữa phần NHÌN THẤY thay vì giữa cả
+     section — tức bị header ăn mất một nửa lề trên.
+
+     Chỉ áp cho hero ĐẦU TRANG. Biên tập viên hoàn toàn có thể đặt thêm một
+     `heroSection` ở giữa trang; hero đó không bị header che nên không có gì
+     để chừa, thêm 132px đệm vào nó chỉ là một khoảng trống vô cớ. */
+  main > .rhl-hero:first-child {
+    padding-top: var(--header-h);
   }
 }
 

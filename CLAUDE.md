@@ -76,3 +76,43 @@ Muốn đưa site về chuẩn AA: đổi `--color-gold-text` sang `--color-gold
 (`#8f6a1c`, 4.59:1) và các token chữ trên nền vàng đậm sang
 `--color-cream-hi`, rồi xoá hai danh sách trong `a11y.spec.ts` — test sẽ tự
 chỉ ra chỗ nào còn sót. Mọi nhãn đều dùng token, không hardcode màu.
+
+## Header
+
+Header là `position: fixed` và **trôi trên ảnh hero**, không nằm bên trên nó.
+Toàn bộ phần nhìn thấy (hai trạng thái màu, nền kính, chiều cao, logo) nằm ở
+khối `.rhl-header` trong `app/globals.css`; `components/layout/HeaderShell.tsx`
+chỉ bật/tắt đúng một attribute `data-scrolled`.
+
+Bố cục: **một hàng duy nhất**, logo 120px nằm chính giữa và menu ngang bị cắt
+làm đôi ôm hai bên (`NavHalf` trong `Header.tsx`, chia theo số mục — 8 mục
+thành 4/4). Hàng này dùng lề ngang RIÊNG (16/20/24px) chứ không dùng
+`<Container>` — lý do ở comment ngay trên nó trong `Header.tsx`. Ngân sách bề
+ngang ở 1180px (ngưỡng `nav`, chật nhất): khung 1132px = menu 614 + logo 139 +
+chip ngôn ngữ 86 + nút đặt phòng 155, dư ~138px cho bốn khe. **Thêm mục vào
+menu, nới cỡ chữ hay phóng logo thì phải đo lại ở cả sáu ngôn ngữ** — đây đúng
+là chỗ đã hai lần sinh lỗi chồng lấn.
+
+Ba giao ước dễ phá nếu không biết:
+
+1. **`.rhl-hero` phải là con ĐẦU TIÊN của `<main>`** thì header mới chuyển
+   sang trạng thái trong suốt (chữ kem, logo trắng), và `<main>` mới bỏ phần
+   `padding-top` chừa cho header. Điều kiện viết bằng
+   `body:has(main > .rhl-hero:first-child)` — không có prop nào truyền tay, nên
+   trang nào đổi section đầu thì header tự đổi theo. Hero mới phải mang class
+   `rhl-hero` (hiện có: `HomeHero`, `HeroSection`, hero của `RoomPage`).
+2. **Chiều cao header chỉ khai ở `--header-h`** (`@theme` + media query
+   `73.75rem` ngay dưới). Ba nơi đọc nó: `main`, `main > .rhl-hero:first-child`,
+   và `scroll-margin-top`. Chép tay con số vào một trong ba chỗ là chữ chui
+   xuống dưới thanh ở lần đổi tiếp theo.
+3. **Không đặt `backdrop-filter` (hay `filter`, `transform`) lên chính
+   `<header>`.** Phần tử có các thuộc tính đó trở thành containing block cho
+   mọi con `position: fixed`, mà panel menu điện thoại (`MobileMenu`) là con
+   của header — nó sẽ bị neo vào khung header thay vì vào viewport. Bộ lọc
+   kính nằm ở `.rhl-header::before`.
+
+Màu của mọi control trong header (link menu, chip ngôn ngữ, nút đặt phòng, nút
+mở menu) đến từ sáu biến `--hdr-*` khai ở `.rhl-header`, dùng qua
+`.rhl-navlink` / `.rhl-chip` / `.rhl-cta` / `.rhl-burger`. **Đừng hardcode
+`text-ink`/`text-gold` vào control trong header** — trên ảnh hero tối chúng
+gần như vô hình.

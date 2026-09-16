@@ -25,7 +25,13 @@ export function HeroSection({
 }: any & { lang: Locale; isFirst?: boolean }) {
   return (
     <section
-      className={`on-dark relative flex items-end overflow-hidden ${
+      // `rhl-hero`: dấu cho biết section này là hero tối. Header đọc nó qua
+      // `body:has(main > .rhl-hero:first-child)` để chuyển sang trạng thái
+      // trôi trên ảnh, và `<main>` nhờ đó biết không phải chừa chỗ cho header
+      // (xem `app/globals.css`). Đặt ở MỌI hero chứ không chỉ khi `isFirst`:
+      // điều kiện "có phải section đầu không" đã do `:first-child` trả lời,
+      // giữ một nguồn sự thật thay vì hai.
+      className={`rhl-hero on-dark relative flex items-end overflow-hidden ${
         HEIGHTS[height as keyof typeof HEIGHTS] ?? HEIGHTS.medium
       }`}
     >

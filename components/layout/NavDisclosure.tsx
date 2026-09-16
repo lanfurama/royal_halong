@@ -78,7 +78,11 @@ export function NavDisclosure({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
-        className="text-ink hover:text-gold flex h-11 items-center gap-1.5 text-[0.6875rem] font-medium tracking-[0.05em] whitespace-nowrap uppercase transition-colors xl:text-[0.78125rem]"
+        // `.rhl-navlink` (app/globals.css) — cùng màu và cùng hover với link
+        // cấp 1 không có menu con, và tự đổi sáng/tối theo việc header đang
+        // trôi trên ảnh hero hay đã thành thanh kính kem. Không hardcode
+        // `text-ink` ở đây nữa: trên ảnh tối nó gần như vô hình.
+        className="rhl-navlink flex h-11 items-center gap-1.5 text-[0.6875rem] font-medium tracking-[0.05em] whitespace-nowrap uppercase xl:text-[0.78125rem]"
       >
         {label}
         <svg
@@ -101,10 +105,13 @@ export function NavDisclosure({
       <div
         id={panelId}
         hidden={!open}
-        // Header đã chuyển sang nền KEM (bản redesign) — panel nền tối của
-        // bản cũ sẽ trông như một mảng lạ treo dưới thanh sáng. Nền kem sáng
-        // hơn nền trang (`cream-soft`) + viền vàng mảnh + bóng ấm để tách
-        // khỏi nội dung phía sau mà vẫn cùng một tông.
+        // Nền kem ĐẶC, không mờ theo header: panel là một lớp nội dung đè lên
+        // trang, phải đọc được cả khi phía sau là ảnh hero. Sáng hơn nền trang
+        // (`cream-soft`) + viền vàng mảnh + bóng ấm để tách khỏi nội dung phía
+        // sau mà vẫn cùng một tông.
+        // KHÔNG chèn `mt-*` giữa nút và panel: nhóm này mở bằng hover, và một
+        // khe hở dù 4px cũng đủ để `onMouseLeave` bắn khi con trỏ đi ngang qua
+        // — menu con đóng ngay trước khi tay chạm tới nó.
         className="bg-cream-soft ring-gold/25 shadow-lift absolute top-full left-0 z-50 min-w-60 py-2 ring-1"
       >
         <ul>

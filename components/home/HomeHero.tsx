@@ -52,7 +52,13 @@ export function HomeHero({
         // `pb-*` chừa chỗ cho phần thanh đặt phòng kéo ngược lên (`-mt-*` bên
         // dưới, cùng cặp số): chữ hero nằm sát đáy vì `justify-end`, không có
         // đệm này thì thanh che mất dòng mô tả.
-        className="on-dark relative flex min-h-[86vh] min-h-[86dvh] flex-col justify-end pb-28 lg:pb-32"
+        //
+        // `rhl-hero`: đánh dấu "section này là hero tối". Header đọc dấu ấy
+        // qua `body:has(main > .rhl-hero:first-child)` để tự chuyển sang trạng
+        // thái trôi trên ảnh, và `<main>` nhờ đó biết KHÔNG phải chừa chỗ cho
+        // header (xem `app/globals.css`). Class cũng tự đặt `padding-top`
+        // bằng đúng chiều cao header.
+        className="rhl-hero on-dark relative flex min-h-[86vh] min-h-[86dvh] flex-col justify-end pb-28 lg:pb-32"
       >
         {section?.background && (
           <div className="absolute inset-0 overflow-hidden">

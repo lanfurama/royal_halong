@@ -92,8 +92,33 @@ export function LangSwitcher({ lang, slug }: { lang: Locale; slug?: SlugField | 
         // nhìn thấy chỉ là "VI"/"日本語" — không nói lên đây là nút gì.
         aria-label={`${ui('language', lang)}: ${LOCALE_LABELS[lang]}`}
         onClick={() => setOpen((value) => !value)}
-        className="text-muted hover:text-ink flex h-11 items-center gap-1.5 px-2 text-xs tracking-[0.04em] transition-colors"
+        // `.rhl-chip` (app/globals.css) lo màu + viền, và đổi theo việc header
+        // đang trôi trên ảnh hay đang là thanh kính kem. Ở đây chỉ còn hình
+        // học. Bản trước không có viền và dùng `--color-muted` — một nhãn mờ
+        // cạnh nút đặt phòng viền vàng thì không ai đọc ra là bấm được.
+        className="rhl-chip flex h-11 items-center gap-2 px-3 text-[0.6875rem] font-semibold tracking-[0.1em] uppercase"
       >
+        {/* Quả địa cầu: nói "đổi ngôn ngữ" mà không cần chữ, nên chip vẫn đọc
+            được ở mọi thứ tiếng kể cả khi mã locale ("TH", "JA") không gợi gì
+            cho người đang xem.
+            Ẩn dưới `sm`: ở 375px, chip cộng nút mở menu phải nằm lọt trong
+            nửa khung bên trái để logo giữ được vị trí chính giữa (xem lưới ở
+            `Header.tsx`) — 23px của icon là phần thừa duy nhất cắt được mà
+            không mất nghĩa, vì cạnh nó đã là chữ "VI" trong một khung viền. */}
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.25"
+          className="hidden shrink-0 sm:block"
+        >
+          <circle cx="8" cy="8" r="6.25" />
+          <path d="M1.75 8h12.5" />
+          <ellipse cx="8" cy="8" rx="3" ry="6.25" />
+        </svg>
         <span aria-hidden="true">{LOCALE_SHORT[lang]}</span>
         <svg
           width="10"
@@ -103,18 +128,22 @@ export function LangSwitcher({ lang, slug }: { lang: Locale; slug?: SlugField | 
           fill="none"
           stroke="currentColor"
           strokeWidth="1.5"
-          className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         >
           <path d="M2 4l3 3 3-3" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 
       {/* `hidden` (không chỉ opacity-0) để panel đang đóng nằm ngoài thứ tự
-          Tab — panel mờ nhưng vẫn focus được là lỗi bàn phím kinh điển. */}
+          Tab — panel mờ nhưng vẫn focus được là lỗi bàn phím kinh điển.
+          `left-0`: chip giờ nằm ở CỘT TRÁI của header (logo đã ra giữa), nên
+          panel thả xuống từ mép trái, không phải mép phải như bản cũ.
+          Nền kem đặc chứ không trong suốt theo header: đây là một lớp nội
+          dung đè lên trang, phải đọc được kể cả khi phía sau là ảnh hero. */}
       <ul
         id={panelId}
         hidden={!open}
-        className="bg-cream-soft ring-gold/25 shadow-lift absolute top-full right-0 z-50 min-w-40 py-1.5 ring-1"
+        className="bg-cream-soft ring-gold/25 shadow-lift absolute top-full left-0 z-50 mt-2 min-w-52 py-1.5 ring-1"
       >
         {LOCALES.map((locale) => {
           const active = locale === lang
@@ -129,11 +158,35 @@ export function LangSwitcher({ lang, slug }: { lang: Locale; slug?: SlugField | 
                 // Việt — ra âm vô nghĩa.
                 lang={locale}
                 aria-current={active ? 'true' : undefined}
-                className={`flex min-h-11 items-center px-4 text-sm transition-colors ${
+                className={`flex min-h-11 items-center gap-3 px-4 text-sm transition-colors ${
                   active ? 'text-gold-text font-semibold' : 'text-ink hover:bg-gold/8'
                 }`}
               >
-                {LOCALE_LABELS[locale]}
+                {/* Mã locale đứng trước tên đầy đủ: nó là thứ hiện trên chip,
+                    nên người dùng nối được "VI trên nút" với "VI trong danh
+                    sách" mà không phải đọc hiểu tên ngôn ngữ. Cột rộng cố định
+                    để sáu dòng thẳng hàng. */}
+                <span aria-hidden="true" className="text-gold-text w-7 shrink-0 text-[0.625rem] font-semibold tracking-[0.1em]">
+                  {LOCALE_SHORT[locale]}
+                </span>
+                <span className="min-w-0 flex-1">{LOCALE_LABELS[locale]}</span>
+                {/* Dấu tích cho ngôn ngữ đang chọn — `aria-current` đã nói
+                    điều đó cho screen reader, đây là phần nhìn thấy tương
+                    đương, không phải chỉ dựa vào chữ đậm. */}
+                {active && (
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    className="shrink-0"
+                  >
+                    <path d="M2 6.5l2.75 2.75L10 3.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
               </Link>
             </li>
           )

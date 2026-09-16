@@ -95,16 +95,17 @@ export function MobileMenu({
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="mobile-menu"
-        // Header giờ nền kem: icon phải là vàng/nâu, không phải trắng.
-        // Viền vàng mảnh biến nó thành một nút thấy rõ thay vì ba gạch trôi
-        // nổi — bản thiết kế vẽ đúng như vậy.
-        className="border-gold/25 text-gold flex size-11 items-center justify-center border nav:hidden"
+        // `.rhl-burger` (app/globals.css) lo màu + viền và đổi theo trạng thái
+        // header: vàng đồng trên thanh kính kem, vàng sáng khi header đang
+        // trôi trên ảnh hero. Ba gạch dùng `bg-current` để đi theo đúng màu
+        // ấy thay vì ghim `bg-gold` — trên ảnh tối, vàng đồng gần như biến mất.
+        className="rhl-burger flex size-11 shrink-0 items-center justify-center nav:hidden"
       >
         <span className="sr-only">{ui('openMenu', lang)}</span>
         <span aria-hidden="true" className="flex flex-col gap-[5px]">
-          <span className="bg-gold block h-[1.5px] w-5" />
-          <span className="bg-gold block h-[1.5px] w-5" />
-          <span className="bg-gold block h-[1.5px] w-3.5" />
+          <span className="block h-[1.5px] w-5 bg-current" />
+          <span className="block h-[1.5px] w-5 bg-current" />
+          <span className="block h-[1.5px] w-3.5 bg-current" />
         </span>
       </button>
 

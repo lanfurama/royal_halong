@@ -53,6 +53,18 @@ const DICT = {
     ja: 'メインメニュー（モバイル）',
     th: 'เมนูหลัก (มือถือ)',
   },
+  // Menu ngang desktop bị LOGO cắt làm đôi (xem `Header.tsx`), nên nó là hai
+  // vùng `<nav>` thật chứ không phải một. Hai vùng cùng vai trò mà trùng tên
+  // truy cập thì người dùng screen reader nghe "navigation, Menu chính" hai
+  // lần và không biết mình đang ở nửa nào — nửa sau phải có tên riêng.
+  mainMenuMore: {
+    vi: 'Menu chính (phần tiếp)',
+    en: 'Main menu (continued)',
+    zh: '主菜单（续）',
+    ko: '주 메뉴(계속)',
+    ja: 'メインメニュー（続き）',
+    th: 'เมนูหลัก (ต่อ)',
+  },
   language: { vi: 'Ngôn ngữ', en: 'Language', zh: '语言', ko: '언어', ja: '言語', th: 'ภาษา' },
 
   about: {
