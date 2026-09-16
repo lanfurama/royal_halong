@@ -41,7 +41,7 @@ export function NewsletterForm({ lang }: { lang: Locale }) {
         placeholder={placeholder}
         aria-invalid={state.fieldErrors?.email ? 'true' : undefined}
         aria-describedby={state.fieldErrors?.email ? 'newsletter-email-error' : undefined}
-        className="border-line focus:border-ink focus:outline-ink min-w-0 flex-1 border bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1"
+        className="border-line focus:border-ink focus:outline-ink min-h-11 min-w-0 flex-1 rounded-card border bg-white px-3.5 py-2 text-sm focus:outline-2 focus:outline-offset-1"
       />
       {/*
         Nền footer là `bg-gold` (xem Footer.tsx) — một nút `solid` (cũng nền
@@ -53,7 +53,10 @@ export function NewsletterForm({ lang }: { lang: Locale }) {
       <button
         type="submit"
         disabled={pending}
-        className={`${BUTTON_BASE_CLASSES} bg-ink text-white hover:bg-ink/80 focus-visible:outline-white px-6 py-2 disabled:opacity-60`}
+        // `inline-flex min-h-11` — nút này đo được 38px cao trên bản
+        // production, dưới ngưỡng 44px, và nó nằm ngay cạnh ô email trong
+        // một hàng `flex` chật ở 390px.
+        className={`${BUTTON_BASE_CLASSES} bg-ink text-white hover:bg-ink/80 focus-visible:outline-white inline-flex min-h-11 items-center justify-center rounded-pill px-6 py-2 disabled:opacity-60`}
       >
         {pending ? (lang === 'vi' ? 'Đang gửi...' : 'Sending...') : submit}
       </button>

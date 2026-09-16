@@ -3,7 +3,7 @@
 @theme {
   /* Màu thương hiệu — lấy từ salient-dynamic-styles.css của bản gốc */
   --color-gold: #bf8d2c;       /* trên trắng 2.97 — CHỈ dùng làm nền/viền/icon */
-  --color-gold-hi: #d19f2b;    /* trên trắng 2.41 — CHỈ nền/viền/icon */
+  --color-gold-hi: #d19f2b;    /* trên trắng 2.41 — CHỈ nền/viền/icon; trên ink 8.21 -> dùng được làm chữ nhỏ trên nền tối */
   --color-gold-deep: #9b7f22;  /* trên trắng 3.85 — chữ >= 24px hoặc >= 19px bold */
   --color-gold-text: #896520;  /* trên trắng 5.32, trên cream 4.55 — chữ nhỏ */
   --color-ink: #0a0a0a;
@@ -13,11 +13,38 @@
   --color-sky: #98c8e8;        /* trang trí, không làm chữ trên nền sáng */
   --color-peach: #ffac66;      /* trang trí, không làm chữ trên nền sáng */
 
+  /* Nền phụ trợ thêm ở bản redesign — chỉ là màu NỀN, không bao giờ làm chữ.
+     `cream-soft` là bản nhạt hơn của cream để xen kẽ hai dải sáng liền nhau
+     mà không tạo đường cắt cứng; `ink-soft` là nền tối thứ hai (footer trên,
+     overlay) đủ tối để chữ trắng vẫn > 15:1. */
+  --color-cream-soft: #faf6f1;
+  --color-ink-soft: #141210;
+
+  /* Chữ phụ TRÊN NỀN GOLD (chân trang). Đây là giá trị ĐẶC, không phải
+     `text-ink/80`: axe bắt được `text-ink/70` chỉ đạt **4.23:1** trên
+     `bg-gold` — trượt ngưỡng 4.5 cho chữ thường. Opacity lên chữ luôn là
+     phép nhân với một nền mà tác giả phải tự nhớ, nên một lần chỉnh sau này
+     rất dễ tụt dưới ngưỡng mà không ai biết. Màu này = ink phủ 80% trên
+     gold, đo lại ra **5.14:1** — đặt tên và khoá lại. CHỈ dùng trên gold. */
+  --color-ink-muted: #2e2411;
+
   /* Font — biến do lib/fonts.ts gán */
   --font-display: var(--font-arsenal), Georgia, serif;
   --font-body: var(--font-inter), system-ui, sans-serif;
   --font-accent: var(--font-cormorant), Georgia, serif;
   --font-alt: var(--font-fahkwang), system-ui, sans-serif;
+
+  /* Bo góc — một thang duy nhất cho toàn site. Trước bản này mọi thứ vuông
+     góc 0px; thang này giữ mức vừa phải (không bo tròn kiểu app) để vẫn hợp
+     với khách sạn 5 sao. */
+  --radius-card: 0.75rem;   /* 12px — thẻ, ảnh, khối nội dung */
+  --radius-media: 1rem;     /* 16px — khối ảnh lớn, bản đồ */
+  --radius-pill: 999px;     /* nút tròn, chip, chấm carousel */
+
+  /* Đổ bóng — rất nhẹ, chỉ để tách thẻ khỏi nền kem, không tạo cảm giác
+     "material card". Dùng tông nâu của thương hiệu thay vì đen thuần. */
+  --shadow-card: 0 1px 2px rgb(58 42 16 / 0.06), 0 8px 24px -12px rgb(58 42 16 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(58 42 16 / 0.08), 0 18px 40px -18px rgb(58 42 16 / 0.28);
 }
 
 @layer base {
@@ -28,5 +55,78 @@
     font-size: 16px;
     line-height: 1.6;
   }
-  h1, h2, h3 { font-family: var(--font-display); }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    /* Tiêu đề trang chủ là tiếng Việt viết hoa, rất dài ("CẢM NHẬN THIẾT KẾ
+       HIỆN ĐẠI VÀ KHÔNG KHÍ THƯ GIÃN"). Mặc định trình duyệt ngắt dòng tham
+       lam, để lại dòng cuối trơ trọi một hai chữ — đã thấy ở cả 390px và
+       1440px. `balance` chia đều các dòng; chỉ áp cho tiêu đề (spec giới hạn
+       ~6 dòng), không áp cho đoạn văn. */
+    text-wrap: balance;
+    line-height: 1.15;
+  }
+
+  /* Neo cuộn: header dính cao 72px (80px ở lg) che mất đầu section khi nhảy
+     tới anchor. Chừa sẵn khoảng trống đúng bằng chiều cao header. */
+  :where(section, h2, h3) {
+    scroll-margin-top: 5.5rem;
+  }
+
+  /* Viền focus mặc định cho MỌI control. Trước bản này chỉ `Button` và vài
+     chỗ rời rạc khai focus-visible; phần còn lại (link chân trang, chấm
+     carousel, mũi tên) rơi về outline mặc định của trình duyệt, màu xanh
+     lam — vừa lạc tông vừa gần như vô hình trên nền kem. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-gold-deep);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  /* Trên nền tối, gold-deep (3.85 trên trắng) tụt xuống dưới 3:1 so với ink.
+     gold-hi đạt 8.21:1 trên ink — đổi màu viền theo nền, không đổi độ dày. */
+  :where(.on-dark) :where(a, button, input, [tabindex]):focus-visible {
+    outline-color: var(--color-gold-hi);
+  }
+}
+
+@layer utilities {
+  /* Lớp phủ gradient cho chữ đè ảnh — thay cho `bg-black/45` phẳng trước đây
+     vốn làm xám đều cả bức ảnh.
+     Các mốc KHÔNG chọn bằng mắt. Ràng buộc: ảnh nền có thể sáng bất kỳ, nên
+     phải tính theo trường hợp xấu nhất là nền TRẮNG (L = 1.0). Chữ trắng trên
+     lớp đen độ đục `a` phủ nền trắng cho L = 1 - a, và
+        contrast = 1.05 / (L + 0.05) >= 4.5  <=>  a >= 0.817.
+     Vì vậy toàn bộ dải có chữ giữ `a >= 0.86`, chỉ nhả dần ở 20% trên cùng —
+     nơi không có chữ, chỉ để gradient không cắt thành một đường ngang.
+     Áp lên CHÍNH khối chứa chữ (kèm padding-top rộng làm vùng chuyển), không
+     áp lên một lớp cao theo % chiều cao thẻ: chiều cao chữ đổi theo độ dài
+     tiêu đề, nên neo theo % thẻ là cách chắc chắn để một ngày nào đó chữ trôi
+     ra khỏi vùng đủ tối. */
+  .scrim-bottom {
+    background-image: linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.92) 0%,
+      rgb(0 0 0 / 0.86) 62%,
+      rgb(0 0 0 / 0.45) 84%,
+      rgb(0 0 0 / 0) 100%
+    );
+  }
+
+  /* Scrim cho hero và dải CTA. Cùng ràng buộc tính toán như `.scrim-bottom`:
+     ảnh nền do biên tập viên chọn, có thể là ảnh ban ngày gần trắng, nên các
+     mốc phải đủ tối cho TRƯỜNG HỢP XẤU NHẤT chứ không phải cho đúng bức ảnh
+     đang dùng hôm nay (ảnh hero hiện tại chụp lúc hoàng hôn, vốn đã tối ở
+     đáy — nếu chỉnh theo nó thì ngày đổi ảnh là hỏng).
+     Khối chữ nằm ở 40% dưới: giữ `a >= 0.82` suốt dải đó (đủ 4.5:1 cho phụ
+     đề 16px trên nền trắng). Phần trên nhả xuống 0.28 — vừa đủ để logo và
+     menu trắng của header dính ở đỉnh vẫn đọc được trên mọi ảnh. */
+  .scrim-hero {
+    background-image: linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.88) 0%,
+      rgb(0 0 0 / 0.82) 38%,
+      rgb(0 0 0 / 0.5) 62%,
+      rgb(0 0 0 / 0.28) 100%
+    );
+  }
 }

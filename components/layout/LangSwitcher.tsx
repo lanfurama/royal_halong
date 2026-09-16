@@ -19,7 +19,11 @@ export function LangSwitcher({ lang, slug }: { lang: Locale; slug?: SlugField | 
   const pathname = usePathname()
 
   return (
-    <div className="flex items-center gap-2 text-xs tracking-wider uppercase">
+    // Đo được trước bản này: hai link "VI"/"EN" chỉ 13×16px và 17×16px —
+    // nhỏ hơn ngưỡng 44px gần ba lần, ngay cạnh nhau nên rất dễ bấm nhầm.
+    // `size-11` cho vùng chạm đủ 44×44 mà chữ vẫn giữ nguyên cỡ 12px, và
+    // `-mx-1` kéo lại phần lề thừa để cụm không chiếm thêm bề ngang header.
+    <div className="-mx-1 flex items-center text-xs tracking-wider uppercase">
       {LOCALES.map((locale) => {
         // Bug thật: hoán prefix thuần (`/vi/<slug-vi>` -> `/en/<slug-vi>`)
         // giả định slug giống nhau ở mọi locale. `hreflang` (`lib/seo.ts`,
@@ -46,7 +50,9 @@ export function LangSwitcher({ lang, slug }: { lang: Locale; slug?: SlugField | 
             href={href}
             hrefLang={locale}
             aria-current={active ? 'true' : undefined}
-            className={active ? 'text-gold-hi font-semibold' : 'text-white/70 hover:text-white'}
+            className={`flex size-11 items-center justify-center transition-colors ${
+              active ? 'text-gold-hi font-semibold' : 'text-white/70 hover:text-white'
+            }`}
           >
             {locale.toUpperCase()}
           </Link>

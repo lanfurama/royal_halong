@@ -8,8 +8,15 @@ import Link from 'next/link'
 // `px-0` đứng sau `px-6` trong cùng chuỗi KHÔNG thắng. Đã đo trên
 // `/vi/luu-tru-...`: padding ngang thực tế vẫn là 24px dù gọi
 // `className="px-0"`.
+//
+// `display` cũng KHÔNG nằm ở đây, vì đúng lý do trên: mọi variant giờ dùng
+// `inline-flex` (để `min-h-11` canh giữa được nhãn), và một `inline-block`
+// sót lại trong BASE sẽ tranh chấp cùng nhóm utility — Tailwind xử theo thứ
+// tự trong stylesheet, không theo thứ tự chuỗi, nên kết quả phụ thuộc may
+// rủi. `<button>` của LeadForm/NewsletterForm vốn đã là inline-block mặc
+// định nên không mất gì khi bỏ khai báo này.
 export const BUTTON_BASE_CLASSES =
-  'inline-block text-sm font-semibold tracking-wide uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2'
+  'text-sm font-semibold tracking-wide uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2'
 
 // Viền focus PHẢI đạt 3:1 với màu nền ngay dưới nó (SC 1.4.11), không phải
 // với nền trang. `outline-gold-deep` trên chính nền `gold` chỉ 1.30:1 — gần
@@ -30,19 +37,35 @@ export const BUTTON_VARIANT_COLORS = {
   ghost: 'text-gold-text hover:underline focus-visible:outline-gold-deep',
 } as const
 
+// `inline-flex items-center` + `min-h-11` bảo đảm 44px chiều cao thật kể cả
+// khi nhãn xuống dòng hoặc cỡ chữ bị ghi đè — `py-3` đơn thuần chỉ tình cờ ra
+// đúng 44px với line-height của `text-sm` và vỡ ngay khi một trong hai đổi.
+const BUTTON_SHAPE = 'inline-flex min-h-11 items-center justify-center rounded-pill'
+
 export const BUTTON_VARIANTS = {
-  solid: `${BUTTON_VARIANT_COLORS.solid} px-6 py-3`,
-  outline: `${BUTTON_VARIANT_COLORS.outline} px-6 py-3`,
+  solid: `${BUTTON_SHAPE} ${BUTTON_VARIANT_COLORS.solid} px-6 py-3`,
+  outline: `${BUTTON_SHAPE} ${BUTTON_VARIANT_COLORS.outline} px-6 py-3`,
   // Kiểu link chữ trần — cố tình không có đệm ngang, chỉ đệm dọc cho vùng bấm/focus.
-  ghost: `${BUTTON_VARIANT_COLORS.ghost} py-3`,
+  ghost: `${BUTTON_VARIANT_COLORS.ghost} inline-flex min-h-11 items-center py-3`,
 } as const
+
+// CTA dạng link chữ trong thẻ và khối ảnh-chữ ("XEM THÊM", "KHÁM PHÁ").
+// Trước bản này ba nơi (CardGridSection, ImageTextSection, OfferPage) tự viết
+// tay `mt-4 inline-block text-sm ... underline` — đo trên production ra chiều
+// cao **16px**, thấp hơn ngưỡng 44px gần ba lần, mà đó lại chính là đường đi
+// tiếp của mỗi thẻ.
+// Bỏ gạch chân thường trực (giữ `hover:underline` từ variant `ghost`): chữ
+// hoa cỡ nhỏ có dấu tiếng Việt bị gạch chân cắt qua phần dấu dưới. Khả năng
+// nhận ra "đây là link" vẫn còn nhờ màu vàng + in đậm + viết hoa + tách khỏi
+// đoạn văn, chứ không chỉ dựa vào màu.
+export const LINK_CTA_CLASSES = `${BUTTON_BASE_CLASSES} ${BUTTON_VARIANT_COLORS.ghost} group/cta mt-5 inline-flex min-h-11 items-center gap-2`
 
 // Nút CTA to (hero, dải CTA, trang ưu đãi) dùng chung MỘT định nghĩa — trước
 // đây 3 file (HeroSection, CtaBandSection, OfferPage) tự chép cùng một chuỗi
 // class tay, không qua Button vì `SmartLink` tự resolve href/label nên không
 // gọi `<Button>` trực tiếp được. Kết quả: viền focus `outline-ink` (SC
 // 1.4.11) bị thiếu ở cả 3 chỗ. Giờ cả 3 import hằng số này thay vì tự viết.
-export const CTA_BAND_BUTTON_CLASSES = `${BUTTON_BASE_CLASSES} ${BUTTON_VARIANT_COLORS.solid} mt-8 px-8 py-3`
+export const CTA_BAND_BUTTON_CLASSES = `${BUTTON_BASE_CLASSES} ${BUTTON_SHAPE} ${BUTTON_VARIANT_COLORS.solid} mt-8 px-8 py-3`
 
 export function Button({
   href,
