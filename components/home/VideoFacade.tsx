@@ -50,7 +50,9 @@ export function youTubeId(url: string | null | undefined): string | null {
  *
  * 1. **Xem trước tại chỗ** — tự chạy, TẮT TIẾNG, lặp, không có thanh điều
  *    khiển, phủ kín khung ảnh dọc 4:5 của bản thiết kế.
- * 2. **Bấm vào** — mở lightbox 16:9 có tiếng và có điều khiển đầy đủ.
+ * 2. **Bấm vào** — mở lightbox 16:9 có tiếng và có điều khiển đầy đủ. Nút
+ *    phát chỉ hiện thường trực khi chưa có bản xem trước; lúc video đang
+ *    chạy nó ẩn và hiện lại khi rê chuột / focus.
  *
  * Vì sao phải tách hai tầng thay vì nhúng một iframe cho xong: khung của bản
  * thiết kế là ẢNH DỌC 4:5, còn video là 16:9. Nhét thẳng 16:9 vào 4:5 thì
@@ -178,7 +180,18 @@ export function VideoFacade({
           />
         )}
 
-        <span aria-hidden="true" className="absolute inset-0 grid place-items-center">
+        {/* Nút phát là lối vào lightbox có tiếng, nên luôn tồn tại. Nhưng
+            khi bản xem trước ĐANG CHẠY thì một nút "phát" nổi cố định trên
+            một video đang phát là mâu thuẫn — ẩn đi, chỉ hiện lại khi rê
+            chuột hoặc Tab vào khung. Lúc chưa nạp (ảnh tĩnh, reduced-motion,
+            mạng chậm) nút hiện thường trực vì đó là dấu hiệu duy nhất cho
+            biết đây là video. */}
+        <span
+          aria-hidden="true"
+          className={`absolute inset-0 grid place-items-center transition-opacity duration-300 ${
+            preview ? 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100' : ''
+          }`}
+        >
           <span className="border-gold rhl-animate grid size-21 place-items-center rounded-pill border bg-[rgb(143_106_28/0.8)] backdrop-blur-[6px] transition-transform duration-300 group-hover:scale-110 [animation:rhl-pulse_2.4s_infinite]">
             {/* Tam giác dựng bằng viền CSS, đúng bản thiết kế — không cần tải
                 thêm một icon SVG cho một hình ba cạnh. `ml` bù phần lệch tâm
