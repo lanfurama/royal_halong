@@ -27,8 +27,20 @@
      này có 8 mục cấp 1, tổng bề ngang 614px ở cỡ chữ nhỏ nhất; cộng thương
      hiệu + chuyển ngôn ngữ + nút đặt phòng thì 1024px thiếu ~180px và mục
      cuối ("ƯU ĐÃI") đè lên nút ngôn ngữ. Cũng không dùng `xl` (1280) vì như
-     thế dải 1180–1279 mất menu ngang một cách vô cớ. */
-  --breakpoint-nav: 1180px;
+     thế dải 1180–1279 mất menu ngang một cách vô cớ.
+
+     VIẾT BẰNG `rem`, ĐỪNG ĐỔI LẠI THÀNH `1180px`. Tailwind v4 sắp các
+     `@media` theo giá trị breakpoint, nhưng nó KHÔNG so được `px` với `rem`
+     — mọi breakpoint khai bằng px bị xuất ra TRƯỚC toàn bộ breakpoint rem
+     mặc định (sm/md/lg/xl/2xl đều là rem). Với `1180px`, khối
+     `@media (min-width:1180px)` nằm trước `@media (min-width:40rem)`, nên ở
+     dải 1180–1535 `sm:flex` thắng `nav:hidden` do đứng sau trong cascade:
+     tên khách sạn ở `Header.tsx` lẽ ra phải ẩn thì vẫn hiện và ĐÈ LÊN menu
+     (đo được −176px ở 1180px, −94px ở 1300px). `73.75rem` = 1180px ở cỡ chữ
+     gốc mặc định, cùng đơn vị nên xếp đúng chỗ: lg(64) < nav(73.75) < xl(80).
+     Kèm thêm: breakpoint theo rem giãn theo cỡ chữ người dùng đặt, giống mọi
+     breakpoint còn lại. */
+  --breakpoint-nav: 73.75rem;
 
   /* --- Trục vàng đồng --- */
   /* Vàng chủ đạo: viền, nền nhỏ, icon, và (theo chỉ đạo) cả nhãn eyebrow. */

@@ -108,10 +108,15 @@ export function HeroBookingBar({
   const cell =
     'border-gold/20 flex flex-col gap-2 border-b px-5 py-4 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0'
   const label = 'text-gold text-[0.625rem] tracking-[0.14em] uppercase'
+  // `min-h-11` / `size-11` = 44px. Không phải trang trí: `<input type="date">`
+  // và `<select>` ở đây đo được 28px và 26px — bấm trúng được trên chuột,
+  // nhưng đây là ô đầu tiên khách chạm vào trên điện thoại. Phần còn lại của
+  // site đã theo đúng ngưỡng này (`Button`, `Footer`, `MobileMenu`,
+  // `NavDisclosure`…); thanh đặt phòng là chỗ duy nhất còn sót.
   const value =
-    'font-display text-ink w-full min-w-0 border-none bg-transparent p-0 text-lg outline-none [color-scheme:light]'
+    'font-display text-ink min-h-11 w-full min-w-0 border-none bg-transparent p-0 text-lg outline-none [color-scheme:light]'
   const stepper =
-    'border-gold/40 text-gold hover:bg-gold hover:text-cream-hi grid size-8 shrink-0 place-items-center border text-lg leading-none transition-colors'
+    'border-gold/40 text-gold hover:bg-gold hover:text-cream-hi grid size-11 shrink-0 place-items-center border text-lg leading-none transition-colors'
 
   return (
     <form

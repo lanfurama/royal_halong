@@ -38,11 +38,11 @@ export function HomeIntro({
   const stats = parseTravelStats(blocksToPlainText(locationBlocks))
 
   return (
-    // `pt-44` (176px) chừa chỗ cho nửa dưới của thanh đặt phòng đang đè lên
-    // từ hero (`HomeHero` dùng `translate-y-1/2`). Thanh đó cao ~150–230px
-    // tuỳ bề ngang, nên phần đè xuống là ~75–115px; 176px còn dư khoảng thở.
-    // Sửa chiều cao thanh đặt phòng thì phải xem lại con số này.
-    <section className="pt-44 pb-20 lg:pb-24">
+    // Đệm trên là khoảng thở bình thường, KHÔNG phải chỗ chừa cho thanh đặt
+    // phòng: từ bản này thanh đó nằm trong luồng và tự chiếm chỗ (xem ghi chú
+    // ở `HomeHero`). Trước đây chỗ này là `pt-44` — một con số buộc phải khớp
+    // với chiều cao thanh, và đã đè lên chữ ở 390px khi thanh xếp 1 cột.
+    <section className="pt-16 pb-20 lg:pt-24 lg:pb-24">
       <Container size="wide">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-14">
           <div>

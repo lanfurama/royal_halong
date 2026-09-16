@@ -101,13 +101,29 @@ export function Header({
               liệu biên tập viên sửa được. Dòng phụ bên dưới là phần trang
               trí của bản thiết kế và đúng với thực tế khách sạn (156 phòng 5
               sao + 11 villa). */}
-          {/* Hiện từ `sm`, ẨN LẠI trong dải 1180–1535px, hiện lại từ `2xl`.
-              Dải giữa là lúc menu ngang xuất hiện: đo được 8 mục cấp 1 cần
-              ~750px, cộng khối tên 258px + chuyển ngôn ngữ + nút đặt phòng
-              thì 1180px thiếu chỗ và mục cuối đè lên nút ngôn ngữ. Logo
-              (chữ R trong khung bầu dục) vẫn ở lại, nên thương hiệu không
-              biến mất — chỉ phần chữ nhường chỗ cho điều hướng. */}
-          <span className="hidden flex-col leading-none sm:flex nav:hidden 2xl:flex">
+          {/* Hiện từ `sm`, ẨN từ `nav` (1180px) trở lên — tức là hễ menu
+              ngang có mặt thì khối chữ nhường chỗ. Logo (chữ R trong khung
+              bầu dục) vẫn ở lại, nên thương hiệu không biến mất.
+
+              KHÔNG có `2xl:flex` để hiện lại chữ ở màn rộng, dù trông có vẻ
+              màn rộng thì thừa chỗ. Hàng header bị chặn `max-w-[87.5rem]`
+              (1400px), nên bề ngang dùng được ĐỨNG YÊN ở 1320px kể từ
+              1536px trở đi — kéo màn hình rộng thêm không sinh ra một pixel
+              nào. Đo ở 2560px: nav 810 + cụm phải 197 + logo 60 + gap 12
+              chừa lại 241px, trong khi chữ cần 245px. Thiếu 4px, và thiếu
+              mãi mãi. Bản trước có `2xl:flex` nên từ 1536px chữ hiện lại rồi
+              đè lên mục menu đầu tiên (đo được −5px ở 1536, −29px ở 1920).
+              Muốn đưa chữ trở lại thì phải giành thêm chỗ THẬT trước — nới
+              `max-w`, thu `gap` của nav, hoặc giảm cỡ chữ tên — rồi mới bật
+              lại; nhớ đo bằng cả 6 ngôn ngữ vì nhãn menu mỗi thứ tiếng một
+              bề ngang. */}
+          {/* `min-w-0` là lưới an toàn, giữ lại kể cả khi chữ đã ẩn ở dải
+              nav: thiếu nó, khối này giữ `min-width:auto` (mặc định của flex
+              item) nên không co theo `<Link>` được, và `truncate` ngay bên
+              dưới không bao giờ kích hoạt — chữ tràn khỏi cha thay vì bị
+              cắt. `min-w-0` trên `<Link>` (đã có sẵn) chỉ mở khoá cho CHÍNH
+              `<Link>` co, không truyền xuống con. */}
+          <span className="hidden min-w-0 flex-col leading-none sm:flex nav:hidden">
             <span className="font-display text-ink truncate text-[1.1875rem] font-bold tracking-[0.06em]">
               {brand}
             </span>

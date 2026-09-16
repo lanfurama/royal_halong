@@ -138,10 +138,13 @@ export function HomeReviewMap({
                     aria-label={`${ui('viewReview', lang)} ${dotIndex + 1}`}
                     aria-current={dotIndex === index ? 'true' : undefined}
                     // Vạch nhìn thấy chỉ cao 2px, nhưng nút bọc cao 44px nên
-                    // vẫn bấm trúng bằng ngón cái. `py-5` tạo vùng chạm,
-                    // `-my-5` thu lại khoảng chiếm chỗ để hàng vạch không đẩy
-                    // bố cục cao thêm 40px.
-                    className="group -my-5 py-5"
+                    // vẫn bấm trúng bằng ngón cái. `py-[21px]` tạo vùng chạm,
+                    // `-my-[21px]` thu lại khoảng chiếm chỗ để hàng vạch không
+                    // đẩy bố cục cao thêm.
+                    //
+                    // 21 chứ không phải 20: `py-5` cho 20+2+20 = 42px, hụt
+                    // ngưỡng 44px mà chính ghi chú này khẳng định là đã đạt.
+                    className="group -my-[21px] py-[21px]"
                   >
                     <span
                       className={`block h-0.5 transition-all duration-400 ${
