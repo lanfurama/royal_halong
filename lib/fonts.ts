@@ -19,8 +19,29 @@ import { Playfair_Display, Be_Vietnam_Pro } from 'next/font/google'
  * khai style italic, trình duyệt tự làm nghiêng giả (skew) — trông gãy ở cỡ
  * chữ lớn của serif.
  */
+/**
+ * Danh sách weight dưới đây được chốt bằng ĐO, không phải đoán: quét
+ * `getComputedStyle` trên 8 trang của bản production (`/vi`, casino, deluxe,
+ * news, our-gallery, convention, reservation, offers) rồi đối chiếu với
+ * trạng thái `document.fonts`.
+ *
+ * Đã BỎ vì không trang nào dùng (cả 8 trang đều báo `unloaded`):
+ * - Playfair Display 500
+ * - Be Vietnam Pro 300
+ *
+ * Đã THÊM `700` cho Be Vietnam Pro: quét thấy trình duyệt yêu cầu weight
+ * 700 và 900 ở 2/8 trang trong khi config cũ dừng ở 600, nên nó phải LÀM ĐẬM
+ * GIẢ (kéo giãn nét). Nguồn là thẻ `<strong>` trong nội dung Sanity —
+ * `font-weight: bolder` tính tương đối so với chữ xung quanh, nên trong một
+ * đoạn đã 600 thì `bolder` nhảy lên 900. Khai 700 làm nó có nét thật để
+ * dùng; xem thêm rule ghim `strong` trong `globals.css`.
+ *
+ * Playfair chỉ thật sự cần italic ở weight 400 (trích dẫn khách), nhưng
+ * `next/font` áp `style` cho MỌI weight — không khai riêng theo từng cặp
+ * được. Ba weight × hai style là mức nhỏ nhất còn đúng.
+ */
 export const display = Playfair_Display({
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '600', '700'],
   style: ['normal', 'italic'],
   subsets: ['latin', 'vietnamese'],
   display: 'swap',
@@ -28,7 +49,7 @@ export const display = Playfair_Display({
 })
 
 export const body = Be_Vietnam_Pro({
-  weight: ['300', '400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
   subsets: ['latin', 'vietnamese'],
   display: 'swap',
   variable: '--font-be-vietnam',

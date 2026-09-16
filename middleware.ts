@@ -43,6 +43,26 @@ export function middleware(request: NextRequest) {
   return NextResponse.redirect(url, 308)
 }
 
+/**
+ * Matcher phải LOẠI SẴN đúng những path mà hàm trên vốn đã bỏ qua.
+ *
+ * Bản trước là `'/((?!_next/static|_next/image).*)'` — chỉ chừa hai đường
+ * `_next`, nên middleware vẫn CHẠY cho `/api/*`, `/studio/*`, `/favicon.ico`,
+ * `/robots.txt`, `/sitemap.xml` và mọi file trong `public/` (ô bản đồ, icon
+ * Leaflet, icon PWA…). Hàm return sớm ngay lập tức, nhưng trên Vercel thì
+ * lần chạy ĐÃ TÍNH RỒI: Edge Middleware tính theo lượt gọi, không theo việc
+ * nó làm gì. Một lượt xem trang chủ kéo theo hàng chục request asset, mỗi
+ * cái một lượt gọi vô ích.
+ *
+ * Bốn nhánh loại trừ dưới đây là bản dịch nguyên văn của bốn điều kiện
+ * return sớm trong hàm. Giữ CẢ HAI chỗ là cố ý, không phải trùng lặp thừa:
+ * matcher cắt chi phí, các điều kiện trong hàm giữ đúng hành vi nếu sau này
+ * ai đó nới matcher ra. Sửa một bên thì phải xem lại bên kia.
+ *
+ * `.*\.[a-zA-Z0-9]+$` khớp đúng khái niệm "có phần mở rộng file" của
+ * `isStaticAssetPath()` — chặn theo HÌNH DẠNG chứ không liệt kê từng tên,
+ * vì lý do đã ghi ở ghi chú của hàm đó.
+ */
 export const config = {
-  matcher: ['/((?!_next/static|_next/image).*)'],
+  matcher: ['/((?!api(?:/|$)|studio(?:/|$)|_|\\.well-known|.*\\.[a-zA-Z0-9]+$).*)'],
 }

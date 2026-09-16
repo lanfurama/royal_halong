@@ -1,9 +1,10 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { t, type Locale } from '@/lib/i18n'
 import { ui } from '@/lib/ui-strings'
+import { useNearViewport } from '@/lib/use-near-viewport'
 import { Container } from '@/components/ui/Container'
 
 // Leaflet đụng `window` khi import -> bắt buộc tắt SSR. Khung chờ tải phải
@@ -60,6 +61,8 @@ export function HomeReviewMap({
   const list = ((testimonials ?? []) as any[]).filter((item) => t<string>(item?.quote, lang))
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapNear = useNearViewport(mapRef)
 
   useEffect(() => {
     if (paused || list.length < 2) return
@@ -168,8 +171,21 @@ export function HomeReviewMap({
               và để người dùng screen reader biết vùng này là gì. */}
           <h2 className="sr-only">{heading}</h2>
 
-          <div className="ring-gold/20 h-full w-full overflow-hidden ring-1">
-            <LeafletMap lat={lat} lng={lng} zoom={zoom} className="h-full min-h-[460px] w-full" />
+          {/* Chỉ dựng bản đồ khi nó trôi tới gần khung nhìn — xem
+              `lib/use-near-viewport.ts`. `next/dynamic` một mình vẫn nạp
+              ngay lúc render; đo trên bản production thì Leaflet + ô bản đồ
+              OSM về hết trước khi người xem cuộn quá khối giới thiệu.
+
+              Chỗ giữ chỗ KHÔNG `animate-pulse` như fallback `loading` của
+              `dynamic()`: khối này nằm ngoài màn hình phần lớn thời gian,
+              một animation chạy vô ích ở đó chỉ tốn thêm lần vẽ lại. Pulse
+              vẫn còn ở đúng lúc có nghĩa — khi chunk đang thật sự tải. */}
+          <div ref={mapRef} className="ring-gold/20 h-full w-full overflow-hidden ring-1">
+            {mapNear ? (
+              <LeafletMap lat={lat} lng={lng} zoom={zoom} className="h-full min-h-[460px] w-full" />
+            ) : (
+              <div className="bg-cream h-full min-h-[460px] w-full" aria-hidden="true" />
+            )}
           </div>
 
           {/* `z-[500]`: các pane của Leaflet nằm ở z-index 200–700, một lớp

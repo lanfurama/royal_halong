@@ -5,6 +5,7 @@ import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 import type { Locale } from '@/lib/i18n'
 import { ui } from '@/lib/ui-strings'
+import { useNearViewport } from '@/lib/use-near-viewport'
 
 /**
  * Lấy id video từ các dạng URL YouTube thường gặp. Trả `null` cho mọi thứ
@@ -42,12 +43,18 @@ export function youTubeId(url: string | null | undefined): string | null {
  * của YouTube cho một video phần lớn không xem. Chủ dự án chọn đổi sang tự
  * chạy. Hai thứ dưới đây giữ lại phần lớn lợi ích đó, ĐỪNG BỎ:
  *
- * - `IntersectionObserver`: iframe chỉ nạp khi khối trôi tới gần khung nhìn.
- *   Khối này nằm dưới màn hình đầu, nên khách thoát ở hero không trả đồng
- *   nào. Bỏ nó đi là quay lại đúng chi phí mà cả mẫu facade cố tránh.
- * - `prefers-reduced-motion`: bật thì KHÔNG nạp bản xem trước, giữ ảnh tĩnh
- *   + nút phát. Một video tự chạy lặp vô hạn là đúng thứ cờ này nói là
- *   không muốn.
+ * - Hoãn theo khung nhìn (`useNearViewport`): iframe chỉ nạp khi khối trôi
+ *   tới gần màn hình. Khối này nằm dưới màn hình đầu, nên khách thoát ở hero
+ *   không trả đồng nào. Bỏ nó đi là quay lại đúng chi phí mà mẫu facade cố
+ *   tránh.
+ * - `prefers-reduced-motion` và mạng chậm / tiết kiệm dữ liệu: không nạp bản
+ *   xem trước, giữ ảnh tĩnh + nút phát (xem ba nhánh trong `useEffect`).
+ *
+ * Con số đo được trên bản production, trang chủ 1440×900, tắt cache: bản xem
+ * trước tốn 3.0MB JS + 0.5MB CSS của trình phát YouTube + ~6.9MB luồng video
+ * — trong khi TOÀN BỘ phần còn lại của trang (HTML, JS, CSS, font, ảnh
+ * Sanity) chỉ khoảng 1.8MB. Muốn cắt tiếp thì chỉ còn một cách thật: bỏ tự
+ * chạy, quay lại facade bấm-mới-phát.
  */
 export function VideoFacade({
   videoUrl,
@@ -62,30 +69,42 @@ export function VideoFacade({
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
-  const [preview, setPreview] = useState(false)
+  const [choPhep, setChoPhep] = useState(false)
   const hostRef = useRef<HTMLDivElement>(null)
   const id = youTubeId(videoUrl)
 
+  /**
+   * Bản xem trước là thứ ĐẮT NHẤT trên trang chủ — đo trên bản production:
+   * 3.0MB JavaScript + 0.5MB CSS của trình phát YouTube, cộng ~6.9MB luồng
+   * video, tức gấp khoảng sáu lần toàn bộ phần còn lại của trang cộng lại.
+   * Ba nhánh dưới đây từ chối nạp nó; người xem vẫn có ảnh tĩnh + nút phát
+   * và bấm vào vẫn mở lightbox đầy đủ, nên không ai mất chức năng.
+   */
   useEffect(() => {
-    if (!id) return
+    // Một video tự chạy lặp vô hạn là đúng thứ cờ này nói là không muốn.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const host = hostRef.current
-    if (!host) return
 
-    // `rootMargin` cho iframe bắt đầu nạp TRƯỚC khi khối lọt vào khung nhìn,
-    // để lúc người xem cuộn tới thì video đã chạy chứ không phải đứng chờ
-    // khung hình đầu tiên.
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return
-        setPreview(true)
-        io.disconnect()
-      },
-      { rootMargin: '300px' },
-    )
-    io.observe(host)
-    return () => io.disconnect()
-  }, [id])
+    const conn = (navigator as any).connection
+    // Người dùng bật "tiết kiệm dữ liệu" trong trình duyệt/hệ điều hành.
+    if (conn?.saveData) return
+    // Mạng chậm: 10MB trên 3G là hàng chục giây và tiền data thật của khách.
+    // `effectiveType` là ước lượng của trình duyệt theo tốc độ đo được, không
+    // phải loại sóng thật — đúng thứ cần ở đây.
+    if (typeof conn?.effectiveType === 'string' && /(^|-)[23]g$/.test(conn.effectiveType)) return
+
+    setChoPhep(true)
+  }, [])
+
+  // `rootMargin: '0px'` — KHÔNG dùng mặc định 200px của hook như bản đồ.
+  // Ở 1440×900 khối video chỉ nằm dưới nếp gấp khoảng 127px, nên biên 200px
+  // với tới nó ngay lúc tải: đo được 16 request YouTube trước khi người xem
+  // cuộn một pixel nào. Với 10MB thì "gần nhìn thấy" là chưa đủ lý do —
+  // phải thật sự nhìn thấy. Bản đồ giữ biên 200px vì nó rẻ hơn hai bậc và
+  // được lợi khi nạp sớm.
+  const preview = useNearViewport(hostRef, {
+    rootMargin: '0px',
+    enabled: choPhep && Boolean(id),
+  })
 
   if (!id) {
     // URL không phải YouTube nhận dạng được -> vẫn hiện ảnh, bỏ nút phát.

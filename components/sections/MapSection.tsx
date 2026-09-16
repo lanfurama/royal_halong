@@ -1,7 +1,9 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { useRef } from 'react'
 import { type Locale } from '@/lib/i18n'
+import { useNearViewport } from '@/lib/use-near-viewport'
 import { Container } from '@/components/ui/Container'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 
@@ -29,6 +31,9 @@ export function MapSection({
   lang,
   siteSettings,
 }: any & { lang: Locale; siteSettings?: any }) {
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapNear = useNearViewport(mapRef)
+
   // Đúng theo mô tả trong schema (`overrideCoords`: "Tắt thì lấy toạ độ từ
   // Cấu hình site"): overrideCoords bật -> dùng lat/lng riêng của khối; tắt
   // (mặc định) -> dùng `siteSettings.lat/lng`. `siteSettings` hôm nay chưa có
@@ -65,8 +70,16 @@ export function MapSection({
         {/* `overflow-hidden` cắt các ô tile vuông góc của Leaflet theo bo góc
             của khung — không có nó, tile vẫn tràn ra bốn góc và bo góc chỉ
             là trang trí vô hình. */}
-        <div className="shadow-card overflow-hidden rounded-media">
-          <LeafletMap lat={latitude} lng={longitude} zoom={zoomLevel} />
+        {/* Chỉ dựng bản đồ khi trôi tới gần khung nhìn — cùng lý do và cùng
+            hook với `HomeReviewMap`, xem `lib/use-near-viewport.ts`. Ở các
+            trang con khối này gần như luôn nằm cuối trang, nên phần lớn lượt
+            xem trước đây trả tiền cho Leaflet mà không bao giờ thấy nó. */}
+        <div ref={mapRef} className="shadow-card overflow-hidden rounded-media">
+          {mapNear ? (
+            <LeafletMap lat={latitude} lng={longitude} zoom={zoomLevel} />
+          ) : (
+            <div className="bg-cream-alt h-96 w-full" aria-hidden="true" />
+          )}
         </div>
       </Container>
     </section>

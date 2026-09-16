@@ -165,6 +165,18 @@
     letter-spacing: -0.01em;
   }
 
+  /* `<strong>`/`<b>` đến từ nội dung Sanity (PortableText), không từ class
+     Tailwind nào. Mặc định của trình duyệt là `font-weight: bolder` — một
+     giá trị TƯƠNG ĐỐI: trong đoạn văn 400 nó thành 700, nhưng nằm trong một
+     khối đã 600 thì nhảy lên 900. Quét 8 trang bản production thấy đúng hai
+     mức 700 và 900 bị yêu cầu, trong khi `lib/fonts.ts` không khai mức nào
+     trong hai mức đó -> trình duyệt làm đậm giả (kéo giãn nét, chữ bệt).
+     Ghim về một giá trị TUYỆT ĐỐI đã có nét thật; xem ghi chú trong
+     `lib/fonts.ts`. */
+  :where(strong, b) {
+    font-weight: 700;
+  }
+
   /* Neo cuộn: header dính cao 76px che mất đầu section khi nhảy tới anchor. */
   :where(section, h2, h3) {
     scroll-margin-top: 5.5rem;
