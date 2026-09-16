@@ -1,18 +1,15 @@
-import { defineType, defineField } from 'sanity'
+import { defineType } from 'sanity'
+import { localeFields, TRANSLATION_FIELDSET } from './localeFields'
 
 export const localeText = defineType({
   name: 'localeText',
-  title: 'Đoạn văn song ngữ',
+  title: 'Đoạn văn đa ngữ',
   type: 'object',
-  fields: [
-    defineField({
-      name: 'vi',
-      title: 'Tiếng Việt',
-      type: 'text',
-      rows: 3,
-      validation: (r) => r.required().min(1),
-    }),
-    defineField({ name: 'en', title: 'English', type: 'text', rows: 3 }),
-  ],
+  fieldsets: [TRANSLATION_FIELDSET],
+  fields: localeFields((_locale, isDefault) => ({
+    type: 'text',
+    rows: 3,
+    ...(isDefault ? { validation: (r: any) => r.required().min(1) } : {}),
+  })),
   preview: { select: { title: 'vi' } },
 })

@@ -1,132 +1,293 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Bảng màu của bản redesign (Claude Design — "Royal Ha Long Home v2 Light").
+
+   Khác bản trước ở chỗ căn bản: nền trang KHÔNG còn là trắng thuần mà là kem
+   ấm `#faf6ee`, và chữ chính là nâu mực `#2a2110` chứ không phải đen. Cả hệ
+   xoay quanh một trục vàng đồng duy nhất, không còn `--color-sky`/
+   `--color-peach` (hai màu trang trí của bản cũ, grep ra không component nào
+   dùng).
+
+   CHỦ Ý ĐÃ ĐƯỢC CHỐT VỚI CHỦ DỰ ÁN — ĐỌC TRƯỚC KHI "SỬA" MÀU:
+   `--color-gold` (#b8892b) đo được **2.93:1** trên nền kem, tức KHÔNG đạt
+   ngưỡng WCAG AA 4.5:1 cho chữ thường. Bản thiết kế dùng đúng màu này cho
+   các nhãn nhỏ 10–11px viết hoa (eyebrow) và bản dựng này bám sát 100% theo
+   yêu cầu rõ ràng của chủ dự án, chấp nhận trượt chuẩn. Đây là quyết định
+   có ý thức, không phải sơ suất: `#8f6a1c` (`--color-gold-deep`) đạt
+   **4.59:1** và là màu thay thế nếu sau này muốn quay lại chuẩn AA — đổi
+   `--color-gold-text` sang `--color-gold-deep` là đủ, mọi eyebrow dùng token
+   đó chứ không hardcode.
+--------------------------------------------------------------------------- */
+
 @theme {
-  /* Màu thương hiệu — lấy từ salient-dynamic-styles.css của bản gốc */
-  --color-gold: #bf8d2c;       /* trên trắng 2.97 — CHỈ dùng làm nền/viền/icon */
-  --color-gold-hi: #d19f2b;    /* trên trắng 2.41 — CHỈ nền/viền/icon; trên ink 8.21 -> dùng được làm chữ nhỏ trên nền tối */
-  --color-gold-deep: #9b7f22;  /* trên trắng 3.85 — chữ >= 24px hoặc >= 19px bold */
-  --color-gold-text: #896520;  /* trên trắng 5.32, trên cream 4.55 — chữ nhỏ */
-  --color-ink: #0a0a0a;
-  --color-cream: #f4ece2;
-  --color-line: #e3d9cb;
-  --color-body: #333333;
-  --color-sky: #98c8e8;        /* trang trí, không làm chữ trên nền sáng */
-  --color-peach: #ffac66;      /* trang trí, không làm chữ trên nền sáng */
+  /* --- Ngưỡng đổi menu ngang <-> hamburger ---
+     1180px là con số của bản thiết kế (`navWide = window.innerWidth >= 1180`).
+     Không dùng `lg` (1024) như bản cũ vì đo được: menu tiếng Việt của site
+     này có 8 mục cấp 1, tổng bề ngang 614px ở cỡ chữ nhỏ nhất; cộng thương
+     hiệu + chuyển ngôn ngữ + nút đặt phòng thì 1024px thiếu ~180px và mục
+     cuối ("ƯU ĐÃI") đè lên nút ngôn ngữ. Cũng không dùng `xl` (1280) vì như
+     thế dải 1180–1279 mất menu ngang một cách vô cớ. */
+  --breakpoint-nav: 1180px;
 
-  /* Nền phụ trợ thêm ở bản redesign — chỉ là màu NỀN, không bao giờ làm chữ.
-     `cream-soft` là bản nhạt hơn của cream để xen kẽ hai dải sáng liền nhau
-     mà không tạo đường cắt cứng; `ink-soft` là nền tối thứ hai (footer trên,
-     overlay) đủ tối để chữ trắng vẫn > 15:1. */
-  --color-cream-soft: #faf6f1;
-  --color-ink-soft: #141210;
+  /* --- Trục vàng đồng --- */
+  /* Vàng chủ đạo: viền, nền nhỏ, icon, và (theo chỉ đạo) cả nhãn eyebrow. */
+  --color-gold: #b8892b;
+  /* Vàng đậm: nền nút chính, nền chân trang, chữ vàng trên nền kem khi cần
+     đạt AA (4.59:1). */
+  --color-gold-deep: #8f6a1c;
+  /* Vàng sáng — CHỈ dùng trên nền tối/nền vàng đậm. 8.2:1 trên `ink`. */
+  --color-gold-hi: #f0d78a;
+  /* Vàng kem — nhãn eyebrow trên ảnh tối và trên chân trang. */
+  --color-gold-soft: #ffe6a3;
+  /* Alias ngữ nghĩa cho "chữ màu vàng". Tách khỏi `--color-gold` để một ngày
+     muốn đưa site về chuẩn AA thì chỉ sửa MỘT dòng này. */
+  --color-gold-text: #b8892b;
 
-  /* Chữ phụ TRÊN NỀN GOLD (chân trang). Đây là giá trị ĐẶC, không phải
-     `text-ink/80`: axe bắt được `text-ink/70` chỉ đạt **4.23:1** trên
-     `bg-gold` — trượt ngưỡng 4.5 cho chữ thường. Opacity lên chữ luôn là
-     phép nhân với một nền mà tác giả phải tự nhớ, nên một lần chỉnh sau này
-     rất dễ tụt dưới ngưỡng mà không ai biết. Màu này = ink phủ 80% trên
-     gold, đo lại ra **5.14:1** — đặt tên và khoá lại. CHỈ dùng trên gold. */
-  --color-ink-muted: #2e2411;
+  /* --- Trục nâu mực --- */
+  --color-ink: #2a2110;
+  /* Nền tối thứ hai (dropdown, dải tối) — vẫn thuộc tông nâu, không phải xám. */
+  --color-ink-soft: #3b2f16;
+  /* Chữ nội dung mặc định. Bản cũ để `#333333` xám trung tính, lệch tông với
+     nền kem ấm. */
+  --color-body: #2a2110;
+  /* Chữ phụ trên nền sáng: chú thích, meta, mô tả dưới số liệu. Đây là màu
+     ĐẶC lấy đúng từ bản thiết kế, không phải `text-ink/60` — độ đục lên chữ
+     luôn là phép nhân với một nền mà người sửa sau phải tự nhớ. */
+  --color-muted: #7d6f55;
 
-  /* Font — biến do lib/fonts.ts gán */
-  --font-display: var(--font-arsenal), Georgia, serif;
-  --font-body: var(--font-inter), system-ui, sans-serif;
-  --font-accent: var(--font-cormorant), Georgia, serif;
-  --font-alt: var(--font-fahkwang), system-ui, sans-serif;
+  /* --- Trục kem --- */
+  /* Nền trang. */
+  --color-cream: #faf6ee;
+  /* Kem sáng hơn nền trang: mặt thẻ, form đặt phòng — nổi lên khỏi nền. */
+  --color-cream-soft: #fffdf7;
+  /* Kem ngả nâu: dải xen kẽ (khối đánh giá + bản đồ) để hai dải sáng liền
+     nhau không dính thành một mảng. */
+  --color-cream-alt: #f3ebdb;
+  /* Chữ sáng trên nền tối / nền vàng đậm. 4.67:1 trên `gold-deep`. */
+  --color-cream-hi: #fff8e8;
+  /* Chữ phụ trên nền vàng đậm của chân trang. Màu ĐẶC = `cream-hi` phủ 80%
+     trên `gold-deep`, cùng lý do với `--color-muted` ở trên. */
+  --color-cream-dim: #e8dcbf;
+  /* Đường kẻ: `rgba(184,137,43,.18)` của bản thiết kế quy về màu đặc trên
+     nền kem, để dùng được ở cả chỗ có nền khác phía sau. */
+  --color-line: #e9dcc2;
 
-  /* Bo góc — một thang duy nhất cho toàn site. Trước bản này mọi thứ vuông
-     góc 0px; thang này giữ mức vừa phải (không bo tròn kiểu app) để vẫn hợp
-     với khách sạn 5 sao. */
-  --radius-card: 0.75rem;   /* 12px — thẻ, ảnh, khối nội dung */
-  --radius-media: 1rem;     /* 16px — khối ảnh lớn, bản đồ */
-  --radius-pill: 999px;     /* nút tròn, chip, chấm carousel */
+  /* --- Chữ ---
+     Playfair Display và Be Vietnam Pro KHÔNG có glyph cho chữ Hán, Kana,
+     Hangul hay chữ Thái. Site có sáu ngôn ngữ (xem `lib/i18n.ts`), nên bốn
+     ngôn ngữ trong đó sẽ rơi hết vào font dự phòng — mà `serif`/`sans-serif`
+     trần thì mỗi hệ điều hành chọn một kiểu khác nhau, có máy ra font bitmap
+     xấu. Liệt kê tường minh font hệ thống của từng hệ chữ, theo thứ tự
+     macOS/iOS -> Windows -> Android/Linux.
 
-  /* Đổ bóng — rất nhẹ, chỉ để tách thẻ khỏi nền kem, không tạo cảm giác
-     "material card". Dùng tông nâu của thương hiệu thay vì đen thuần. */
-  --shadow-card: 0 1px 2px rgb(58 42 16 / 0.06), 0 8px 24px -12px rgb(58 42 16 / 0.18);
-  --shadow-lift: 0 2px 4px rgb(58 42 16 / 0.08), 0 18px 40px -18px rgb(58 42 16 / 0.28);
+     Không nạp webfont CJK: một họ Noto Sans SC/JP/KR đầy đủ nặng 4–8 MB và
+     `next/font` không subset được chữ Hán theo cách có ý nghĩa (khác với
+     `latin`/`vietnamese`, tập chữ Hán không chia thành subset nhỏ dùng
+     được). Font hệ thống hiển thị đúng ngay, không tốn byte nào.
+
+     Việc rơi font diễn ra THEO TỪNG GLYPH, nên một trang tiếng Nhật vẫn
+     dùng Playfair cho chữ Latin (tên khách sạn, số) và font hệ thống cho
+     phần kana/kanji — không phải đổi cả trang. */
+  --font-display:
+    var(--font-playfair), 'Playfair Display',
+    /* Trung */ 'Songti SC', 'Noto Serif SC', SimSun,
+    /* Nhật */ 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP',
+    /* Hàn */ 'Apple SD Gothic Neo', 'Noto Serif KR', Batang,
+    /* Thái */ Thonburi, 'Noto Serif Thai', 'Leelawadee UI',
+    Georgia, serif;
+  --font-body:
+    var(--font-be-vietnam), 'Be Vietnam Pro',
+    /* Trung */ 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC',
+    /* Nhật */ 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, 'Noto Sans JP',
+    /* Hàn */ 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR',
+    /* Thái */ Thonburi, 'Leelawadee UI', 'Noto Sans Thai',
+    system-ui, sans-serif;
+
+  /* --- Bo góc ---
+     Bản thiết kế KHÔNG bo góc ở bất cứ đâu: thẻ, ảnh, nút, form đặt phòng
+     đều là góc vuông sắc — đó là thứ tạo cảm giác editorial/hoàng gia thay
+     vì "thẻ material". Bản trước bo 12/16px khắp nơi.
+     `--radius-pill` giữ nguyên 999px vì nó còn dùng cho những thứ TRÒN THẬT
+     (chấm chỉ vị trí, nút mũi tên tròn, logo monogram) chứ không phải để bo
+     thẻ. */
+  --radius-card: 0;
+  --radius-media: 0;
+  --radius-pill: 999px;
+
+  /* --- Đổ bóng ---
+     Tông nâu vàng của thương hiệu, không phải đen thuần: bóng đen trên nền
+     kem ấm ngả xám, thấy rõ ở form đặt phòng nổi trên hero. */
+  --shadow-card: 0 1px 2px rgb(120 90 30 / 0.06), 0 10px 30px -14px rgb(120 90 30 / 0.22);
+  --shadow-lift: 0 2px 6px rgb(120 90 30 / 0.1), 0 24px 56px -22px rgb(120 90 30 / 0.3);
+  /* Bóng sâu riêng cho form đặt phòng đè lên hero — nó phải trông như nổi
+     hẳn trên ảnh, không phải dán phẳng lên. */
+  --shadow-float: 0 40px 80px rgb(120 90 30 / 0.22);
 }
 
 @layer base {
   body {
-    background: #ffffff;
+    background: var(--color-cream);
     color: var(--color-body);
     font-family: var(--font-body);
     font-size: 16px;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-display);
-    /* Tiêu đề trang chủ là tiếng Việt viết hoa, rất dài ("CẢM NHẬN THIẾT KẾ
-       HIỆN ĐẠI VÀ KHÔNG KHÍ THƯ GIÃN"). Mặc định trình duyệt ngắt dòng tham
-       lam, để lại dòng cuối trơ trọi một hai chữ — đã thấy ở cả 390px và
-       1440px. `balance` chia đều các dòng; chỉ áp cho tiêu đề (spec giới hạn
-       ~6 dòng), không áp cho đoạn văn. */
+    /* Tiêu đề tiếng Việt viết hoa rất dài ("CẢM NHẬN THIẾT KẾ HIỆN ĐẠI VÀ
+       KHÔNG KHÍ THƯ GIÃN"). Mặc định trình duyệt ngắt dòng tham lam, để lại
+       dòng cuối trơ trọi một hai chữ — đã thấy ở cả 390px và 1440px.
+       `balance` chia đều các dòng; chỉ áp cho tiêu đề (spec giới hạn ~6
+       dòng), không áp cho đoạn văn.
+       `font-weight: 400`: Playfair Display ở cỡ lớn trông sang nhất ở nét
+       thường — bản thiết kế dùng 400 cho mọi tiêu đề. Không để mặc định
+       `bold` của trình duyệt. */
+    font-weight: 400;
     text-wrap: balance;
-    line-height: 1.15;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
   }
 
-  /* Neo cuộn: header dính cao 72px (80px ở lg) che mất đầu section khi nhảy
-     tới anchor. Chừa sẵn khoảng trống đúng bằng chiều cao header. */
+  /* Neo cuộn: header dính cao 76px che mất đầu section khi nhảy tới anchor. */
   :where(section, h2, h3) {
     scroll-margin-top: 5.5rem;
   }
 
-  /* Viền focus mặc định cho MỌI control. Trước bản này chỉ `Button` và vài
-     chỗ rời rạc khai focus-visible; phần còn lại (link chân trang, chấm
-     carousel, mũi tên) rơi về outline mặc định của trình duyệt, màu xanh
-     lam — vừa lạc tông vừa gần như vô hình trên nền kem. */
+  /* Viền focus mặc định cho MỌI control — link chân trang, chấm carousel,
+     mũi tên… Không có nó chúng rơi về outline mặc định của trình duyệt, màu
+     xanh lam, vừa lạc tông vừa gần như vô hình trên nền kem. */
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--color-gold-deep);
     outline-offset: 2px;
-    border-radius: 2px;
   }
-  /* Trên nền tối, gold-deep (3.85 trên trắng) tụt xuống dưới 3:1 so với ink.
-     gold-hi đạt 8.21:1 trên ink — đổi màu viền theo nền, không đổi độ dày. */
-  :where(.on-dark) :where(a, button, input, [tabindex]):focus-visible {
+  /* Trên nền tối, `gold-deep` tụt xuống dưới 3:1 so với `ink`. `gold-hi` đạt
+     8.2:1 — đổi màu viền theo nền, không đổi độ dày. */
+  :where(.on-dark) :where(a, button, input, select, [tabindex]):focus-visible {
     outline-color: var(--color-gold-hi);
+  }
+
+  /* `::selection` mặc định (xanh hệ thống) cắt ngang tông kem/vàng của trang. */
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-cream-hi);
   }
 }
 
 @layer utilities {
-  /* Lớp phủ gradient cho chữ đè ảnh — thay cho `bg-black/45` phẳng trước đây
-     vốn làm xám đều cả bức ảnh.
-     Các mốc KHÔNG chọn bằng mắt. Ràng buộc: ảnh nền có thể sáng bất kỳ, nên
-     phải tính theo trường hợp xấu nhất là nền TRẮNG (L = 1.0). Chữ trắng trên
-     lớp đen độ đục `a` phủ nền trắng cho L = 1 - a, và
-        contrast = 1.05 / (L + 0.05) >= 4.5  <=>  a >= 0.817.
-     Vì vậy toàn bộ dải có chữ giữ `a >= 0.86`, chỉ nhả dần ở 20% trên cùng —
-     nơi không có chữ, chỉ để gradient không cắt thành một đường ngang.
-     Áp lên CHÍNH khối chứa chữ (kèm padding-top rộng làm vùng chuyển), không
-     áp lên một lớp cao theo % chiều cao thẻ: chiều cao chữ đổi theo độ dài
-     tiêu đề, nên neo theo % thẻ là cách chắc chắn để một ngày nào đó chữ trôi
-     ra khỏi vùng đủ tối. */
-  .scrim-bottom {
+  /* --- Lớp phủ gradient ---
+     Lấy đúng ba gradient của bản thiết kế. Chúng là gradient NÂU VÀNG chứ
+     không phải đen: phủ đen lên ảnh khách sạn làm bức ảnh ngả xám, lệch hẳn
+     khỏi tông ấm của cả trang. */
+
+  /* Hero: đậm dần xuống đáy, nơi có tiêu đề và form đặt phòng. */
+  .scrim-hero {
     background-image: linear-gradient(
-      to top,
-      rgb(0 0 0 / 0.92) 0%,
-      rgb(0 0 0 / 0.86) 62%,
-      rgb(0 0 0 / 0.45) 84%,
-      rgb(0 0 0 / 0) 100%
+      180deg,
+      rgb(45 32 8 / 0.62) 0%,
+      rgb(45 32 8 / 0.58) 45%,
+      rgb(90 64 14 / 0.95) 100%
     );
   }
 
-  /* Scrim cho hero và dải CTA. Cùng ràng buộc tính toán như `.scrim-bottom`:
-     ảnh nền do biên tập viên chọn, có thể là ảnh ban ngày gần trắng, nên các
-     mốc phải đủ tối cho TRƯỜNG HỢP XẤU NHẤT chứ không phải cho đúng bức ảnh
-     đang dùng hôm nay (ảnh hero hiện tại chụp lúc hoàng hôn, vốn đã tối ở
-     đáy — nếu chỉnh theo nó thì ngày đổi ảnh là hỏng).
-     Khối chữ nằm ở 40% dưới: giữ `a >= 0.82` suốt dải đó (đủ 4.5:1 cho phụ
-     đề 16px trên nền trắng). Phần trên nhả xuống 0.28 — vừa đủ để logo và
-     menu trắng của header dính ở đỉnh vẫn đọc được trên mọi ảnh. */
-  .scrim-hero {
-    background-image: linear-gradient(
-      to top,
-      rgb(0 0 0 / 0.88) 0%,
-      rgb(0 0 0 / 0.82) 38%,
-      rgb(0 0 0 / 0.5) 62%,
-      rgb(0 0 0 / 0.28) 100%
-    );
+  /* Thẻ có chữ đè ảnh (lưới dịch vụ, thư viện). Trong suốt ở 30% trên cùng
+     để giữ chi tiết ảnh, đặc dần tới 0.97 ở đáy nơi đặt chữ. */
+  .scrim-card {
+    background-image: linear-gradient(180deg, rgb(143 106 28 / 0) 30%, rgb(120 86 18 / 0.97) 100%);
+  }
+
+  /* Thẻ lớn (tiệc cưới): phủ gần kín vì khối chữ cao hơn. */
+  .scrim-feature {
+    background-image: linear-gradient(180deg, rgb(143 106 28 / 0.05), rgb(120 86 18 / 0.97));
+  }
+
+  /* Giữ tên cũ cho các section chưa chuyển hết — trỏ về cùng gradient thẻ,
+     không để hai công thức song song trôi khỏi nhau. */
+  .scrim-bottom {
+    background-image: linear-gradient(180deg, rgb(143 106 28 / 0) 30%, rgb(120 86 18 / 0.97) 100%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Chỉnh chữ theo hệ chữ viết.
+
+   Nằm NGOÀI `@layer` và có `!important` là cố ý: các lớp `tracking-*` của
+   Tailwind ở layer `utilities` luôn thắng mọi thứ trong `@layer base`, bất kể
+   độ đặc hiệu. Đây là một trong số ít chỗ ghi đè utility là đúng — giãn chữ
+   kiểu Latin (`letter-spacing: .1em` trên nhãn viết hoa) áp lên chữ Hán,
+   Kana hay Hangul làm từng ký tự rời ra thành một hàng ký hiệu rạc, vì các
+   hệ chữ này vốn đã là ô vuông đều nhau. Ảnh hưởng phụ: đoạn chữ Latin nằm
+   trong trang tiếng Trung/Nhật/Hàn cũng mất phần giãn trang trí — đổi lại
+   là phần nội dung chính đọc được.
+--------------------------------------------------------------------------- */
+html:lang(zh) *,
+html:lang(ja) *,
+html:lang(ko) * {
+  letter-spacing: normal !important;
+}
+
+/* Chữ Thái xếp dấu thành ba tầng trên/dưới ký tự gốc; nhịp dòng 1.6 của
+   phần còn lại làm các tầng dấu của hai dòng liền nhau chạm nhau. */
+html:lang(th) body {
+  line-height: 1.85;
+}
+
+/* ---------------------------------------------------------------------------
+   Chuyển động. Cả ba khai báo ngoài @layer để không bị Tailwind sắp xếp lại.
+--------------------------------------------------------------------------- */
+
+/* Dải ảnh chạy ngang vô tận. Dịch đúng -50% vì dải được nhân đôi nội dung:
+   tới -50% là khung hình trùng khít điểm bắt đầu, vòng lặp không thấy mối nối. */
+@keyframes rhl-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes rhl-fade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rhl-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(184 137 43 / 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgb(184 137 43 / 0);
+  }
+}
+
+/* `prefers-reduced-motion` phải tắt HẲN animation chứ không chỉ làm chậm —
+   quét axe bắt trúng một khung hình opacity phân số của chính transition sẽ
+   ra contrast dưới ngưỡng (đã gặp thật với `Reveal`, xem ghi chú trong
+   `components/ui/Reveal.tsx`). Dải marquee khi đó chuyển sang cuộn tay được. */
+@media (prefers-reduced-motion: reduce) {
+  .rhl-marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+  /* Dải ảnh đứng yên vẫn rộng hơn màn hình -> phải cuộn tay được, nếu không
+     người tắt chuyển động chỉ còn thấy 3 ảnh đầu và không có cách nào tới
+     phần còn lại. */
+  .rhl-marquee-viewport {
+    overflow-x: auto;
+  }
+  .rhl-animate {
+    animation: none !important;
   }
 }

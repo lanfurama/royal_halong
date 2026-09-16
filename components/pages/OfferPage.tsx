@@ -12,7 +12,7 @@ export function OfferPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
   return (
     <article className="py-16">
       <Container size="narrow">
-        <h1 className="font-display text-gold-deep text-3xl md:text-4xl">{offerTitle}</h1>
+        <h1 className="font-display text-3xl md:text-4xl">{offerTitle}</h1>
         {doc.priceNote != null && (
           <p className="text-gold-text mt-2 text-sm font-semibold tracking-widest uppercase">
             {t<string>(doc.priceNote as any, lang)}

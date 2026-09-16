@@ -1,4 +1,5 @@
 import { cachedSanity, cachedSanityStaticParams } from './live'
+import type { Locale } from '@/lib/i18n'
 import type { SlugField } from '@/lib/routes'
 import {
   ALL_ROUTES_QUERY,
@@ -7,6 +8,8 @@ import {
   SITE_SETTINGS_QUERY,
   NAVIGATION_QUERY,
   RESERVATION_SLUG_QUERY,
+  ROOM_OPTIONS_QUERY,
+  PAGE_SLUG_BY_ID_QUERY,
 } from './queries'
 
 /**
@@ -17,11 +20,16 @@ import {
  * `sections` mà không phá `strict` của tsconfig. Các task sau (5, 6) tự thu
  * hẹp kiểu theo `_type` khi cần.
  */
-export interface RouteEntry {
+/**
+ * Một route với slug của MỌI locale (`ALL_ROUTES_QUERY` chiếu đủ sáu, sinh
+ * từ `LOCALES`). `vi` luôn có — query đã lọc `defined(slug.vi.current)`;
+ * các locale còn lại có thể `null` và được `resolveRouteSlug()`
+ * (`lib/routes.ts`) giải quyết theo đúng chuỗi fallback của `t()`.
+ */
+export type RouteEntry = {
   _type: 'page' | 'room' | 'post' | 'offer'
   vi: string
-  en: string | null
-}
+} & Partial<Record<Locale, string | null>>
 
 export interface SanityDoc {
   _id: string
@@ -74,5 +82,27 @@ export async function getNavigation() {
  */
 export async function getReservationSlug(): Promise<SlugField | null> {
   const { data } = await cachedSanity({ query: RESERVATION_SLUG_QUERY, ...PUBLISHED })
+  return (data as { slug?: SlugField } | null)?.slug ?? null
+}
+
+export interface RoomOption {
+  _id: string
+  title?: Record<string, string | null> | null
+  slug?: SlugField | null
+}
+
+/** Loại phòng cho thanh đặt phòng trên hero — xem `ROOM_OPTIONS_QUERY`. */
+export async function getRoomOptions(): Promise<RoomOption[]> {
+  const { data } = await cachedSanity({ query: ROOM_OPTIONS_QUERY, ...PUBLISHED })
+  return (data as RoomOption[] | null) ?? []
+}
+
+/** Slug của một trang theo `_id` tất định — xem `PAGE_SLUG_BY_ID_QUERY`. */
+export async function getPageSlugById(id: string): Promise<SlugField | null> {
+  const { data } = await cachedSanity({
+    query: PAGE_SLUG_BY_ID_QUERY,
+    params: { id },
+    ...PUBLISHED,
+  })
   return (data as { slug?: SlugField } | null)?.slug ?? null
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { isLocale } from '@/lib/i18n'
+import { isLocale, LOCALES } from '@/lib/i18n'
+import { resolveRouteSlug } from '@/lib/routes'
 import { buildMetadata } from '@/lib/seo'
 import { getAllRoutes, getDocBySlug, getSiteSettings } from '@/sanity/lib/fetchers'
 import { SectionRenderer } from '@/components/sections/SectionRenderer'
@@ -19,9 +20,15 @@ export async function generateMetadata({ params }: PageProps<'/[lang]/[slug]'>):
 export async function generateStaticParams() {
   const routes = await getAllRoutes()
   const params: { lang: string; slug: string }[] = []
+  // Sinh cho TẤT CẢ locale, không chỉ vi/en. Mỗi locale lấy slug riêng nếu
+  // có, không thì rơi theo đúng chuỗi fallback (<locale> -> en -> vi) —
+  // cùng hàm mà `LangSwitcher` và `hreflang` dùng, nên ba chỗ không thể trỏ
+  // khác nhau.
   for (const route of routes) {
-    if (route.vi) params.push({ lang: 'vi', slug: route.vi })
-    params.push({ lang: 'en', slug: route.en || route.vi })
+    for (const lang of LOCALES) {
+      const slug = resolveRouteSlug(route, lang)
+      if (slug) params.push({ lang, slug })
+    }
   }
   // cacheComponents bắt buộc trả ít nhất một param.
   if (params.length === 0) {

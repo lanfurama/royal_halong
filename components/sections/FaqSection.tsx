@@ -10,7 +10,7 @@ export function FaqSection({ heading, items, lang }: any & { lang: Locale }) {
     <section className="py-16">
       <Container size="narrow">
         {heading && (
-          <h2 className="font-display text-gold-deep mb-8 text-3xl">{t<string>(heading, lang)}</h2>
+          <h2 className="font-display mb-8 text-3xl">{t<string>(heading, lang)}</h2>
         )}
         {/* `<dl>` chỉ cho phép nhóm `<dt>`/`<dd>` (hoặc `<div>` bọc chúng) làm con
             trực tiếp — `<details>` không hợp lệ ở đó. `<details>`/`<summary>` gốc
@@ -23,7 +23,7 @@ export function FaqSection({ heading, items, lang }: any & { lang: Locale }) {
                   {t<string>(item.question, lang)}
                   <span
                     aria-hidden="true"
-                    className="text-gold-deep ml-4 transition-transform group-open:rotate-45"
+                    className="text-gold ml-4 transition-transform group-open:rotate-45"
                   >
                     +
                   </span>

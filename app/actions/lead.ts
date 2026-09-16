@@ -10,7 +10,7 @@ import {
 import { rateLimit } from '@/lib/rate-limit'
 import { echoValues } from '@/lib/form-values'
 import { sendLeadNotification } from '@/lib/mail'
-import type { Locale } from '@/lib/i18n'
+import { isLocale, DEFAULT_LOCALE, type Locale } from '@/lib/i18n'
 
 export interface FormState {
   status: 'idle' | 'success' | 'error'
@@ -54,7 +54,32 @@ const MESSAGES = {
     rateLimited: 'Too many submissions. Please try again in a few minutes.',
     failed: 'Could not send. Please try again or call our hotline.',
   },
-} as const
+  zh: {
+    success: '感谢您的留言，我们会尽快与您联系。',
+    invalid: '请检查您填写的信息。',
+    rateLimited: '提交次数过多，请稍后再试。',
+    failed: '发送失败，请重试或拨打我们的热线。',
+  },
+  ko: {
+    success: '감사합니다. 최대한 빨리 연락드리겠습니다.',
+    invalid: '입력하신 정보를 확인해 주세요.',
+    rateLimited: '너무 많이 제출하셨습니다. 잠시 후 다시 시도해 주세요.',
+    failed: '전송하지 못했습니다. 다시 시도하시거나 핫라인으로 연락해 주세요.',
+  },
+  ja: {
+    success: 'ありがとうございます。折り返しご連絡いたします。',
+    invalid: 'ご入力内容をご確認ください。',
+    rateLimited: '送信回数が多すぎます。しばらくしてからもう一度お試しください。',
+    failed: '送信できませんでした。もう一度お試しいただくか、ホットラインまでご連絡ください。',
+  },
+  th: {
+    success: 'ขอบคุณค่ะ ทางเราจะติดต่อกลับโดยเร็วที่สุด',
+    invalid: 'กรุณาตรวจสอบข้อมูลที่กรอก',
+    rateLimited: 'ส่งข้อมูลบ่อยเกินไป กรุณาลองใหม่อีกครั้งในอีกสักครู่',
+    failed: 'ส่งไม่สำเร็จ กรุณาลองใหม่หรือโทรหาสายด่วนของเรา',
+  },
+  // Xem ghi chú cùng nội dung ở `app/actions/newsletter.ts`.
+} as const satisfies Record<Locale, Record<string, string>>
 
 /** Logic thuần, không chạm Next runtime — đây là thứ được test. */
 export async function handleLead(
@@ -62,7 +87,14 @@ export async function handleLead(
   clientKey: string,
   deps: Deps,
 ): Promise<FormState> {
-  const locale: Locale = (raw as { locale?: string })?.locale === 'en' ? 'en' : 'vi'
+  // Nhận ĐỦ sáu locale. Biểu thức cũ (`=== 'en' ? 'en' : 'vi'`) quy mọi
+  // giá trị lạ về 'vi' — sau khi site có 6 ngôn ngữ thì lead gửi từ trang
+  // tiếng Hàn sẽ được ghi là tiếng Việt và email xác nhận gửi sai ngôn ngữ.
+  // `isLocale()` là bộ lọc thật; giá trị không hợp lệ vẫn rơi về mặc định.
+  const rawLocale = (raw as { locale?: string })?.locale
+  const locale: Locale = typeof rawLocale === 'string' && isLocale(rawLocale)
+    ? rawLocale
+    : DEFAULT_LOCALE
   const text = MESSAGES[locale]
 
   // Bot điền trường bẫy: trả thành công giả để nó không thử cách khác.

@@ -1,4 +1,5 @@
 import { t, type Locale } from '@/lib/i18n'
+import { INTL_LOCALES } from '@/lib/i18n'
 import type { SanityDoc } from '@/sanity/lib/fetchers'
 import { Container } from '@/components/ui/Container'
 import { SanityImage } from '@/components/ui/SanityImage'
@@ -11,11 +12,11 @@ export function PostPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
   return (
     <article className="py-16">
       <Container size="narrow">
-        <h1 className="font-display text-gold-deep text-3xl md:text-4xl">{postTitle}</h1>
+        <h1 className="font-display text-3xl md:text-4xl">{postTitle}</h1>
         {published && (
           <p className="mt-3 text-xs tracking-widest uppercase">
             <time dateTime={published.toISOString()}>
-              {published.toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB', {
+              {published.toLocaleDateString(INTL_LOCALES[lang], {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',

@@ -5,13 +5,14 @@ import { submitNewsletter } from '@/app/actions/newsletter'
 import type { FormState } from '@/app/actions/lead'
 import { BUTTON_BASE_CLASSES } from '@/components/ui/Button'
 import type { Locale } from '@/lib/i18n'
+import { ui } from '@/lib/ui-strings'
 
 const INITIAL: FormState = { status: 'idle' }
 
 export function NewsletterForm({ lang }: { lang: Locale }) {
   const [state, formAction, pending] = useActionState(submitNewsletter, INITIAL)
-  const placeholder = lang === 'vi' ? 'Email của bạn' : 'Your email'
-  const submit = lang === 'vi' ? 'Đăng ký' : 'Subscribe'
+  const placeholder = ui('emailPlaceholder', lang)
+  const submit = ui('subscribe', lang)
 
   if (state.status === 'success') {
     return (
@@ -41,14 +42,19 @@ export function NewsletterForm({ lang }: { lang: Locale }) {
         placeholder={placeholder}
         aria-invalid={state.fieldErrors?.email ? 'true' : undefined}
         aria-describedby={state.fieldErrors?.email ? 'newsletter-email-error' : undefined}
-        className="border-line focus:border-ink focus:outline-ink min-h-11 min-w-0 flex-1 rounded-card border bg-white px-3.5 py-2 text-sm focus:outline-2 focus:outline-offset-1"
+        // Nền chân trang giờ là `gold-deep` (#8f6a1c) chứ không còn `gold`
+        // sáng — ô nhập nền kem sáng (`cream-soft`) để nổi hẳn lên, chữ nhập
+        // vào là `ink` như mọi ô nhập khác của site. Viền focus phải đạt 3:1
+        // với nền NGAY DƯỚI nó (nền ô, màu kem) chứ không phải nền chân
+        // trang -> `outline-ink`.
+        className="border-cream-hi/40 bg-cream-soft text-ink focus:border-ink focus:outline-ink min-h-11 min-w-0 flex-1 border px-3.5 py-2 text-sm focus:outline-2 focus:outline-offset-1"
       />
       {/*
-        Nền footer là `bg-gold` (xem Footer.tsx) — một nút `solid` (cũng nền
-        gold) sẽ gần như biến mất vào nền. Dùng `bg-ink`/`text-white` để nổi
-        bật, kèm `focus-visible:outline-white` vì viền focus phải đạt 3:1 với
-        chính nền NGAY DƯỚI nó (nền nút, màu ink) chứ không phải nền footer —
-        outline trắng trên ink gần 21:1, thừa xa ngưỡng.
+        Nền chân trang là `gold-deep` (xem Footer.tsx) — một nút cũng màu vàng
+        sẽ chìm vào nền. Bản thiết kế dùng đúng cặp đảo ngược này cho nút
+        "Khám phá": nền kem sáng, chữ vàng đậm (4.59:1). Viền focus phải đạt
+        3:1 với nền NGAY DƯỚI nó (nền nút, màu kem) chứ không phải nền chân
+        trang -> `outline-ink`.
       */}
       <button
         type="submit"
@@ -56,13 +62,13 @@ export function NewsletterForm({ lang }: { lang: Locale }) {
         // `inline-flex min-h-11` — nút này đo được 38px cao trên bản
         // production, dưới ngưỡng 44px, và nó nằm ngay cạnh ô email trong
         // một hàng `flex` chật ở 390px.
-        className={`${BUTTON_BASE_CLASSES} bg-ink text-white hover:bg-ink/80 focus-visible:outline-white inline-flex min-h-11 items-center justify-center rounded-pill px-6 py-2 disabled:opacity-60`}
+        className={`${BUTTON_BASE_CLASSES} bg-cream-hi text-gold-deep hover:bg-gold-soft focus-visible:outline-ink inline-flex min-h-11 items-center justify-center px-6 py-2 disabled:opacity-60`}
       >
-        {pending ? (lang === 'vi' ? 'Đang gửi...' : 'Sending...') : submit}
+        {pending ? ui('sending', lang) : submit}
       </button>
 
       {state.status === 'error' && state.message && (
-        <p id="newsletter-email-error" role="alert" className="w-full text-xs text-red-950">
+        <p id="newsletter-email-error" role="alert" className="text-cream-hi w-full text-xs font-medium">
           {state.message}
         </p>
       )}

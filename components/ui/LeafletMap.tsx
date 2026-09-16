@@ -12,9 +12,23 @@ const icon = L.icon({
   iconAnchor: [12, 41],
 })
 
-export function LeafletMap({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
+export function LeafletMap({
+  lat,
+  lng,
+  zoom,
+  // Chiều cao trước đây khoá cứng `h-96`. Khối "đánh giá + bản đồ" ở trang
+  // chủ đặt bản đồ cạnh một cột chữ cao hơn thế, nên nó cần kéo đầy cột.
+  // Mặc định giữ nguyên `h-96` để mọi nơi gọi cũ không đổi hành vi — và để
+  // khung chờ tải trong `MapSection` vẫn khớp đúng chiều cao.
+  className = 'h-96 w-full',
+}: {
+  lat: number
+  lng: number
+  zoom: number
+  className?: string
+}) {
   return (
-    <MapContainer center={[lat, lng]} zoom={zoom} scrollWheelZoom={false} className="h-96 w-full">
+    <MapContainer center={[lat, lng]} zoom={zoom} scrollWheelZoom={false} className={className}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

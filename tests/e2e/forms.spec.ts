@@ -48,6 +48,11 @@ function skipOnMobile(testInfo: { project: { name: string } }) {
  * vào phần tử THẬT SỰ có kích thước 0 (div cha) để khớp đúng cách trình
  * duyệt tính visibility.
  */
+// Tên field bẫy bot là `ref_2` (`#field-ref-2` / `#newsletter-ref-2`), KHÔNG
+// phải `company`. Test này trỏ vào `#field-company`/`#newsletter-company` —
+// tên của một bản trước — nên ba assertion honeypot đã hỏng từ trước lần đổi
+// giao diện này (xác minh: `git show HEAD:components/forms/NewsletterForm.tsx`
+// cũng dùng `ref_2`). Sửa selector cho khớp mã nguồn thật.
 async function expectHoneypotHidden(page: Page, inputSelector: string) {
   const input = page.locator(inputSelector)
   const wrapper = input.locator('xpath=ancestor::div[1]')
@@ -86,7 +91,7 @@ test.describe('LeadForm — render và liên kết label (không tốn rate limi
     await expect(page.getByLabel('Lời nhắn')).toHaveAttribute('id', 'field-message')
     await expect(page.getByRole('button', { name: /Gửi yêu cầu/ })).toBeVisible()
 
-    await expectHoneypotHidden(page, '#field-company')
+    await expectHoneypotHidden(page, '#field-ref-2')
   })
 
   test('trang hội nghị MICE: đúng formType, honeypot ẩn', async ({ page }) => {
@@ -95,7 +100,7 @@ test.describe('LeadForm — render và liên kết label (không tốn rate limi
     const form = page.locator('form').filter({ has: page.locator('input[name="type"]') })
     await expect(form).toHaveCount(1)
     await expect(form.locator('input[name="type"]')).toHaveValue('mice')
-    await expectHoneypotHidden(page, '#field-company')
+    await expectHoneypotHidden(page, '#field-ref-2')
   })
 })
 
@@ -106,7 +111,7 @@ test.describe('NewsletterForm — chân trang mọi trang (không tốn rate lim
     await expect(page.getByLabel('Email của bạn')).toHaveAttribute('id', 'newsletter-email')
     await expect(page.getByRole('button', { name: /Đăng ký/ })).toBeVisible()
 
-    await expectHoneypotHidden(page, '#newsletter-company')
+    await expectHoneypotHidden(page, '#newsletter-ref-2')
   })
 
   test('honeypot bị điền qua API -> trả 200 (không đụng DB, không tốn rate limit)', async ({

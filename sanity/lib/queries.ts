@@ -1,4 +1,13 @@
 import { defineQuery } from 'next-sanity'
+import { LOCALES } from '../../lib/i18n'
+
+// Chiếu slug của TẤT CẢ locale, sinh từ `LOCALES` thay vì liệt kê tay
+// `"vi": slug.vi.current, "en": slug.en.current`. Hai chỗ dưới đây (danh
+// sách route cho sitemap/generateStaticParams, và tra document theo slug)
+// phải luôn phủ đúng cùng một tập ngôn ngữ — liệt kê tay ở hai nơi là cách
+// chắc chắn để thêm ngôn ngữ thứ bảy rồi quên một chỗ.
+const ROUTE_SLUGS = LOCALES.map((l) => `"${l}": slug.${l}.current`).join(',\n  ')
+const SLUG_MATCH_ANY_LOCALE = LOCALES.map((l) => `slug.${l}.current == $slug`).join(' || ')
 
 const IMAGE = `{ ..., asset->{ _id, url, metadata { dimensions, lqip } } }`
 
@@ -68,15 +77,14 @@ export const ALL_ROUTES_QUERY = defineQuery(`
   && defined(slug.vi.current)
 ]{
   _type,
-  "vi": slug.vi.current,
-  "en": slug.en.current
+  ${ROUTE_SLUGS}
 }
 `)
 
 export const DOC_BY_SLUG_QUERY = defineQuery(`
 *[
   (_type == "page" || _type == "room" || _type == "post" || _type == "offer")
-  && (slug.vi.current == $slug || slug.en.current == $slug)
+  && (${SLUG_MATCH_ANY_LOCALE})
 ][0]{
   ...,
   heroImage ${IMAGE},
@@ -147,4 +155,29 @@ export const HALLS_QUERY = defineQuery(`
 // slug EN riêng.
 export const RESERVATION_SLUG_QUERY = defineQuery(`
 *[_id == "page.reservation"][0]{ slug }
+`)
+
+/**
+ * Danh sách loại phòng cho ô "Loại phòng" của thanh đặt phòng trên hero
+ * (`components/home/HeroBookingBar.tsx`).
+ *
+ * Lấy từ document `room` THẬT chứ không hardcode bốn lựa chọn như bản
+ * thiết kế ("Deluxe / Premier Seaview / Royal Suite / Villa") — khách sạn
+ * này thực tế có PHÒNG DELUXE, PHÒNG PREMIUM, VILLAS DELUXE, VILLAS SUITE.
+ * Một ô chọn liệt kê loại phòng không tồn tại là lời hứa sai ngay ở hành
+ * động chính của trang.
+ */
+/**
+ * Slug của một `page` theo `_id` tất định do script import sinh ra
+ * (`page.<slug-vi>`). Cùng cơ chế với `RESERVATION_SLUG_QUERY`, nhưng nhận
+ * `_id` qua tham số để không phải thêm một query gần-giống-hệt cho mỗi
+ * trang cần trỏ tới. Trả `null` khi trang bị xoá/đổi `_id` — nơi gọi tự bỏ
+ * link thay vì trỏ vào 404.
+ */
+export const PAGE_SLUG_BY_ID_QUERY = defineQuery(`
+*[_id == $id][0]{ slug }
+`)
+
+export const ROOM_OPTIONS_QUERY = defineQuery(`
+*[_type == "room"] | order(order asc){ _id, title, slug }
 `)

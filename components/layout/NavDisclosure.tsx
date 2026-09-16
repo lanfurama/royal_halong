@@ -78,7 +78,7 @@ export function NavDisclosure({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
-        className="hover:text-gold-hi flex h-11 items-center gap-1.5 text-xs tracking-widest whitespace-nowrap uppercase transition-colors"
+        className="text-ink hover:text-gold flex h-11 items-center gap-1.5 text-[0.6875rem] font-medium tracking-[0.05em] whitespace-nowrap uppercase transition-colors xl:text-[0.78125rem]"
       >
         {label}
         <svg
@@ -101,7 +101,11 @@ export function NavDisclosure({
       <div
         id={panelId}
         hidden={!open}
-        className="bg-ink-soft ring-gold/20 shadow-lift absolute top-full left-0 z-50 min-w-60 rounded-b-card py-2 ring-1"
+        // Header đã chuyển sang nền KEM (bản redesign) — panel nền tối của
+        // bản cũ sẽ trông như một mảng lạ treo dưới thanh sáng. Nền kem sáng
+        // hơn nền trang (`cream-soft`) + viền vàng mảnh + bóng ấm để tách
+        // khỏi nội dung phía sau mà vẫn cùng một tông.
+        className="bg-cream-soft ring-gold/25 shadow-lift absolute top-full left-0 z-50 min-w-60 py-2 ring-1"
       >
         <ul>
           {items.map((child: any, index: number) => (
@@ -109,7 +113,7 @@ export function NavDisclosure({
               <SmartLink
                 link={child.link}
                 lang={lang}
-                className="hover:text-gold-hi hover:bg-white/5 flex min-h-11 items-center px-5 text-xs tracking-wide uppercase transition-colors"
+                className="text-ink hover:text-gold hover:bg-gold/8 flex min-h-11 items-center px-5 text-xs tracking-wide uppercase transition-colors"
               >
                 {t<string>(child.label, lang)}
               </SmartLink>

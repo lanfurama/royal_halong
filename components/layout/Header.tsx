@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { t, type Locale } from '@/lib/i18n'
+import { ui } from '@/lib/ui-strings'
 import type { SlugField } from '@/lib/routes'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { SmartLink } from '@/components/ui/SmartLink'
@@ -8,17 +9,13 @@ import { MobileMenu } from './MobileMenu'
 import { NavDisclosure } from './NavDisclosure'
 import { LangSwitcher } from './LangSwitcher'
 
-// `siteSettings` chưa có document nào trong Sanity hôm nay (getSiteSettings()
-// trả null) — link về trang chủ vẫn cần một tên truy cập, nên có fallback
-// tĩnh thay vì để trống. Đây là tên đã dùng sẵn ở `app/layout.tsx` <title>,
-// không phải bịa mới.
+// `siteSettings` có thể chưa có document -> link về trang chủ vẫn cần một
+// tên truy cập, nên có fallback tĩnh thay vì để trống.
 const BRAND_FALLBACK = 'Royal Halong Hotel'
 
-// Mục điều hướng cuối cùng trong dữ liệu Sanity là "ĐẶT PHÒNG" — hành động
-// chính của cả trang. Bản gốc render nó thành nút vàng tách riêng ở góc phải,
-// bản dựng lại trước đây để nó lẫn vào 8 link chữ trắng giống hệt nhau. Tách
-// ra theo slug đích (`reservation`), không theo nhãn: nhãn đổi theo ngôn ngữ
-// ("ĐẶT PHÒNG"/"BOOK NOW") còn slug thì không.
+// Mục điều hướng "ĐẶT PHÒNG" là hành động chính của cả trang -> tách ra
+// thành nút viền vàng ở góc phải. Tách theo slug đích (`reservation`), không
+// theo nhãn: nhãn đổi theo ngôn ngữ ("ĐẶT PHÒNG"/"BOOK NOW") còn slug thì không.
 const BOOKING_SLUG = 'reservation'
 
 function isBookingItem(item: any): boolean {
@@ -36,8 +33,7 @@ export function Header({
   navigation: any
   settings: any
   /** Slug (song ngữ) của TRANG HIỆN TẠI — truyền xuống `LangSwitcher` để nó
-   * trỏ đúng bản dịch riêng từng locale thay vì hoán prefix mù. `undefined`
-   * (không truyền) giữ hành vi hoán prefix cũ — xem `LangSwitcher.tsx`. */
+   * trỏ đúng bản dịch riêng từng locale thay vì hoán prefix mù. */
   slug?: SlugField | null
 }) {
   const allItems: any[] = navigation?.header ?? []
@@ -47,39 +43,85 @@ export function Header({
   const items = allItems.filter((item) => item !== bookingItem)
 
   return (
-    <header className="bg-ink on-dark sticky top-0 z-40 text-white">
+    // Nền kem BÁN TRONG SUỐT + blur: bản thiết kế để header nổi trên ảnh
+    // hero mà vẫn đọc được. Gradient (đậm hơn ở mép trên) thay cho một màu
+    // phẳng để mép dưới hoà vào nội dung thay vì cắt thành một vạch.
+    // Không dùng `on-dark`: header giờ là nền SÁNG, viền focus phải là
+    // `gold-deep` chứ không phải `gold-hi` (xem `globals.css`).
+    <header className="border-gold/20 sticky top-0 z-40 border-b bg-[linear-gradient(180deg,rgb(250_246_238/0.95),rgb(250_246_238/0.85))] backdrop-blur-[14px]">
       <a
         href="#main"
-        className="focus:bg-gold focus:text-ink sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2"
+        className="focus:bg-gold focus:text-cream-hi sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2"
       >
-        Bỏ qua điều hướng
+        {ui('skipNav', lang)}
       </a>
 
-      <Container size="wide" className="flex h-18 items-center justify-between gap-4 lg:h-20">
+      <Container size="wide" className="flex min-h-19 items-center gap-4 lg:gap-6">
+        {/* Khối thương hiệu: dấu hiệu (logo thật của khách sạn — chữ R trong
+            khung bầu dục, vàng trên nền trong suốt nên đọc được cả trên kem
+            lẫn trên ảnh tối) + tên đặt cạnh.
+            Vì sao vẫn viết tên bên cạnh dù logo đã có chữ "ROYAL HALONG
+            HOTEL" bên trong: logo là ảnh dọc 1200×1033, ở chiều cao 56px của
+            header thì dòng chữ trong ảnh chỉ còn ~7px — không đọc nổi. Phần
+            đọc được ở cỡ đó là CHỮ R, đúng vai trò monogram mà bản thiết kế
+            đặt ở vị trí này. Tên thật nằm ở khối chữ bên cạnh, cỡ thật. */}
+        {/* Thứ tự ưu tiên khi hết chỗ: <nav> và cụm bên phải `shrink-0`
+            (chúng quyết định bề ngang TỐI THIỂU cần có), khối thương hiệu là
+            thứ duy nhất được co — và co bằng cách CẮT CHỮ (`min-w-0` +
+            `truncate` bên dưới), không phải bằng cách đè lên hàng xóm.
+            Trước bản này <nav> mang `min-w-0`, nên flex co chính nó xuống
+            dưới bề ngang nội dung: đo ở 1920px ra khung <nav> 757px trong
+            khi <ul> bên trong cần 810px — 53px thừa tràn ra ngoài và mục
+            cuối ("ƯU ĐÃI") nằm chồng lên nút ngôn ngữ. */}
         <Link
           href={`/${lang}`}
-          className="flex shrink-0 items-center gap-3 py-2"
+          className="flex min-w-0 items-center gap-3 py-2"
           aria-label={brand}
         >
-          {settings?.logoLight?.asset ? (
+          {settings?.logo?.asset ? (
             <SanityImage
-              image={settings.logoLight}
+              image={settings.logo}
               lang={lang}
-              sizes="120px"
+              sizes="80px"
               priority
-              fallbackAlt={brand}
-              className="h-11 w-auto"
+              decorative
+              className="h-13 w-auto shrink-0"
             />
           ) : (
-            <span className="font-display text-gold-hi text-lg">{brand}</span>
+            <span
+              aria-hidden="true"
+              className="border-gold text-gold font-display grid size-11 place-items-center rounded-pill text-[1.375rem] font-semibold"
+            >
+              R
+            </span>
           )}
+
+          {/* Tên lấy từ `siteSettings.brandName` (hôm nay: "ROYAL HẠ LONG
+              HOTEL"), KHÔNG hardcode chuỗi trong bản thiết kế — đây là dữ
+              liệu biên tập viên sửa được. Dòng phụ bên dưới là phần trang
+              trí của bản thiết kế và đúng với thực tế khách sạn (156 phòng 5
+              sao + 11 villa). */}
+          {/* Hiện từ `sm`, ẨN LẠI trong dải 1180–1535px, hiện lại từ `2xl`.
+              Dải giữa là lúc menu ngang xuất hiện: đo được 8 mục cấp 1 cần
+              ~750px, cộng khối tên 258px + chuyển ngôn ngữ + nút đặt phòng
+              thì 1180px thiếu chỗ và mục cuối đè lên nút ngôn ngữ. Logo
+              (chữ R trong khung bầu dục) vẫn ở lại, nên thương hiệu không
+              biến mất — chỉ phần chữ nhường chỗ cho điều hướng. */}
+          <span className="hidden flex-col leading-none sm:flex nav:hidden 2xl:flex">
+            <span className="font-display text-ink truncate text-[1.1875rem] font-bold tracking-[0.06em]">
+              {brand}
+            </span>
+            <span className="text-gold mt-1.5 text-[0.5625rem] tracking-[0.1em]">
+              HOTEL &amp; VILLAS · ★★★★★
+            </span>
+          </span>
         </Link>
 
-        {/* Không có menu (navigation rỗng hôm nay) -> không render <nav>,
-            không phải <nav> rỗng. */}
+        {/* Không có menu (navigation rỗng) -> không render <nav>, không phải
+            <nav> rỗng. */}
         {items.length > 0 && (
-          <nav aria-label="Menu chính" className="hidden min-w-0 lg:block">
-            <ul className="flex items-center gap-x-6 xl:gap-x-7">
+          <nav aria-label={ui('mainMenu', lang)} className="ml-auto hidden shrink-0 nav:block">
+            <ul className="flex items-center gap-x-[clamp(0.75rem,1.6vw,1.75rem)]">
               {items.map((item, index) => {
                 const label = t<string>(item.label, lang)
                 const children: any[] = item.children ?? []
@@ -100,7 +142,7 @@ export function Header({
                     <SmartLink
                       link={item.link}
                       lang={lang}
-                      className="hover:text-gold-hi flex h-11 items-center text-xs tracking-widest whitespace-nowrap uppercase transition-colors"
+                      className="text-ink hover:text-gold flex h-11 items-center text-[clamp(0.6875rem,1.1vw,0.78125rem)] font-medium tracking-[0.05em] whitespace-nowrap uppercase transition-colors"
                     >
                       {label}
                     </SmartLink>
@@ -111,24 +153,30 @@ export function Header({
           </nav>
         )}
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* `ml-auto` ở MỌI bề rộng dưới `nav` (menu ngang bị ẩn, không ai
+            đẩy cụm này sang phải), và `nav:ml-4` từ đó trở lên — lúc ấy chính
+            <nav> giữ `ml-auto`, cụm này chỉ cần khoảng cách với mục cuối. */}
+        <div className={`flex shrink-0 items-center gap-1 sm:gap-3 ml-auto ${items.length > 0 ? 'nav:ml-4' : ''}`}>
           <LangSwitcher lang={lang} slug={slug} />
 
-          {/* CTA chính. Ẩn ở điện thoại hẹp (đã có trong panel menu) để không
-              đẩy logo/ngôn ngữ vỡ hàng ở 390px — đo được: logo 47px +
-              VI/EN 88px + hamburger 44px + CTA 132px = 311px, vừa khít 335px
-              nội dung nhưng không còn khoảng thở nào. */}
+          {/* CTA chính — nút viền vàng, góc vuông (bản thiết kế không bo góc
+              ở bất cứ đâu). Ẩn ở điện thoại hẹp (đã có trong panel menu) để
+              không đẩy logo/ngôn ngữ vỡ hàng ở 390px. */}
           {bookingItem && (
             <SmartLink
               link={bookingItem.link}
               lang={lang}
-              className="bg-gold text-ink hover:bg-gold-hi hidden h-11 items-center rounded-pill px-5 text-xs font-semibold tracking-widest whitespace-nowrap uppercase transition-colors sm:flex"
+              className="border-gold text-gold hover:bg-gold hover:text-cream-hi hidden h-11 items-center border px-5 text-xs font-semibold tracking-[0.08em] whitespace-nowrap uppercase transition-colors sm:flex"
             >
               {t<string>(bookingItem.label, lang)}
             </SmartLink>
           )}
 
-          <MobileMenu lang={lang} items={allItems} />
+          {/* `items` (đã bỏ mục đặt phòng) + `bookingItem` riêng: bản thiết
+              kế đặt CTA đặt phòng thành nút vàng đặc ở đáy panel, không lẫn
+              vào danh sách link. Trước đây truyền `allItems` nên nó là link
+              thứ 9 giống hệt 8 link kia. */}
+          <MobileMenu lang={lang} items={items} bookingItem={bookingItem} />
         </div>
       </Container>
     </header>

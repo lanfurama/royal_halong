@@ -53,7 +53,7 @@ describe('SectionRenderer', () => {
   // trên cùng một fixture: nếu component đọc đúng `tone`, kết quả phải khớp
   // `tone`; nếu ai đó (lại) đổi component sang đọc `background`, kết quả sẽ
   // khớp `background` thay vào đó và test dưới đây FAIL.
-  it('richTextSection tone="ink": nền tối + tiêu đề gold-hi (đọc đúng field `tone`, không phải `background`)', () => {
+  it('richTextSection tone="ink": nền tối + tiêu đề sáng (đọc đúng field `tone`, không phải `background`)', () => {
     const { container } = render(
       <SectionRenderer
         lang="vi"
@@ -64,12 +64,15 @@ describe('SectionRenderer', () => {
     expect(section?.className).toContain('bg-ink')
     expect(section?.className).not.toContain('bg-cream')
 
+    // Từ bản redesign, tiêu đề KHÔNG còn tô vàng: trên nền tối nó là
+    // `cream-hi`, trên nền sáng nó thừa hưởng màu chữ mặc định (nâu mực).
+    // Điều test này canh vẫn là: nhánh màu phải đi theo `tone`, và hai nhánh
+    // phải KHÁC nhau.
     const heading = screen.getByRole('heading', { level: 2 })
-    expect(heading.className).toContain('text-gold-hi')
-    expect(heading.className).not.toContain('text-gold-deep')
+    expect(heading.className).toContain('text-cream-hi')
   })
 
-  it('richTextSection tone="cream": nền kem + tiêu đề gold-deep (đọc đúng field `tone`, không phải `background`)', () => {
+  it('richTextSection tone="cream": nền kem + tiêu đề nâu mực (đọc đúng field `tone`, không phải `background`)', () => {
     const { container } = render(
       <SectionRenderer
         lang="vi"
@@ -77,12 +80,13 @@ describe('SectionRenderer', () => {
       />,
     )
     const section = container.querySelector('section')
-    expect(section?.className).toContain('bg-cream')
+    expect(section?.className).toContain('bg-cream-alt')
     expect(section?.className).not.toContain('bg-ink')
 
+    // Nhánh sáng: không gắn class màu nào, tiêu đề thừa hưởng nâu mực. Điểm
+    // cần canh là nó KHÔNG lẫn sang nhánh tối.
     const heading = screen.getByRole('heading', { level: 2 })
-    expect(heading.className).toContain('text-gold-deep')
-    expect(heading.className).not.toContain('text-gold-hi')
+    expect(heading.className).not.toContain('text-cream-hi')
   })
 })
 

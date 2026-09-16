@@ -6,10 +6,11 @@ import { SmartLink } from '@/components/ui/SmartLink'
 import { Reveal } from '@/components/ui/Reveal'
 import { LINK_CTA_CLASSES } from '@/components/ui/Button'
 
+// Xem ghi chú cùng nội dung ở `RichTextSection.tsx`.
 const BG = {
-  white: 'bg-white text-body',
-  cream: 'bg-cream text-body',
-  ink: 'bg-ink on-dark text-white',
+  white: 'bg-cream text-body',
+  cream: 'bg-cream-alt text-body',
+  ink: 'bg-ink on-dark text-cream-hi',
 } as const
 
 export function ImageTextSection({
@@ -59,7 +60,7 @@ export function ImageTextSection({
             {heading && (
               <h2
                 className={`font-display mb-5 text-[clamp(1.5rem,4vw,2.25rem)] ${
-                  dark ? 'text-gold-hi' : 'text-gold-deep'
+                  dark ? 'text-cream-hi' : ''
                 }`}
               >
                 {headingText}

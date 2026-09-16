@@ -60,7 +60,7 @@ export async function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) 
             </div>
 
             {Array.isArray(doc.features) && doc.features.length > 0 && (
-              <div className="bg-cream p-6">
+              <div className="bg-cream-soft shadow-card p-6">
                 {/* 20px trong khối phụ (aside) cạnh h1 lớn — giữ cỡ chữ nhỏ để không
                     lấn tiêu đề trang, đổi màu sang gold-text (5.32:1 trên trắng) thay
                     vì tăng lên 24px. */}
@@ -88,9 +88,9 @@ export async function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) 
       </section>
 
       {Array.isArray(doc.gallery) && doc.gallery.length > 0 && (
-        <section className="bg-cream py-16">
+        <section className="bg-cream-alt py-16">
           <Container size="wide">
-            <h2 className="font-display text-gold-deep mb-8 text-center text-3xl">Hình ảnh phòng</h2>
+            <h2 className="font-display mb-8 text-center text-3xl">Hình ảnh phòng</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {(doc.gallery as any[]).map((image: any, index: number) => (
                 <Reveal key={image._key ?? index} delay={index * 60}>

@@ -8,10 +8,10 @@ export function HallListSection({ heading, resolved, lang }: any & { lang: Local
   // parameter không chặn được `null` tường minh.
   const list: any[] = resolved ?? []
   return (
-    <section className="bg-cream py-16">
+    <section className="bg-cream-alt py-16">
       <Container>
         {heading && (
-          <h2 className="font-display text-gold-deep mb-10 text-center text-3xl">
+          <h2 className="font-display mb-10 text-center text-3xl">
             {t<string>(heading, lang)}
           </h2>
         )}
@@ -32,7 +32,7 @@ export function HallListSection({ heading, resolved, lang }: any & { lang: Local
                   )}
                 </div>
                 <div>
-                  <h3 className="font-display text-gold-deep text-2xl">{hallName}</h3>
+                  <h3 className="font-display text-2xl">{hallName}</h3>
                   <p className="text-gold-text mt-1 text-xs tracking-widest uppercase">
                     {[
                       hall.areaSqm ? `Diện tích: ${hall.areaSqm} m²` : null,

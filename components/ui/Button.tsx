@@ -33,7 +33,7 @@ export const BUTTON_BASE_CLASSES =
 export const BUTTON_VARIANT_COLORS = {
   // nền gold + chữ ink = 6.66:1. KHÔNG đổi sang chữ trắng (chỉ 2.97:1).
   solid: 'bg-gold text-ink hover:bg-gold-hi focus-visible:outline-ink',
-  outline: 'border border-gold-deep text-gold-text hover:bg-cream focus-visible:outline-gold-deep',
+  outline: 'border border-gold text-gold-text hover:bg-cream-alt focus-visible:outline-gold-deep',
   ghost: 'text-gold-text hover:underline focus-visible:outline-gold-deep',
 } as const
 

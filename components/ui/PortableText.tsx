@@ -6,10 +6,10 @@ const components: PortableTextComponents = {
   block: {
     normal: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
     h2: ({ children }) => (
-      <h2 className="font-display text-gold-deep mt-10 mb-4 text-3xl">{children}</h2>
+      <h2 className="font-display mt-10 mb-4 text-3xl">{children}</h2>
     ),
     h3: ({ children }) => (
-      <h3 className="font-display text-gold-deep mt-8 mb-3 text-2xl">{children}</h3>
+      <h3 className="font-display mt-8 mb-3 text-2xl">{children}</h3>
     ),
     h4: ({ children }) => (
       <h4 className="text-ink mt-6 mb-2 text-lg font-semibold">{children}</h4>

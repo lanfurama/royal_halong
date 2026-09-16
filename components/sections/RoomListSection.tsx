@@ -13,7 +13,7 @@ export function RoomListSection({ heading, resolved, lang }: any & { lang: Local
     <section className="py-16">
       <Container>
         {heading && (
-          <h2 className="font-display text-gold-deep mb-10 text-center text-3xl">
+          <h2 className="font-display mb-10 text-center text-3xl">
             {t<string>(heading, lang)}
           </h2>
         )}
@@ -22,7 +22,7 @@ export function RoomListSection({ heading, resolved, lang }: any & { lang: Local
             const roomTitle = t<string>(room.title, lang)
             return (
               <Reveal key={room._id} delay={index * 90}>
-                <article className="bg-cream h-full">
+                <article className="bg-cream-soft shadow-card h-full">
                   {room.heroImage && (
                     <SanityImage
                       image={room.heroImage}

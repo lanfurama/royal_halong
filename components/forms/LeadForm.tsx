@@ -29,7 +29,48 @@ const LABELS = {
     submit: 'Send request',
     sending: 'Sending...',
   },
-} as const
+  zh: {
+    name: '姓名',
+    email: '邮箱',
+    phone: '电话',
+    eventDate: '预计日期',
+    guestCount: '人数',
+    message: '留言',
+    submit: '提交需求',
+    sending: '发送中…',
+  },
+  ko: {
+    name: '이름',
+    email: '이메일',
+    phone: '전화번호',
+    eventDate: '희망 날짜',
+    guestCount: '인원',
+    message: '메시지',
+    submit: '문의 보내기',
+    sending: '전송 중…',
+  },
+  ja: {
+    name: 'お名前',
+    email: 'メールアドレス',
+    phone: '電話番号',
+    eventDate: 'ご希望日',
+    guestCount: 'ご利用人数',
+    message: 'メッセージ',
+    submit: '送信する',
+    sending: '送信中…',
+  },
+  th: {
+    name: 'ชื่อ-นามสกุล',
+    email: 'อีเมล',
+    phone: 'เบอร์โทรศัพท์',
+    eventDate: 'วันที่ต้องการ',
+    guestCount: 'จำนวนผู้เข้าร่วม',
+    message: 'ข้อความ',
+    submit: 'ส่งคำขอ',
+    sending: 'กำลังส่ง…',
+  },
+  // Xem ghi chú cùng nội dung ở `app/actions/newsletter.ts`.
+} as const satisfies Record<Locale, Record<string, string>>
 
 /**
  * `<form action={formAction}>` với Server Action: submit được ngay cả khi
@@ -56,7 +97,7 @@ export function LeadForm({
 
   if (state.status === 'success') {
     return (
-      <p role="status" className="border-gold-deep bg-white border-l-4 p-4 text-sm">
+      <p role="status" className="border-gold bg-cream-soft border-l-4 p-4 text-sm">
         {successMessage ?? state.message}
       </p>
     )
@@ -138,7 +179,7 @@ export function LeadForm({
           name="message"
           rows={4}
           defaultValue={prev.message ?? ''}
-          className="border-line focus:border-gold-deep focus:outline-gold-deep w-full border bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1"
+          className="border-line focus:border-gold-deep focus:outline-gold-deep w-full border bg-cream-soft px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1"
         />
       </div>
 

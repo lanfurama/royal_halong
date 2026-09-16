@@ -37,7 +37,7 @@ export function CardGridSection({
   const list: any[] = cards ?? []
 
   return (
-    <section className="bg-cream py-16 lg:py-24">
+    <section className="bg-cream-alt py-16 lg:py-24">
       <Container size="wide">
         <SectionHeading heading={heading} subheading={subheading} lang={lang} />
 

@@ -16,7 +16,7 @@ export function TableSection({
     <section className="py-12">
       <Container>
         {heading && (
-          <h2 className="font-display text-gold-deep mb-4 text-2xl">{t<string>(heading, lang)}</h2>
+          <h2 className="font-display mb-4 text-2xl">{t<string>(heading, lang)}</h2>
         )}
         {/* Bảng luật Baccarat rộng hơn màn hình điện thoại -> cuộn ngang riêng,
             không để cả trang cuộn ngang. `tabIndex=0` + `role="group"` để
@@ -33,7 +33,7 @@ export function TableSection({
           <table className="border-line w-full min-w-[480px] border-collapse border text-sm">
             {caption && <caption className="mb-2 text-left text-xs">{t<string>(caption, lang)}</caption>}
             <thead>
-              <tr className="bg-cream">
+              <tr className="bg-cream-alt">
                 {headerList.map((cell: any, index: number) => (
                   <th
                     key={cell._key ?? index}
@@ -47,7 +47,7 @@ export function TableSection({
             </thead>
             <tbody>
               {rowList.map((row: any, rowIndex: number) => (
-                <tr key={row._key ?? rowIndex} className={rowIndex % 2 ? 'bg-cream/40' : ''}>
+                <tr key={row._key ?? rowIndex} className={rowIndex % 2 ? 'bg-cream-alt/50' : ''}>
                   {(row.cells ?? []).map((cell: any, cellIndex: number) => (
                     <td key={cell._key ?? cellIndex} className="border-line border px-3 py-2">
                       {t<string>(cell, lang)}

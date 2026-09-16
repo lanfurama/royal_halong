@@ -1,4 +1,5 @@
-import { defineType, defineField, defineArrayMember, type Rule } from 'sanity'
+import { defineType, defineArrayMember, type Rule } from 'sanity'
+import { localeFields, TRANSLATION_FIELDSET } from './localeFields'
 
 const blockContent = [
   defineArrayMember({
@@ -38,16 +39,12 @@ const blockContent = [
 
 export const localeBlock = defineType({
   name: 'localeBlock',
-  title: 'Nội dung song ngữ',
+  title: 'Nội dung đa ngữ',
   type: 'object',
-  fields: [
-    defineField({
-      name: 'vi',
-      title: 'Tiếng Việt',
-      type: 'array',
-      of: blockContent,
-      validation: (r) => r.required().min(1),
-    }),
-    defineField({ name: 'en', title: 'English', type: 'array', of: blockContent }),
-  ],
+  fieldsets: [TRANSLATION_FIELDSET],
+  fields: localeFields((_locale, isDefault) => ({
+    type: 'array',
+    of: blockContent,
+    ...(isDefault ? { validation: (r: any) => r.required().min(1) } : {}),
+  })),
 })

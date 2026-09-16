@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { display, body, accent, alt } from '@/lib/fonts'
+import { display, body } from '@/lib/fonts'
 import { DEFAULT_LOCALE } from '@/lib/i18n'
 import './globals.css'
 
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
  * lý nhất có thể, còn hơn hẳn không có `lang` nào cả.
  */
 export default function GlobalNotFound() {
-  const fontVars = [display, body, accent, alt].map((f) => f.variable).join(' ')
+  const fontVars = [display, body].map((f) => f.variable).join(' ')
 
   return (
     <html lang={DEFAULT_LOCALE} className={fontVars}>

@@ -22,7 +22,7 @@ export function VenueListSection({ heading, resolved, lang }: any & { lang: Loca
     <section className="py-16">
       <Container>
         {heading && (
-          <h2 className="font-display text-gold-deep mb-10 text-center text-3xl">
+          <h2 className="font-display mb-10 text-center text-3xl">
             {t<string>(heading, lang)}
           </h2>
         )}
@@ -43,7 +43,7 @@ export function VenueListSection({ heading, resolved, lang }: any & { lang: Loca
                   )}
                 </div>
                 <div>
-                  <h3 className="font-display text-gold-deep text-2xl">{venueName}</h3>
+                  <h3 className="font-display text-2xl">{venueName}</h3>
                   <div className="mt-3 text-sm">
                     <RichText value={venue.description} lang={lang} />
                   </div>
@@ -56,7 +56,7 @@ export function VenueListSection({ heading, resolved, lang }: any & { lang: Loca
                   {venue.highlights?.length > 0 && (
                     <ul className="mt-4 flex flex-wrap gap-2">
                       {venue.highlights.map((item: any, i: number) => (
-                        <li key={i} className="bg-cream px-3 py-1 text-xs">
+                        <li key={i} className="bg-cream-alt px-3 py-1 text-xs">
                           {t<string>(item, lang)}
                         </li>
                       ))}

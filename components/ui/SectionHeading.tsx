@@ -6,9 +6,9 @@ import { t, type Locale, type LocaleField } from '@/lib/i18n'
  * `... mb-8 ...` (Gallery), `mb-6` (Map), `mb-10` (Testimonials) — bốn nhịp
  * khác nhau cho cùng một vai trò, thấy rõ khi cuộn hết trang chủ.
  *
- * Màu: `gold-deep` chỉ đạt 3.85:1 trên nền trắng — hợp lệ cho chữ >= 24px
- * (text-3xl = 30px), nhưng phần phụ đề cỡ nhỏ thì KHÔNG, nên phụ đề dùng
- * `text-body`. Đây là lý do hai dòng ngay cạnh nhau lại khác màu.
+ * Màu: từ bản redesign, tiêu đề là NÂU MỰC (màu chữ mặc định) chứ không
+ * còn tô vàng — vàng chỉ dành cho nhãn nhỏ, viền và nút. Đường kẻ vàng ngắn
+ * phía trên giữ vai trò dấu hiệu thương hiệu.
  */
 export function SectionHeading({
   heading,
@@ -40,7 +40,7 @@ export function SectionHeading({
       {headingText && (
         <h2
           className={`font-display text-[clamp(1.5rem,4vw,2.25rem)] ${
-            tone === 'dark' ? 'text-gold-hi' : 'text-gold-deep'
+            tone === 'dark' ? 'text-cream-hi' : ''
           }`}
         >
           {headingText}

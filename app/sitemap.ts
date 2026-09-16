@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { LOCALES } from '@/lib/i18n'
+import { resolveRouteSlug } from '@/lib/routes'
 import { getAllRoutes } from '@/sanity/lib/fetchers'
 import { absoluteUrl } from '@/lib/seo'
 import { siteUrl as getSiteUrl } from '@/lib/site-url'
@@ -16,7 +17,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const route of routes) {
     for (const lang of LOCALES) {
-      const slug = lang === 'vi' ? route.vi : route.en || route.vi
+      // Cùng chuỗi fallback với `t()`/`resolveSlug` (<locale> -> en -> vi).
+      // Trước đây là `lang === 'vi' ? route.vi : route.en || route.vi` — một
+      // biểu thức chỉ đúng khi site có đúng hai ngôn ngữ.
+      const slug = resolveRouteSlug(route, lang)
       if (!slug) continue
       entries.push({
         url: absoluteUrl(`/${lang}/${slug}`, siteUrl),

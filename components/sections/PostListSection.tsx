@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { t, type Locale } from '@/lib/i18n'
+import { t, INTL_LOCALES, type Locale } from '@/lib/i18n'
+import { ui } from '@/lib/ui-strings'
 import { Container } from '@/components/ui/Container'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { Reveal } from '@/components/ui/Reveal'
@@ -21,7 +22,7 @@ export function PostListSection({
       <section className="py-16">
         <Container>
           <p className="text-center text-sm">
-            {lang === 'vi' ? 'Chưa có bài viết nào.' : 'No articles yet.'}
+            {ui('noPosts', lang)}
           </p>
         </Container>
       </section>
@@ -32,7 +33,7 @@ export function PostListSection({
     <section className="py-16">
       <Container>
         {heading && (
-          <h2 className="font-display text-gold-deep mb-10 text-center text-3xl">
+          <h2 className="font-display mb-10 text-center text-3xl">
             {t<string>(heading, lang)}
           </h2>
         )}
@@ -58,7 +59,7 @@ export function PostListSection({
                         dateTime={published.toISOString()}
                         className="text-gold-text mt-4 block text-xs tracking-widest uppercase"
                       >
-                        {published.toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB', {
+                        {published.toLocaleDateString(INTL_LOCALES[lang as Locale], {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',

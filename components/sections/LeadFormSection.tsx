@@ -11,10 +11,10 @@ export function LeadFormSection({
   sourcePage,
 }: any & { lang: Locale }) {
   return (
-    <section className="bg-cream py-16">
+    <section className="bg-cream-alt py-16">
       <Container size="narrow">
         {heading && (
-          <h2 className="font-display text-gold-deep mb-3 text-3xl">{t(heading, lang)}</h2>
+          <h2 className="font-display mb-3 text-3xl">{t(heading, lang)}</h2>
         )}
         {description && <p className="mb-8 text-sm">{t(description, lang)}</p>}
         <LeadForm

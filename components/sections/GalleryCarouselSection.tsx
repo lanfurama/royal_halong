@@ -44,10 +44,10 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
   // nhiều chỗ hơn phần còn lại, flex bèn co hai nút — đo được **21×44px**,
   // tức đúng nửa ngưỡng theo chiều ngang, dù class đã ghi `size-11`.
   const controlClasses =
-    'flex size-11 shrink-0 items-center justify-center rounded-pill border border-line bg-white text-gold-text transition-colors hover:bg-cream disabled:opacity-40'
+    'flex size-11 shrink-0 items-center justify-center rounded-pill border border-line bg-cream-soft text-gold-text transition-colors hover:bg-cream disabled:opacity-40'
 
   return (
-    <section className="bg-cream-soft py-16 lg:py-24">
+    <section className="bg-cream-alt py-16 lg:py-24">
       <Container size="wide">
         <SectionHeading heading={heading ?? album?.title} lang={lang} />
       </Container>

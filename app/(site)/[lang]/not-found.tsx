@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { DEFAULT_LOCALE, isLocale } from '@/lib/i18n'
+import { DEFAULT_LOCALE, isLocale, type Locale } from '@/lib/i18n'
 import { SiteChrome } from '@/components/layout/SiteChrome'
 
 // Đo thật bằng curl (`pnpm build && PORT=3100 pnpm start`): boundary này
@@ -16,7 +16,7 @@ import { SiteChrome } from '@/components/layout/SiteChrome'
 // `not-found.tsx` theo convention Next KHÔNG nhận props/params — `lang`
 // dùng `DEFAULT_LOCALE` làm giá trị hợp lý nhất có thể trong trường hợp đó.
 export default function NotFound({ params }: { params?: { lang?: string } }) {
-  const lang = isLocale(params?.lang ?? '') ? (params!.lang as 'vi' | 'en') : DEFAULT_LOCALE
+  const lang = isLocale(params?.lang ?? '') ? (params!.lang as Locale) : DEFAULT_LOCALE
 
   return (
     <SiteChrome lang={lang} slug={null}>

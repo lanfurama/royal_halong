@@ -54,7 +54,7 @@ export function TestimonialsBlock({
   if (list.length === 0) return null
 
   return (
-    <section className="bg-white py-16 lg:py-24">
+    <section className="bg-cream py-16 lg:py-24">
       <Container size="wide">
         <SectionHeading heading={{ vi: 'Cảm nhận của khách', en: 'Guest reviews' }} lang={lang} />
 
@@ -68,7 +68,7 @@ export function TestimonialsBlock({
               return (
                 <figure
                   key={item._id ?? index}
-                  className="bg-cream flex min-w-0 shrink-0 basis-full flex-col rounded-card p-6 lg:basis-[calc(50%-0.75rem)] lg:p-8"
+                  className="bg-cream-soft shadow-card flex min-w-0 shrink-0 basis-full flex-col rounded-card p-6 lg:basis-[calc(50%-0.75rem)] lg:p-8"
                 >
                   {/* Dấu ngoặc kép lớn — dấu hiệu thị giác duy nhất cho biết
                       đây là lời của khách, thay cho việc phải viết thêm chữ. */}

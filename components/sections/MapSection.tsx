@@ -14,7 +14,7 @@ const LeafletMap = dynamic(() => import('@/components/ui/LeafletMap').then((m) =
   // một hình chữ nhật lạ giữa lúc tải.
   loading: () => (
     <div
-      className="bg-cream h-96 w-full animate-pulse rounded-media motion-reduce:animate-none"
+      className="bg-cream-alt h-96 w-full animate-pulse rounded-media motion-reduce:animate-none"
       aria-hidden="true"
     />
   ),
@@ -59,7 +59,7 @@ export function MapSection({
         : 15
 
   return (
-    <section className="bg-white py-16 lg:py-24">
+    <section className="bg-cream py-16 lg:py-24">
       <Container size="wide">
         <SectionHeading heading={heading} lang={lang} />
         {/* `overflow-hidden` cắt các ô tile vuông góc của Leaflet theo bo góc

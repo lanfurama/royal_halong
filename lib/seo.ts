@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { t, isEmpty, LOCALES, DEFAULT_LOCALE, type Locale } from './i18n'
+import { t, isEmpty, LOCALES, DEFAULT_LOCALE, OG_LOCALES, type Locale } from './i18n'
 import { resolveSlug, type SlugField } from './routes'
 import { siteUrl as defaultSiteUrl } from './site-url'
 import { urlFor } from '@/sanity/lib/image'
@@ -85,7 +85,7 @@ export function buildMetadata({
       description,
       url: absoluteUrl(path, siteUrl),
       siteName: brand,
-      locale: lang === 'vi' ? 'vi_VN' : 'en_US',
+      locale: OG_LOCALES[lang],
       type: 'website',
       ...(ogImageUrl ? { images: [{ url: ogImageUrl }] } : {}),
     },

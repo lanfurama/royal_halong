@@ -39,7 +39,7 @@ export function Field({
         required={required}
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`border-line focus:border-gold-deep focus:outline-gold-deep w-full border bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1 ${
+        className={`border-line focus:border-gold-deep focus:outline-gold-deep w-full border bg-cream-soft px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1 ${
           error ? 'border-red-600' : ''
         }`}
         {...rest}

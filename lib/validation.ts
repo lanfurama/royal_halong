@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { t, type Locale, type LocaleField } from '@/lib/i18n'
+import { LOCALES, t, type Locale, type LocaleField } from '@/lib/i18n'
 
 /**
  * Thông điệp lỗi KHÔNG phải chuỗi hiển thị, mà là KHOÁ ổn định.
@@ -119,7 +119,10 @@ const phone = z
   .max(40, messages.tooLong)
   .refine((value) => value.replace(/\D/g, '').length >= 8, messages.phoneInvalid)
 
-const locale = z.enum(['vi', 'en'], messages.localeInvalid)
+// Sinh từ `LOCALES` thay vì liệt kê tay: form gửi `locale` lên server và
+// một enum đứng im ở ['vi','en'] sẽ TỪ CHỐI mọi lead gửi từ trang tiếng
+// Trung/Hàn/Nhật/Thái — lỗi im lặng, chỉ thấy khi đếm lead thiếu.
+const locale = z.enum(LOCALES, messages.localeInvalid)
 
 /**
  * guestCount: chuỗi rỗng (input tuỳ chọn chưa điền trong form thật) -> undefined
