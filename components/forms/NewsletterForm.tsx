@@ -24,10 +24,10 @@ export function NewsletterForm({ lang }: { lang: Locale }) {
   return (
     <form action={formAction} className="flex flex-wrap gap-2" noValidate>
       <input type="hidden" name="locale" value={lang} />
-      {/* Bẫy bot: ẩn khỏi mắt và khỏi screen reader, người thật không bao giờ điền. */}
+      {/* Bẫy bot — xem ghi chú tên trường trong LeadForm.tsx. */}
       <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden">
-        <label htmlFor="newsletter-company">Company</label>
-        <input id="newsletter-company" name="company" tabIndex={-1} autoComplete="off" />
+        <label htmlFor="newsletter-ref-2">Ref</label>
+        <input id="newsletter-ref-2" name="ref_2" tabIndex={-1} autoComplete="off" />
       </div>
 
       <label htmlFor="newsletter-email" className="sr-only">
@@ -41,7 +41,7 @@ export function NewsletterForm({ lang }: { lang: Locale }) {
         placeholder={placeholder}
         aria-invalid={state.fieldErrors?.email ? 'true' : undefined}
         aria-describedby={state.fieldErrors?.email ? 'newsletter-email-error' : undefined}
-        className="border-line focus:border-gold-deep focus:outline-gold-deep min-w-0 flex-1 border bg-white px-3 py-2 text-sm focus:outline-2"
+        className="border-line focus:border-ink focus:outline-ink min-w-0 flex-1 border bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1"
       />
       {/*
         Nền footer là `bg-gold` (xem Footer.tsx) — một nút `solid` (cũng nền
@@ -59,7 +59,7 @@ export function NewsletterForm({ lang }: { lang: Locale }) {
       </button>
 
       {state.status === 'error' && state.message && (
-        <p id="newsletter-email-error" role="alert" className="w-full text-xs text-red-700">
+        <p id="newsletter-email-error" role="alert" className="w-full text-xs text-red-950">
           {state.message}
         </p>
       )}

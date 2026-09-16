@@ -29,14 +29,14 @@ describe('NewsletterForm', () => {
     expect(screen.getByRole('button', { name: 'Subscribe' })).toBeDefined()
   })
 
-  it('gửi kèm locale qua input ẩn, có trường bẫy bot company ẩn khỏi AT', () => {
+  it('gửi kèm locale qua input ẩn, có trường bẫy bot ref_2 ẩn khỏi AT', () => {
     const { container } = render(<NewsletterForm lang="vi" />)
     const localeInput = container.querySelector('input[name="locale"]') as HTMLInputElement
     expect(localeInput.value).toBe('vi')
 
-    const wrapper = container.querySelector('input[name="company"]')?.parentElement
+    const wrapper = container.querySelector('input[name="ref_2"]')?.parentElement
     expect(wrapper?.getAttribute('aria-hidden')).toBe('true')
-    const honeypot = container.querySelector('input[name="company"]') as HTMLInputElement
+    const honeypot = container.querySelector('input[name="ref_2"]') as HTMLInputElement
     expect(honeypot.tabIndex).toBe(-1)
   })
 

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { newsletterSchema, isHoneypotFilled } from '@/lib/validation'
+import { newsletterSchema, isHoneypotFilled, isPlainObject } from '@/lib/validation'
 import { rateLimit } from '@/lib/rate-limit'
 
 // KHÔNG khai báo `export const runtime` — xem giải thích trong
@@ -18,7 +18,14 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (isHoneypotFilled(body as { company?: unknown })) {
+  if (!isPlainObject(body)) {
+    return NextResponse.json(
+      { ok: false, message: 'Body phải là một object JSON' },
+      { status: 400 },
+    )
+  }
+
+  if (isHoneypotFilled(body)) {
     return NextResponse.json({ ok: true })
   }
   const limit = rateLimit(clientKey)

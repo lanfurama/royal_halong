@@ -49,6 +49,10 @@ export function LeadForm({
 }) {
   const [state, formAction, pending] = useActionState(submitLead, INITIAL)
   const text = LABELS[lang]
+  // Điền lại những gì người dùng vừa gõ. Thiết yếu khi JS chưa load: lúc đó
+  // submit là điều hướng thật, trang được dựng lại và mọi ô sẽ rỗng nếu không
+  // có `defaultValue`.
+  const prev = state.values ?? {}
 
   if (state.status === 'success') {
     return (
@@ -64,10 +68,16 @@ export function LeadForm({
       <input type="hidden" name="locale" value={lang} />
       {sourcePage && <input type="hidden" name="sourcePage" value={sourcePage} />}
 
-      {/* Bẫy bot: ẩn khỏi mắt và khỏi screen reader, người thật không bao giờ điền. */}
+      {/*
+        Bẫy bot: ẩn khỏi mắt và khỏi screen reader, người thật không bao giờ điền.
+        Tên trường KHÔNG được là `company`/`organization`: Chrome bỏ qua
+        `autoComplete="off"` với nhóm address/organization và vẫn tự điền, khiến
+        lead THẬT bị coi là bot — bị vứt lặng lẽ kèm thông báo thành công giả.
+        Dùng tên vô nghĩa để không trình tự-điền nào nhận ra.
+      */}
       <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden">
-        <label htmlFor="field-company">Company</label>
-        <input id="field-company" name="company" tabIndex={-1} autoComplete="off" />
+        <label htmlFor="field-ref-2">Ref</label>
+        <input id="field-ref-2" name="ref_2" tabIndex={-1} autoComplete="off" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -77,6 +87,7 @@ export function LeadForm({
           required
           autoComplete="name"
           error={state.fieldErrors?.name}
+        defaultValue={prev.name ?? ''}
         />
         <Field
           name="phone"
@@ -85,6 +96,7 @@ export function LeadForm({
           required
           autoComplete="tel"
           error={state.fieldErrors?.phone}
+        defaultValue={prev.phone ?? ''}
         />
       </div>
       <Field
@@ -94,6 +106,7 @@ export function LeadForm({
         required
         autoComplete="email"
         error={state.fieldErrors?.email}
+        defaultValue={prev.email ?? ''}
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
@@ -101,6 +114,7 @@ export function LeadForm({
           label={text.eventDate}
           type="date"
           error={state.fieldErrors?.eventDate}
+        defaultValue={prev.eventDate ?? ''}
         />
         <Field
           name="guestCount"
@@ -108,6 +122,7 @@ export function LeadForm({
           type="number"
           min={1}
           error={state.fieldErrors?.guestCount}
+        defaultValue={prev.guestCount ?? ''}
         />
       </div>
 
@@ -122,6 +137,7 @@ export function LeadForm({
           id="field-message"
           name="message"
           rows={4}
+          defaultValue={prev.message ?? ''}
           className="border-line focus:border-gold-deep focus:outline-gold-deep w-full border bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-offset-1"
         />
       </div>

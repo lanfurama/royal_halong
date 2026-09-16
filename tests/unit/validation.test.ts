@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { leadSchema, newsletterSchema, isHoneypotFilled, errorMessage, ERROR_MESSAGES } from '@/lib/validation'
+import { leadSchema, newsletterSchema, isHoneypotFilled, errorMessage, ERROR_MESSAGES, isPlainObject } from '@/lib/validation'
 
 const valid = {
   type: 'wedding',
@@ -67,11 +67,11 @@ describe('newsletterSchema', () => {
 
 describe('isHoneypotFilled()', () => {
   it('true khi trường bẫy có giá trị', () => {
-    expect(isHoneypotFilled({ company: 'bot' })).toBe(true)
+    expect(isHoneypotFilled({ ref_2: 'bot' })).toBe(true)
   })
 
   it('false khi trường bẫy rỗng hoặc không có', () => {
-    expect(isHoneypotFilled({ company: '' })).toBe(false)
+    expect(isHoneypotFilled({ ref_2: '' })).toBe(false)
     expect(isHoneypotFilled({})).toBe(false)
   })
 })
@@ -100,7 +100,65 @@ describe('thông điệp lỗi song ngữ', () => {
     }
   })
 
-  it('khoá lạ trả về chính nó, không trả chuỗi rỗng', () => {
-    expect(errorMessage('khong_ton_tai', 'vi')).toBe('khong_ton_tai')
+  // Hợp đồng ĐÃ ĐỔI: trước đây khoá lạ trả về chính nó, nhưng zod tự sinh
+  // message tiếng Anh cho các ràng buộc không có khoá riêng ("Too big:
+  // expected string to have <=200 characters") — trả nguyên chuỗi đó ra UI
+  // nghĩa là khách Việt đọc tiếng Anh kỹ thuật. Giờ rơi về câu chung ĐÃ DỊCH.
+  it('khoá lạ rơi về câu chung theo đúng ngôn ngữ, không trả chuỗi thô', () => {
+    expect(errorMessage('khong_ton_tai', 'vi')).toBe('Giá trị không hợp lệ')
+    expect(errorMessage('khong_ton_tai', 'en')).toBe('Invalid value')
+    expect(errorMessage('Too big: expected string', 'vi')).not.toMatch(/expected/)
+  })
+})
+
+describe('chống mất lead — các lỗi review tổng phát hiện', () => {
+  // eventDate từng là text tự do đổ thẳng vào cột Postgres kiểu `date`:
+  // "20/12/2026" qua được zod, Postgres ném 22007, lead MẤT và người gửi chỉ
+  // thấy "Không gửi được".
+  it('eventDate chỉ nhận ISO YYYY-MM-DD và ngày CÓ THẬT', () => {
+    const base = { type: 'wedding', name: 'A', email: 'a@b.co', phone: '0904030222', locale: 'vi' }
+    for (const bad of ['20/12/2026', 'khong-phai-ngay', '2026-13-01', '2026-02-31', '2026-02-29']) {
+      expect(leadSchema.safeParse({ ...base, eventDate: bad }).success, bad).toBe(false)
+    }
+    for (const ok of ['2026-12-20', '2024-02-29', '']) {
+      expect(leadSchema.safeParse({ ...base, eventDate: ok }).success, ok).toBe(true)
+    }
+  })
+
+  // `JSON.parse("null")` thành công, nên body null lọt qua try/catch rồi làm nổ
+  // `data.company` -> Next trả 500 body RỖNG.
+  it('isHoneypotFilled chịu được null và mọi kiểu không phải object', () => {
+    for (const v of [null, undefined, 'chuỗi', 42, [], true]) {
+      expect(() => isHoneypotFilled(v)).not.toThrow()
+      expect(isHoneypotFilled(v)).toBe(false)
+    }
+  })
+
+  it('isPlainObject phân biệt object thật với null/mảng', () => {
+    expect(isPlainObject({ a: 1 })).toBe(true)
+    expect(isPlainObject(null)).toBe(false)
+    expect(isPlainObject([])).toBe(false)
+    expect(isPlainObject('x')).toBe(false)
+  })
+
+  // errorMessage() từng trả về chính KHOÁ khi không tìm thấy, nên message
+  // tiếng Anh zod tự sinh rò thẳng ra giao diện tiếng Việt.
+  it('lỗi zod tự sinh không rò chuỗi tiếng Anh ra UI tiếng Việt', () => {
+    const r = leadSchema.safeParse({
+      type: 'wedding', name: 'A', email: 'a@b.co', phone: '0904030222',
+      locale: 'vi', guestCount: 'abc',
+    })
+    expect(r.success).toBe(false)
+    const msg = errorMessage(r.error!.issues[0].message, 'vi')
+    expect(msg).not.toMatch(/expected|Invalid input|Too big/i)
+    expect(msg).toBeTruthy()
+  })
+
+  it('giới hạn độ dài: message 1 triệu ký tự bị chặn', () => {
+    const r = leadSchema.safeParse({
+      type: 'wedding', name: 'A', email: 'a@b.co', phone: '0904030222',
+      locale: 'vi', message: 'x'.repeat(1_000_000),
+    })
+    expect(r.success).toBe(false)
   })
 })

@@ -116,7 +116,7 @@ test.describe('NewsletterForm — chân trang mọi trang (không tốn rate lim
     // lệ) không chạm `lib/db` — nên request này thành công dù CHƯA có
     // DATABASE_URL, đúng như thiết kế "trả thành công giả cho bot".
     const response = await request.post('/api/newsletter', {
-      data: { email: 'bot@example.com', locale: 'vi', company: 'Bot Inc' },
+      data: { email: 'bot@example.com', locale: 'vi', ref_2: 'Bot Inc' },
     })
     expect(response.status()).toBe(200)
     expect((await response.json()).ok).toBe(true)
@@ -234,7 +234,7 @@ test.describe('API /api/leads và /api/newsletter (JSON, không qua trình duy�
         email: 'bot@example.com',
         phone: '0904030222',
         locale: 'vi',
-        company: 'Bot Inc',
+        ref_2: 'Bot Inc',
       },
     })
     expect(response.status()).toBe(200)

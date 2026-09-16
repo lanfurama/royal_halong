@@ -81,7 +81,7 @@ describe('POST /api/leads', () => {
 
   it('honeypot -> 200 nhưng KHÔNG ghi DB', async () => {
     const { POST } = await import('@/app/api/leads/route')
-    const res = await POST(post('http://x/api/leads', { ...validLead, company: 'bot inc' }))
+    const res = await POST(post('http://x/api/leads', { ...validLead, ref_2: 'bot inc' }))
     expect(res.status).toBe(200)
     expect(insertSpy).not.toHaveBeenCalled()
   })
@@ -113,7 +113,7 @@ describe('POST /api/newsletter', () => {
   it('honeypot -> 200 nhưng KHÔNG ghi DB', async () => {
     const { POST } = await import('@/app/api/newsletter/route')
     const res = await POST(
-      post('http://x/api/newsletter', { email: 'a@example.com', locale: 'vi', company: 'bot' }),
+      post('http://x/api/newsletter', { email: 'a@example.com', locale: 'vi', ref_2: 'bot' }),
     )
     expect(res.status).toBe(200)
     expect(insertSpy).not.toHaveBeenCalled()

@@ -54,11 +54,11 @@ describe('LeadForm', () => {
     expect(container.querySelector('input[name="sourcePage"]')).toBeNull()
   })
 
-  it('trường bẫy bot (company) ẩn khỏi mắt/AT nhưng vẫn có label thật và tồn tại trong DOM để bot điền được', () => {
+  it('trường bẫy bot (ref_2, tên mà trình tự-điền không nhận ra) ẩn khỏi mắt/AT nhưng vẫn có label thật và tồn tại trong DOM để bot điền được', () => {
     const { container } = render(<LeadForm formType="general" lang="vi" />)
-    const wrapper = container.querySelector('input[name="company"]')?.parentElement
+    const wrapper = container.querySelector('input[name="ref_2"]')?.parentElement
     expect(wrapper?.getAttribute('aria-hidden')).toBe('true')
-    const honeypot = container.querySelector('input[name="company"]') as HTMLInputElement
+    const honeypot = container.querySelector('input[name="ref_2"]') as HTMLInputElement
     expect(honeypot).not.toBeNull()
     expect(honeypot.tabIndex).toBe(-1)
     // Không dùng type="hidden" — bot đọc DOM thô (không chạy CSS) vẫn phải

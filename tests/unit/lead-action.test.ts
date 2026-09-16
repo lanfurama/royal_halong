@@ -35,7 +35,7 @@ describe('handleLead()', () => {
   it('honeypot có giá trị: báo thành công giả nhưng KHÔNG ghi DB', async () => {
     const insert = vi.fn(async () => undefined)
     const result = await handleLead(
-      { ...valid, company: 'bot inc' },
+      { ...valid, ref_2: 'bot inc' },
       '1.2.3.4',
       { insert, notify: async () => 'skipped' },
     )

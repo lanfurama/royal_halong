@@ -29,7 +29,7 @@ export async function submitNewsletter(
   const locale: Locale = raw.locale === 'en' ? 'en' : 'vi'
   const text = MESSAGES[locale]
 
-  if (isHoneypotFilled(raw as { company?: unknown })) {
+  if (isHoneypotFilled(raw)) {
     return { status: 'success', message: text.success }
   }
 

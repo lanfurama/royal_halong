@@ -1,8 +1,14 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { leadSchema, isHoneypotFilled, errorMessage, type LeadInput } from '@/lib/validation'
+import {
+  leadSchema,
+  isHoneypotFilled,
+  errorMessage,
+  type LeadInput,
+} from '@/lib/validation'
 import { rateLimit } from '@/lib/rate-limit'
+import { echoValues } from '@/lib/form-values'
 import { sendLeadNotification } from '@/lib/mail'
 import type { Locale } from '@/lib/i18n'
 
@@ -19,6 +25,15 @@ export interface FormState {
   code?: 'rate_limited' | 'invalid' | 'failed'
   /** Giây cần chờ, chỉ có khi `code === 'rate_limited'`. */
   retryAfterSeconds?: number
+  /**
+   * Giá trị người dùng vừa gửi, trả ngược lại để form điền lại vào ô.
+   *
+   * Khi JS chưa load, submit là một POST điều hướng THẬT: trình duyệt dựng
+   * lại trang từ HTML mới, mọi ô người dùng đã gõ biến mất. Với JS bật thì
+   * React giữ DOM nên không lộ — đúng kiểu "đúng trên một ca, hỏng ở ca còn
+   * lại". Không bao giờ trả lại trường bẫy bot.
+   */
+  values?: Record<string, string>
 }
 
 interface Deps {
@@ -51,7 +66,7 @@ export async function handleLead(
   const text = MESSAGES[locale]
 
   // Bot điền trường bẫy: trả thành công giả để nó không thử cách khác.
-  if (isHoneypotFilled(raw as { company?: unknown })) {
+  if (isHoneypotFilled(raw)) {
     return { status: 'success', message: text.success }
   }
 
@@ -64,6 +79,7 @@ export async function handleLead(
       message: text.rateLimited,
       code: 'rate_limited',
       retryAfterSeconds: limit.retryAfterSeconds,
+      values: echoValues(raw),
     }
   }
 
@@ -79,14 +95,14 @@ export async function handleLead(
         fieldErrors[field] = errorMessage(issue.message, locale)
       }
     }
-    return { status: 'error', message: text.invalid, code: 'invalid', fieldErrors }
+    return { status: 'error', message: text.invalid, code: 'invalid', fieldErrors, values: echoValues(raw) }
   }
 
   try {
     await deps.insert(parsed.data)
   } catch (error) {
     console.error('Ghi lead thất bại:', error)
-    return { status: 'error', message: text.failed, code: 'failed' }
+    return { status: 'error', message: text.failed, code: 'failed', values: echoValues(raw) }
   }
 
   // Mail hỏng không được làm hỏng kết quả — lead đã nằm an toàn trong DB.

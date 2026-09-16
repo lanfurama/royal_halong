@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { handleLead, insertLead } from '@/app/actions/lead'
+import { isPlainObject } from '@/lib/validation'
 import { sendLeadNotification } from '@/lib/mail'
 
 // KHÔNG khai báo `export const runtime` — Next 16 với `cacheComponents` bật
@@ -22,6 +23,13 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  if (!isPlainObject(body)) {
+    return NextResponse.json(
+      { ok: false, message: 'Body phải là một object JSON' },
+      { status: 400 },
+    )
+  }
+
   const result = await handleLead(body, clientKey, {
     insert: insertLead,
     notify: sendLeadNotification,
@@ -31,9 +39,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, message: result.message })
   }
 
-  // Bị chặn spam KHÔNG phải lỗi dữ liệu: trả 429 + Retry-After để client tự
-  // động lùi đúng nhịp, giống hệt cách /api/newsletter đang làm.
-  const status = result.code === 'rate_limited' ? 429 : 400
+  // Ba loại lỗi, ba mã khác nhau:
+  // - rate_limited -> 429 + Retry-After (client lùi rồi thử lại)
+  // - failed       -> 500 (lỗi PHÍA SERVER: Neon rớt, DATABASE_URL sai). Trả
+  //                   400 như trước là nói với client "dữ liệu của bạn sai,
+  //                   đừng thử lại" trong khi dữ liệu hoàn toàn đúng — và lead
+  //                   thì đã mất.
+  // - invalid      -> 400 (dữ liệu người gửi sai thật)
+  const status = result.code === 'rate_limited' ? 429 : result.code === 'failed' ? 500 : 400
   const headers =
     result.code === 'rate_limited' && result.retryAfterSeconds
       ? { 'Retry-After': String(result.retryAfterSeconds) }
