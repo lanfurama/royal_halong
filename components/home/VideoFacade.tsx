@@ -12,6 +12,31 @@ import { useNearViewport } from '@/lib/use-near-viewport'
  * không nhận dạng được — nơi gọi khi đó không render nút phát, thay vì nhúng
  * một iframe trỏ vào URL hỏng.
  */
+/**
+ * Tỉ lệ khung hình THẬT của phần hình trong video giới thiệu.
+ *
+ * File trên YouTube là 16:9 đúng chuẩn, nhưng nội dung bên trong nó được
+ * dựng ở 2.35:1 (CinemaScope) và hai dải đen đã được NUNG THẲNG vào từng
+ * khung hình. Đo trong lightbox — một khung 16:9 thật, không có CSS nào can
+ * thiệp: 12/12 mẫu đều cho viền 91px trên / 89px dưới trên khung cao 745px,
+ * tức 24% chiều cao; phần hình còn lại 1325×565 = 2.345.
+ *
+ * Vì là pixel của chính video nên KHÔNG có cách nào bằng CSS làm chúng biến
+ * mất — chỉ có thể phóng to rồi cắt bỏ. Hai chỗ dùng hằng số này (bản xem
+ * trước và lightbox) đều làm đúng thế.
+ *
+ * ⚠️ ĐÂY LÀ THUỘC TÍNH CỦA ĐÚNG VIDEO HIỆN TẠI, không phải của component.
+ * `videoUrl` lấy từ Sanity, biên tập viên đổi được. Thay bằng một video 16:9
+ * bình thường mà quên sửa chỗ này thì 12% mép trên và mép dưới của video mới
+ * sẽ bị cắt oan. Cách sửa dứt điểm là xuất lại video không kèm viền đen, rồi
+ * đặt hằng số này về `16 / 9`.
+ */
+const TI_LE_NOI_DUNG = 2.35
+const TI_LE_FILE = 16 / 9
+/** Phải phóng chiều cao iframe lên bấy nhiêu lần thì phần hình (đã trừ viền
+ *  nung sẵn) mới lấp đầy đúng chiều cao khung chứa. */
+const BU_VIEN_NUNG = TI_LE_NOI_DUNG / TI_LE_FILE
+
 export function youTubeId(url: string | null | undefined): string | null {
   if (!url) return null
   const match = url.match(
@@ -143,7 +168,13 @@ export function VideoFacade({
             // rồi căn giữa và để `overflow-hidden` của cha cắt phần thừa.
             // `pointer-events-none` để cú bấm rơi xuống <button> bọc ngoài
             // chứ không bị iframe nuốt.
-            className="pointer-events-none absolute top-1/2 left-1/2 aspect-video min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 border-0"
+            // `minHeight` vượt 100% để đẩy hai dải đen nung sẵn ra NGOÀI vùng
+            // cắt của cha (`overflow-hidden` ở `HomeIntro`) — xem
+            // `BU_VIEN_NUNG`. Đặt bằng inline style chứ không phải class
+            // Tailwind vì con số này được TÍNH ra; Tailwind quét mã nguồn
+            // dạng văn bản nên một class ghép lúc chạy sẽ không có trong CSS.
+            style={{ minHeight: `${BU_VIEN_NUNG * 100}%` }}
+            className="pointer-events-none absolute top-1/2 left-1/2 aspect-video min-w-full -translate-x-1/2 -translate-y-1/2 border-0"
           />
         )}
 
@@ -171,17 +202,31 @@ export function VideoFacade({
           // Chỉ có một slide -> bỏ hẳn hai mũi tên, chúng không dẫn đi đâu.
           buttonPrev: () => null,
           buttonNext: () => null,
-          // `max-w` theo CẢ bề ngang lẫn chiều cao khung nhìn: chỉ giới hạn
-          // bề ngang thì ở màn thấp (laptop 13" ngang màn) khung 16:9 cao
-          // quá và bị tràn ra ngoài đỉnh/đáy.
+          // Khung lightbox theo TỈ LỆ NỘI DUNG (2.35:1), không phải tỉ lệ
+          // file (16:9): đặt 16:9 thì hai dải đen nung sẵn của video hiện
+          // nguyên trong khung, thành ra một khung 16:9 chứa một hình
+          // 2.35:1 — đúng thứ đang bị kêu. Iframe bên trong vẫn là 16:9
+          // (đúng cái YouTube phát), chỉ bị `overflow-hidden` cắt bớt hai
+          // dải đó. Xem `TI_LE_NOI_DUNG`.
+          //
+          // Bề ngang chặn theo CẢ chiều ngang lẫn chiều cao khung nhìn: chỉ
+          // chặn bề ngang thì ở màn thấp (laptop 13") khung bị tràn ra ngoài
+          // đỉnh/đáy.
           slide: () => (
-            <div className="relative aspect-video w-[min(92vw,calc(88vh*16/9))]">
+            <div
+              className="relative overflow-hidden w-[min(92vw,calc(88vh*2.35))]"
+              style={{ aspectRatio: String(TI_LE_NOI_DUNG) }}
+            >
               <iframe
                 src={`${embed}?autoplay=1&rel=0`}
                 title={ui('playVideo', lang)}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                className="absolute inset-0 h-full w-full border-0"
+                // `aspect-video` + `w-full`, KHÔNG phải `inset-0 h-full`:
+                // khung cha giờ là 2.35:1, ép iframe 16:9 vừa khít nó sẽ kéo
+                // méo hình. Giữ iframe đúng 16:9 rồi căn giữa, để hai dải
+                // đen nung sẵn thò ra ngoài và bị cha cắt.
+                className="absolute top-1/2 left-1/2 aspect-video w-full -translate-x-1/2 -translate-y-1/2 border-0"
               />
             </div>
           ),
