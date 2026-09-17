@@ -105,10 +105,10 @@ export function Footer({
     // cũng là lý do mọi token chữ trong khối này là `cream-*`, không phải
     // `ink-*`. `on-dark` để viền focus đổi sang `gold-hi` (xem globals.css).
     <footer className="bg-gold-deep text-cream-hi on-dark border-cream-hi/25 mt-24 border-t">
-      {/* Đệm dọc rút từ 64/36 xuống 48/28. Cùng với việc đưa khối đăng ký lên
+      {/* Đệm dọc rút từ 64/36 xuống 48/24. Cùng với việc đưa khối đăng ký lên
           chung hàng, chân trang thấp đi ~20% mà không hàng bấm được nào phải
           nhỏ hơn 44px. */}
-      <Container size="wide" className="pt-12 pb-7">
+      <Container size="wide" className="pt-12 pb-6">
         <div className={`grid gap-x-8 gap-y-10 sm:grid-cols-2 ${lgCols}`}>
           {/* --- Cột thương hiệu --- */}
           <div>
@@ -267,7 +267,7 @@ export function Footer({
         </div>
 
         {/* --- Dải đáy --- */}
-        <div className="border-cream-hi/20 mt-9 flex flex-wrap items-center justify-between gap-5 border-t pt-5 text-[0.8125rem]">
+        <div className="border-cream-hi/20 mt-8 flex flex-wrap items-center justify-between gap-5 border-t pt-4 text-[0.8125rem]">
           <div className="text-cream-dim leading-relaxed">
             {copyright && <p>{copyright}</p>}
             {addressFull && <p>{addressFull}</p>}
@@ -281,20 +281,23 @@ export function Footer({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={ui('motVerify', lang)}
-              className="border-cream-hi/45 hover:bg-cream-hi/10 flex min-h-11 items-center gap-3 border px-4 py-2 transition-colors"
+              className="border-cream-hi/45 hover:bg-cream-hi/10 flex min-h-11 items-center gap-4 border px-5 py-2 transition-colors"
             >
               {/* Dấu "đã thông báo Bộ Công Thương" là thứ khách Việt tìm để
                   tin một khách sạn — 28px cao thì chữ trong con dấu không
-                  đọc nổi. 42px = +50%, `sizes` đi kèm để Next chọn đúng bản
-                  ảnh chứ không phóng bản 120px lên. */}
+                  đọc nổi. 64px cao (~169px ngang) là cỡ con dấu này vẫn
+                  thường được đặt trên chân trang site Việt. Ảnh gốc trong
+                  Sanity là 600×227 nên ở 64px vẫn dư điểm ảnh cho màn 2x;
+                  `sizes` phải đi theo, nếu không Next xin bản nhỏ rồi phóng
+                  lên thành nhoè. */}
               <SanityImage
                 image={settings.motBadge}
                 lang={lang}
-                sizes="180px"
+                sizes="220px"
                 decorative
-                className="h-[2.625rem] w-auto"
+                className="h-16 w-auto"
               />
-              <span className="text-[0.6875rem] font-semibold tracking-[0.14em] uppercase">
+              <span className="text-xs font-semibold tracking-[0.14em] uppercase">
                 {ui('motNotified', lang)}
               </span>
             </a>
