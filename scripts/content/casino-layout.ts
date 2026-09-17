@@ -129,24 +129,31 @@ const HOTLINE = 'tel:+842033848888'
  *  - `Casino-05` (quầy bar) và `Casino-06` (tủ rượu) là hai chủ thể khác nhau
  *    nhưng cùng phòng, cùng bảng màu — **0.72** — và nằm liền nhau.
  *
- * Thứ tự dưới đây đan xen cảnh RỘNG với cảnh CẬN, và tách hai ảnh quầy bar ra
- * xa nhau. Đo lại toàn bộ các cặp liền nhau sau khi sắp: cặp giống nhất tụt
- * từ 0.88 xuống **0.56**.
+ * Và một dạng lặp thứ hai, không nằm trong album mà nằm giữa album với phần
+ * còn lại của trang: `Casino-07` vừa ở trong thư viện vừa là ảnh của khối
+ * BACCARAT, `Casino-06` vừa ở trong thư viện vừa là ảnh của khối BAR CASINO.
+ * Thư viện nằm ngay trên khối Baccarat, nên cùng một bức ảnh hiện hai lần
+ * trong khoảng hơn một màn hình. Bỏ cả hai khỏi album — ảnh khối giữ nguyên,
+ * không đụng `alt` sáu ngôn ngữ của chúng.
+ *
+ * Thứ tự dưới đây đan xen cảnh RỘNG với cảnh CẬN. Đo lại toàn bộ các cặp liền
+ * nhau: cặp giống nhất tụt từ **0.88** xuống **0.60**.
  *
  * Nêu theo TÊN FILE chứ không theo chỉ số: chỉ số đổi ngay khi thêm/bớt một
  * ảnh, tên file thì không.
  */
 const GALLERY_ORDER = [
   'Royal-Halong-Hotel-Casino-01.jpg', // sảnh rộng, dãy máy điện tử bên trái
-  'Royal-Halong-Hotel-Casino-07.jpg', // cận: nhân viên chia bài bên bàn Baccarat
   'Royal-Halong-Hotel-Casino-02.jpg', // sảnh rộng, bàn nỉ xanh + quầy đổi phỉnh
   'Royal-Halong-Hotel-Casino-12.jpg', // cận: bàn Blackjack, tay chia bài
   'Royal-Halong-Hotel-Casino-05.jpg', // quầy bar
   'Royal-Halong-Hotel-Casino-14.jpg', // dãy máy trò chơi điện tử
   'Royal-Halong-Hotel-Casino-11.jpg', // cận: ống xóc xúc xắc trên nỉ xanh
-  'Royal-Halong-Hotel-Casino-06.jpg', // tủ rượu gắn gương
   'Royal-Halong-Hotel-Casino-15.jpg', // cận: đặt phỉnh lên bàn cược xúc xắc
   'Royal-Halong-Hotel-Casino-17.jpg', // sảnh rộng nhìn từ lối vào
+  // KHÔNG đưa vào đây: `-03` (trùng khung với `-02`), `-07` (ảnh khối
+  // BACCARAT), `-06` (ảnh khối BAR CASINO). Thêm lại là ảnh hiện hai lần
+  // trên cùng một trang.
 ]
 
 /**

@@ -53,37 +53,32 @@ export function GameBand({
 
   return (
     <section className={`relative overflow-hidden ${BG[tone]}`}>
-      {/* Ảnh tràn viền — chỉ từ `lg` trở lên. Dưới ngưỡng đó nó nằm trong
-          luồng, phía trên chữ (khối dưới cùng của file này). `44%` để cột
-          chữ 52% của Container không bao giờ chạm vào ảnh: ở 1024px còn hở
-          43px, ở 1440px còn hở 60px. */}
+      {/* MỘT phần tử ảnh duy nhất cho cả hai khổ: dưới `lg` nó nằm trong
+          luồng, khung 4:3, phía trên chữ; từ `lg` nó thành lớp `absolute`
+          bám mép section và cao bằng cả dải.
+
+          Trước đây chỗ này render HAI `<img>` rồi ẩn bớt một bằng
+          `lg:hidden` / `hidden lg:block`. `display: none` KHÔNG ngăn trình
+          duyệt tải ảnh, mà hai bản lại khai `sizes` khác nhau nên chọn hai
+          bề rộng khác nhau, tức hai URL khác nhau: đo trên bản đang chạy
+          thấy ảnh Baccarat được tải hai lần (384px và 640px) ở desktop.
+
+          `44%` để cột chữ 52% của Container không bao giờ chạm ảnh: ở
+          1024px còn hở 43px, ở 1440px còn hở 60px. */}
       {image && (
         <div
-          aria-hidden="true"
-          className={`absolute inset-y-0 hidden w-[44%] lg:block ${
-            imageSide === 'left' ? 'left-0' : 'right-0'
+          className={`relative aspect-[4/3] w-full lg:absolute lg:inset-y-0 lg:aspect-auto lg:w-[44%] ${
+            imageSide === 'left' ? 'lg:left-0' : 'lg:right-0'
           }`}
         >
           <SanityImage
             image={image}
             lang={lang}
-            sizes="44vw"
-            decorative
+            sizes="(max-width: 1024px) 100vw, 44vw"
+            fallbackAlt={heading}
             className="h-full w-full object-cover"
           />
         </div>
-      )}
-
-      {/* Ảnh ở khổ điện thoại: trong luồng, tỉ lệ 4:3 — cùng tỉ lệ mà
-          `ImageTextSection` dùng, để hai kiểu khối không đá nhau về nhịp. */}
-      {image && (
-        <SanityImage
-          image={image}
-          lang={lang}
-          sizes="100vw"
-          fallbackAlt={heading}
-          className="aspect-[4/3] w-full object-cover lg:hidden"
-        />
       )}
 
       <Container size="wide" className="relative py-14 lg:py-24">
