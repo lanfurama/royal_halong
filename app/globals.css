@@ -574,7 +574,10 @@
     --ldr-ink: var(--color-gold-soft);
     --ldr-rule: rgb(240 215 138 / 0.4);
     --ldr-rule-soft: rgb(240 215 138 / 0.16);
-    --ldr-pattern: 0.08;
+    /* Thấp hơn bản kem một chút chứ không cao hơn: vàng trên nền tối tương
+       phản mạnh hơn vàng trên nền kem, cùng một độ đục thì bản tối trông
+       đậm gấp rưỡi. */
+    --ldr-pattern: 0.06;
     --ldr-grain: 0.05;
     /* `screen` chứ không `multiply`: trên nền tối, hạt nhân với nền ra một
        mảng đen phẳng, chẳng thấy hạt đâu. */
@@ -816,20 +819,28 @@
        α=0.70 -> 3.38:1     α=0.84 -> 4.60:1
        α=0.80 -> 4.20:1     α=0.86 -> 4.82:1     α=0.97 -> 6.23:1
 
-     Nên mốc `0.88` đặt ở **70px** — trước mép trên của chữ (80px với `pt-20`,
-     96px với `pt-24`) — và giữ `0.97` từ 84px xuống đáy. Chữ luôn nằm dưới
-     84px bất kể tiêu đề dài mấy dòng, nên lời hứa ">= 86% đục" trong
+     Nên mốc `0.88` đặt ở **42px** — trước mép trên của chữ (48px với `pt-12`,
+     96px với `pt-24`) — và giữ `0.97` từ 52px xuống đáy. Chữ luôn nằm dưới
+     52px bất kể tiêu đề dài mấy dòng, nên lời hứa ">= 86% đục" trong
      `CardGridSection.tsx` giờ mới đúng là thứ CSS thật sự làm.
+
+     Vì sao dốc GẤP (42px) chứ không thoải (70px) như bản sửa đầu: lớp phủ
+     bọc đúng khối chữ, nên nó cao bao nhiêu là che ảnh bấy nhiêu. Bản 70px
+     đi kèm `pt-20` cho tương phản 5.9–6.6:1 nhưng lớp phủ chiếm **91–96%**
+     chiều cao thẻ — ba thẻ cạnh nhau đọc thành ba khối nâu vàng giống hệt,
+     không phân biệt nổi quầy bánh với tiệc cưới bên hồ bơi. Rút `pt-20` ->
+     `pt-12` và kéo gradient khớp lại giữ được cả hai: chữ vẫn trên nền
+     >= 0.88, mà ảnh lộ thêm 32px ở mỗi thẻ.
 
      Đổi các mốc thì đo lại bằng công thức WCAG, đừng chỉnh bằng mắt. */
   .scrim-card {
     background-image: linear-gradient(
       180deg,
       rgb(143 106 28 / 0) 0,
-      rgb(138 101 24 / 0.2) 24px,
-      rgb(130 94 21 / 0.58) 48px,
-      rgb(120 86 18 / 0.88) 70px,
-      rgb(120 86 18 / 0.97) 84px
+      rgb(138 101 24 / 0.28) 14px,
+      rgb(130 94 21 / 0.66) 30px,
+      rgb(120 86 18 / 0.88) 42px,
+      rgb(120 86 18 / 0.97) 52px
     );
   }
 
@@ -906,10 +917,10 @@
     background-image: linear-gradient(
       180deg,
       rgb(143 106 28 / 0) 0,
-      rgb(138 101 24 / 0.2) 24px,
-      rgb(130 94 21 / 0.58) 48px,
-      rgb(120 86 18 / 0.88) 70px,
-      rgb(120 86 18 / 0.97) 84px
+      rgb(138 101 24 / 0.28) 14px,
+      rgb(130 94 21 / 0.66) 30px,
+      rgb(120 86 18 / 0.88) 42px,
+      rgb(120 86 18 / 0.97) 52px
     );
   }
 }
