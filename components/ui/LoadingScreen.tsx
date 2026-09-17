@@ -20,6 +20,31 @@ const LOGO_SRC = '/logo-royal-halong-white.png'
  * quay. Sáu vòng đo thử thì phần chồng nét biến rìa cầu thành một vệt đặc. */
 const MERIDIANS = [0, 45, 90, 135]
 
+/**
+ * MỘT nhánh của hoa văn góc, vẽ ở tư thế chạy dọc mép DƯỚI của ô 120×120:
+ * thân cuộn vút lên rồi cuốn lại thành vòng xoắn (volute), hai lá nhọn bám
+ * trên thân, một chấm nhuỵ ở mắt vòng xoắn.
+ *
+ * Chỉ vẽ một nhánh vì nhánh thứ hai LÀ chính nó soi gương qua đường chéo 45°
+ * của ô — `matrix(0,-1,-1,0,120,120)` đúng là phép `(x,y) -> (120-y, 120-x)`.
+ * Vẽ tay hai nhánh thì lần chỉnh nét đầu tiên chỉ sửa được một bên, và hoa
+ * văn lệch đối xứng theo cách rất khó nhìn ra là vì sao.
+ */
+const CORNER_ARM = (
+  <>
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      d="M10 112 C 52 112, 82 106, 98 88 C 107 77, 104 64, 95 62 C 87 60, 84 68, 89 72 C 93 75, 99 72, 98 66"
+    />
+    <path fill="currentColor" d="M56 111 C 58 101, 62 93, 64 86 C 68 95, 66 105, 56 111 Z" />
+    <path fill="currentColor" d="M30 111 C 31 105, 33 100, 34 95 C 38 101, 37 107, 30 111 Z" />
+    <circle fill="currentColor" cx="94" cy="67" r="1.6" />
+  </>
+)
+
 type LoadingScreenProps = {
   lang: Locale
   /** `true` (mặc định) — phủ kín viewport, dùng cho `loading.tsx` của route.
@@ -88,18 +113,16 @@ export function LoadingScreen({ lang, fullscreen = true }: LoadingScreenProps) {
           aria-hidden="true"
           focusable="false"
         >
-          <g fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-            {/* Thân cuộn chính: đi từ mép ngoài vào, vút lên rồi cuốn lại
-                thành một vòng xoắn (volute) — mô-típ gốc của hoa văn cuộn. */}
-            <path d="M4 112 C 4 74, 24 46, 58 38" />
-            <path d="M58 38 C 82 32, 96 42, 94 58 C 92 72, 76 76, 70 66 C 65 58, 72 48, 82 52" />
-            {/* Hai lá acanthus bám vào thân, cỡ khác nhau cho khỏi đối xứng
-                cứng. */}
-            <path d="M28 82 C 38 74, 42 60, 38 48 C 50 56, 54 72, 42 84 Z" fill="currentColor" stroke="none" />
-            <path d="M60 52 C 72 48, 80 38, 80 28 C 90 38, 86 54, 68 58 Z" fill="currentColor" stroke="none" />
-            {/* Chấm kết ở chân cuộn — echo hàng chấm quanh huy hiệu logo. */}
-            <circle cx="4" cy="112" r="3" fill="currentColor" stroke="none" />
-          </g>
+          {CORNER_ARM}
+          <g transform="matrix(0,-1,-1,0,120,120)">{CORNER_ARM}</g>
+          {/* Sao bốn cánh ở chân, đúng chỗ hai nhánh gặp nhau — cùng mô-típ
+              với hoạ tiết damask ở nền và với năm ngôi sao trong logo, nên
+              bốn góc và mặt nền đọc ra là MỘT bộ chứ không phải hai thứ
+              trang trí rời nhau. */}
+          <path
+            fill="currentColor"
+            d="M20 100C21 94 23.5 91.5 29.5 90.5C23.5 89.5 21 87 20 81C19 87 16.5 89.5 10.5 90.5C16.5 91.5 19 94 20 100Z"
+          />
         </svg>
       ))}
 

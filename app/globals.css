@@ -582,9 +582,12 @@
     position: absolute;
     inset: 0;
     z-index: -3;
-    opacity: 0.17;
+    /* 0.15 + ô 128px: đủ thấy là hoa văn khi nhìn thẳng, đủ chìm để không
+       tranh chú ý với huy hiệu. Đậm hơn (0.25) thì nền đọc ra thành giấy dán
+       tường và logo trắng bị nhiễu nét ở rìa. */
+    opacity: 0.15;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23b8892b' stroke-width='1.1'%3E%3Cpath d='M48 0C72 12 96 26 96 48C96 70 72 84 48 96C24 84 0 70 0 48C0 26 24 12 48 0Z'/%3E%3Cpath d='M48 13C64 22 79 32 79 48C79 64 64 74 48 83C32 74 17 64 17 48C17 32 32 22 48 13Z' opacity='.45'/%3E%3C/g%3E%3Cpath d='M48 34C49.5 42.5 53.5 46.5 62 48C53.5 49.5 49.5 53.5 48 62C46.5 53.5 42.5 49.5 34 48C42.5 46.5 46.5 42.5 48 34Z' fill='%23b8892b'/%3E%3Ccircle cx='0' cy='48' r='2.2' fill='%23b8892b'/%3E%3Ccircle cx='96' cy='48' r='2.2' fill='%23b8892b'/%3E%3Ccircle cx='48' cy='0' r='2.2' fill='%23b8892b'/%3E%3Ccircle cx='48' cy='96' r='2.2' fill='%23b8892b'/%3E%3C/svg%3E");
-    background-size: 108px 108px;
+    background-size: 128px 128px;
     -webkit-mask-image: radial-gradient(58% 54% at 50% 44%, transparent 0%, #000 76%);
     mask-image: radial-gradient(58% 54% at 50% 44%, transparent 0%, #000 76%);
   }
@@ -597,7 +600,10 @@
     position: absolute;
     z-index: -2;
     width: clamp(4.5rem, 12vw, 9rem);
-    height: auto;
+    /* `aspect-ratio` chứ không `height: auto`: SVG chỉ suy ra chiều cao từ
+       `viewBox` khi thuộc tính `height` vắng mặt, mà `height: auto` của CSS
+       không phải lúc nào cũng tương đương ở Safari cũ. Ô vốn vuông. */
+    aspect-ratio: 1;
     color: var(--color-gold);
     opacity: 0.34;
   }
@@ -699,11 +705,22 @@
     bottom: -17%;
     left: calc(50% - 0.5px);
     width: 1px;
+    /* HAI mẩu chứ không một nét liền. Nét liền chạy suốt sẽ xuyên qua giữa
+       huy hiệu — logo là ảnh PNG nền trong, nên đường kẻ hiện rõ ngay giữa
+       chữ "R" và cắt ngang dòng "ROYAL HALONG HOTEL".
+       23%/77% là mép an toàn đo từ hình học của cụm: logo chiếm 76% bề ngang
+       quả cầu, tức 65,4% chiều cao nó, mà quả cầu lại chỉ chiếm 74,6% chiều
+       cao phần tử này -> mép trên của logo rơi vào 25,6%. Đổi `width` của
+       `.rhl-loader__face` hay `top/bottom` ở đây thì phải tính lại hai mốc. */
     background-image: linear-gradient(
       180deg,
       rgb(240 215 138 / 0) 0%,
-      rgb(240 215 138 / 0.42) 22%,
-      rgb(240 215 138 / 0.42) 78%,
+      rgb(240 215 138 / 0.45) 8%,
+      rgb(240 215 138 / 0.45) 17%,
+      rgb(240 215 138 / 0) 23%,
+      rgb(240 215 138 / 0) 77%,
+      rgb(240 215 138 / 0.45) 83%,
+      rgb(240 215 138 / 0.45) 92%,
       rgb(240 215 138 / 0) 100%
     );
   }
