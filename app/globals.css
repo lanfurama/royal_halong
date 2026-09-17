@@ -510,17 +510,30 @@
 
 @layer utilities {
   /* --- Lớp phủ gradient ---
-     Lấy đúng ba gradient của bản thiết kế. Chúng là gradient NÂU VÀNG chứ
-     không phải đen: phủ đen lên ảnh khách sạn làm bức ảnh ngả xám, lệch hẳn
-     khỏi tông ấm của cả trang. */
+     Các gradient thẻ (`scrim-card`, `scrim-feature`) vẫn là NÂU VÀNG theo
+     bản thiết kế — chúng phủ lên ảnh nhỏ, nơi tông ấm nối liền với nền kem.
+     Riêng hero thì KHÔNG: xem ghi chú ngay dưới. */
 
-  /* Hero: đậm dần xuống đáy, nơi có tiêu đề và form đặt phòng. */
+  /* Hero: TRUNG TÍNH và trong suốt ở đỉnh.
+     Chủ dự án chốt "ảnh banner phải ra đúng màu gốc" — màn nâu vàng cũ
+     (0.62 ngay từ 0%) nhuộm cả bầu trời thành nâu đồng, ảnh chụp hoàng hôn
+     mất hết sắc xanh. Ở đây dải trên cùng để TRONG SUỐT hoàn toàn, chỉ đậm
+     dần từ giữa xuống đáy — nơi thật sự có tiêu đề và form đặt phòng.
+
+     Đen chứ không phải nâu: nâu là "hiệu ứng màu", đen chỉ giảm độ sáng và
+     giữ nguyên sắc độ của ảnh. Đổi lại, phải chịu ảnh hơi trầm ở đáy — đó
+     là cái giá duy nhất để chữ kem đạt tương phản mà không tô màu lên ảnh.
+
+     Không lo dải đỉnh trong suốt làm chữ header khó đọc: header trôi trên
+     ảnh có màn tối RIÊNG ở `.rhl-header::after` (xem khối `.rhl-header`),
+     độc lập hoàn toàn với lớp phủ này. */
   .scrim-hero {
     background-image: linear-gradient(
       180deg,
-      rgb(45 32 8 / 0.62) 0%,
-      rgb(45 32 8 / 0.58) 45%,
-      rgb(90 64 14 / 0.95) 100%
+      rgb(0 0 0 / 0) 0%,
+      rgb(0 0 0 / 0.08) 32%,
+      rgb(0 0 0 / 0.46) 64%,
+      rgb(0 0 0 / 0.78) 100%
     );
   }
 

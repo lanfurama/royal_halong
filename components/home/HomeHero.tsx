@@ -58,7 +58,7 @@ export function HomeHero({
         // thái trôi trên ảnh, và `<main>` nhờ đó biết KHÔNG phải chừa chỗ cho
         // header (xem `app/globals.css`). Class cũng tự đặt `padding-top`
         // bằng đúng chiều cao header.
-        className="rhl-hero on-dark relative flex min-h-[86vh] min-h-[86dvh] flex-col justify-end pb-28 lg:pb-32"
+        className="rhl-hero on-dark relative flex min-h-[95vh] min-h-[95dvh] flex-col justify-end pb-28 lg:pb-32"
       >
         {section?.background && (
           <div className="absolute inset-0 overflow-hidden">
