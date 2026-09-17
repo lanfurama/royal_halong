@@ -46,3 +46,7 @@ next-env.d.ts
 .playwright-mcp/
 task*-tokens.png
 studio-*.png
+
+# Script tra cứu/đo đạc dùng một lần (hardcode đường dẫn scratchpad, không phải nguồn)
+.ui-measure.mjs
+scripts/_*.ts
