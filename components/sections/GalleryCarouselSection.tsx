@@ -72,7 +72,7 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
           ref={emblaRef}
           role="region"
           aria-roledescription="carousel"
-          aria-label={albumTitle ?? 'Thư viện ảnh'}
+          aria-label={albumTitle ?? ui('photoGallery', lang)}
           // Mũi tên trái/phải điều khiển carousel khi nó đang được focus.
           tabIndex={0}
           onKeyDown={(event) => {
@@ -86,7 +86,20 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
                 key={image._key ?? index}
                 type="button"
                 onClick={() => setOpenAt(index)}
-                className="group min-w-0 shrink-0 basis-[78%] overflow-hidden rounded-card sm:basis-[46%] lg:basis-[31%] xl:basis-[23%]"
+                // `relative` KHÔNG phải để trang trí: `<span class="sr-only">`
+                // bên trong dùng `position: absolute`, và nếu không tổ tiên nào
+                // có `position` thì khối chứa của nó là ICB (cả trang). Khi đó
+                // `overflow: hidden` của khung carousel KHÔNG cắt được nó, và
+                // 20 thumbnail đẩy chiều rộng tài liệu ra thêm ~5.500px.
+                //
+                // Đo thật ở /vi/our-gallery: NGAY khi tải trang dư 5521px
+                // (1440px) và 5786px (390px); chỉ về 0 sau ~4 giây khi Embla
+                // đặt `transform` lên khung slide — nghĩa là mọi khách đều
+                // trượt ngang được vào khoảng trống trong lúc trang đang mở,
+                // và mỗi lần Embla `reInit` là cửa sổ lỗi mở lại. Mọi trang có
+                // `galleryCarouselSection` đều dính (thư viện ảnh, tiệc cưới,
+                // cung hội nghị, ẩm thực).
+                className="group relative min-w-0 shrink-0 basis-[78%] overflow-hidden rounded-card sm:basis-[46%] lg:basis-[31%] xl:basis-[23%]"
               >
                 <span className="sr-only">{`${ui('zoomImage', lang)} ${index + 1}`}</span>
                 {/* Tên truy cập của nút đã có từ span sr-only ở trên. Accessible
@@ -159,6 +172,17 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
           src: urlFor(image).width(1800).url(),
           alt: t<string>(image.alt, lang) ?? albumTitle ?? '',
         }))}
+        // `yet-another-react-lightbox` mặc định gắn nhãn tiếng Anh cứng
+        // ("Close" / "Previous" / "Next") cho ba nút điều khiển, ở MỌI ngôn
+        // ngữ. Mô tả ảnh đã dịch đủ sáu thứ tiếng rồi mà ba nút bấm quanh nó
+        // vẫn tiếng Anh thì người dùng screen reader tiếng Trung/Hàn/Nhật/Thái
+        // nghe một câu tiếng Anh xen giữa — và đây là lớp phủ chiếm trọn màn
+        // hình, không có gì khác để bấm.
+        labels={{
+          Close: ui('closeLightbox', lang),
+          Previous: ui('prevImage', lang),
+          Next: ui('nextImage', lang),
+        }}
       />
     </section>
   )

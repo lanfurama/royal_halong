@@ -8,7 +8,7 @@ nhà hàng — không phải hai cách phiên âm khác nhau do hai agent dịch
 
 | Tiếng Việt | Dùng ở mọi ngôn ngữ |
 | --- | --- |
-| Royal Hạ Long Hotel | `Royal Ha Long Hotel` (bỏ dấu ở en/zh/ko/ja/th) |
+| Royal Hạ Long Hotel | `Royal Ha Long Hotel` (bỏ dấu ở en/zh/ko/ja/th) — **không phiên âm sang chữ Hán/Kana/Hangul/Thái ở BẤT KỲ đâu**, kể cả `siteSettings.brandName`. Đây là dạng khách quốc tế gõ khi tìm phòng và là dạng in trên chính toà nhà. Tên CÔNG TY, địa chỉ, cơ quan cấp phép thì vẫn dịch — chúng là thông tin mô tả, không phải tên thương hiệu. |
 | Nhà hàng Phúc Viên | `Phuc Vien Restaurant` · 福缘中餐厅 · 푹비엔 레스토랑 · フックヴィエン・レストラン · ภัตตาคารฟุกเวียน |
 | Piano Bar | `Piano Bar` (giữ nguyên cả 6) |
 | Pool Bar | `Pool Bar` (giữ nguyên cả 6) |

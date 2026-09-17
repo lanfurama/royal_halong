@@ -447,6 +447,14 @@ const DICT = {
     ja: 'ホットライン',
     th: 'สายด่วน',
   },
+  closeLightbox: {
+    vi: 'Đóng ảnh phóng to',
+    en: 'Close',
+    zh: '关闭',
+    ko: '닫기',
+    ja: '閉じる',
+    th: 'ปิด',
+  },
   labelMobile: {
     vi: 'Di động',
     en: 'Mobile',

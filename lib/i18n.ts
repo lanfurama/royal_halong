@@ -62,7 +62,13 @@ export const INTL_LOCALES: Record<Locale, string> = {
   zh: 'zh-CN',
   ko: 'ko-KR',
   ja: 'ja-JP',
-  th: 'th-TH',
+  // `-u-ca-gregory` KHÔNG thừa: `Intl` với `th-TH` mặc định dùng PHẬT LỊCH,
+  // nên `toLocaleDateString` trả năm 2569 trong khi thân bài, ấn phẩm quảng
+  // cáo và chính con dấu trên giấy phép đều ghi 2026. Cùng một trang hiện hai
+  // con số năm khác nhau cho cùng một ngày — khách không biết tin cái nào.
+  // Ép dương lịch để mọi ngày tháng trên site khớp với nội dung do biên tập
+  // viên gõ tay.
+  th: 'th-TH-u-ca-gregory',
 }
 
 export function isLocale(value: string): value is Locale {

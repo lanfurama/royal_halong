@@ -121,7 +121,20 @@ function richLoc(v: Record<Locale, string[]>): Record<Locale, unknown[]> {
 const HOTLINE = '0904 030 222 – 0904 120 900'
 const EMAIL = 'info@royalhalonghotel.com'
 const WEBSITE = 'www.royalhalonghotel.com'
-const WEBSITE_MD = `[${WEBSITE}](https://www.royalhalonghotel.com/)`
+/**
+ * Địa chỉ website hiện dưới dạng CHỮ THUẦN, không phải liên kết.
+ *
+ * Bản trước trỏ `[www.royalhalonghotel.com](https://www.royalhalonghotel.com/)`
+ * — tức một liên kết dẫn khách RỜI KHỎI site này sang site gốc. Đó đúng là
+ * thứ `tests/e2e/routes.spec.ts` ("không còn LIÊN KẾT trỏ domain gốc") sinh
+ * ra để chặn, và nó bắt được ở cả ba trang ưu đãi × hai locale.
+ *
+ * Giữ nguyên chuỗi chữ vì bản clone có in địa chỉ đó trên tờ thông tin
+ * chương trình — chỉ bỏ phần `href`. Khách đang ở đúng website ấy rồi; một
+ * nút bấm quay về chính nơi họ đang đứng không thêm gì, mà lại gửi họ sang
+ * một máy chủ khác.
+ */
+const WEBSITE_MD = WEBSITE
 /** Hai số đường dây nóng, bấm gọi được — dùng TRONG Portable Text. */
 const HOTLINE_MD = '[0904 030 222](tel:+84904030222) – [0904 120 900](tel:+84904120900)'
 const EMAIL_MD = `[${EMAIL}](mailto:${EMAIL})`

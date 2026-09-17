@@ -20,6 +20,30 @@ const COLS = {
   4: 'sm:grid-cols-2',
 } as const
 
+/**
+ * Tỉ lệ ảnh phải đi theo SỐ CỘT, không dùng chung một giá trị.
+ *
+ * Lớp phủ chữ ở đáy thẻ cao theo NỘI DUNG (tiêu đề + mô tả 2 dòng + nút), tức
+ * khoảng 222px bất kể thẻ rộng bao nhiêu. Chiều cao THẺ thì tỉ lệ thuận với
+ * bề rộng cột. Nên cùng một tỉ lệ `16/10`:
+ *
+ *   2 cột @1440 -> thẻ rộng 648px, cao 405px -> lớp phủ chiếm 55%
+ *   3 cột @1440 -> thẻ rộng 424px, cao 265px -> lớp phủ chiếm **84%**
+ *
+ * Ở 84% thì ba thẻ cạnh nhau đọc thành ba khối nâu vàng giống hệt nhau —
+ * không phân biệt nổi quầy bánh buffet với tiệc cưới bên hồ bơi. Một lưới
+ * ẢNH mà không thấy ảnh thì nó là một lưới nút bấm.
+ *
+ * `4/3` cho lưới 3 cột kéo thẻ lên 318px, đưa tỉ lệ che về ~70% mà không phải
+ * đụng tới lớp phủ (vốn đang giữ chữ ở nền >= 0.88 độ đục). Lưới 2 cột giữ
+ * `16/10` vì ảnh ở đó đã đủ lớn và khung ngang hợp với ảnh phong cảnh.
+ */
+const IMAGE_ASPECT = {
+  2: 'aspect-[4/3] lg:aspect-[16/10]',
+  3: 'aspect-[4/3]',
+  4: 'aspect-[4/3] lg:aspect-[16/10]',
+} as const
+
 export function CardGridSection({
   heading,
   subheading,
@@ -59,16 +83,23 @@ export function CardGridSection({
                       lang={lang}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 640px"
                       fallbackAlt={cardTitle}
-                      className="aspect-[4/3] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100 lg:aspect-[16/10]"
+                      className={`w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${IMAGE_ASPECT[columns as 2 | 3 | 4] ?? IMAGE_ASPECT[3]}`}
                     />
                   )}
 
                   {/* Scrim nằm TRÊN CHÍNH khối chữ (không phải một lớp cao
-                      theo % chiều cao thẻ), với `pt-20` làm vùng chuyển: chữ
-                      luôn rơi vào đoạn >= 86% đen bất kể tiêu đề dài mấy
+                      theo % chiều cao thẻ), với `pt-12` làm vùng chuyển: chữ
+                      luôn rơi vào đoạn >= 88% đục bất kể tiêu đề dài mấy
                       dòng. Xem ghi chú tính toán ở `.scrim-bottom` trong
-                      globals.css. */}
-                  <div className="scrim-bottom absolute inset-x-0 bottom-0 px-5 pt-20 pb-5 lg:px-7 lg:pb-7">
+                      globals.css.
+
+                      `pt-12` chứ không phải `pt-20`: lớp phủ bọc đúng khối
+                      chữ, nên mỗi 1px padding trên là 1px ảnh bị che thêm. Ở
+                      `pt-20` lớp phủ chiếm 91–96% chiều cao thẻ và ba thẻ
+                      cạnh nhau đọc thành ba khối nâu vàng giống hệt nhau —
+                      đúng thứ mà một lưới ẢNH sinh ra để tránh. 48px vẫn đủ
+                      cho gradient dựng tới 0.88 trước mép chữ. */}
+                  <div className="scrim-bottom absolute inset-x-0 bottom-0 px-5 pt-12 pb-5 lg:px-7 lg:pb-7">
                     <h3 className="font-display text-xl text-white lg:text-2xl">{cardTitle}</h3>
                     {description && (
                       <p className="mt-2 line-clamp-2 max-w-md text-sm leading-relaxed text-white/85">

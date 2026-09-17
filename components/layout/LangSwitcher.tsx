@@ -119,7 +119,17 @@ export function LangSwitcher({ lang, slug }: { lang: Locale; slug?: SlugField | 
           <path d="M1.75 8h12.5" />
           <ellipse cx="8" cy="8" rx="3" ry="6.25" />
         </svg>
-        <span aria-hidden="true">{LOCALE_SHORT[lang]}</span>
+        {/* `whitespace-nowrap` + `shrink-0`: chữ Hán, Kana và Hangul ngắt dòng
+            được ở GIỮA HAI KÝ TỰ BẤT KỲ — không cần khoảng trắng như chữ
+            Latin. Trong chip cao cố định 44px ở 390px, cụm chữ chỉ còn ~26px
+            bề ngang sau khi trừ lề và mũi tên, nên `한국어` và `日本語` vỡ
+            thành HAI DÒNG cao 35px chồng ra ngoài hộp (đo thật: `lines: 2`;
+            `中文` 2 ký tự và `ไทย` thì vừa, nên lỗi chỉ lộ ở hai thứ tiếng).
+            Nhãn ngôn ngữ là lối thoát của người đang lạc trong một trang họ
+            không đọc được — nó phải đọc được trước đã. */}
+        <span aria-hidden="true" className="shrink-0 whitespace-nowrap">
+          {LOCALE_SHORT[lang]}
+        </span>
         <svg
           width="10"
           height="10"

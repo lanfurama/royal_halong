@@ -28,6 +28,13 @@
  *    r) + cùng liên kết lalya.com → `info@royalhalonghotel.com`.
  * 3. `page.terms-and-conditions` sec-6 — liên kết lalya.com → `info@royalhalonghotel.com`.
  * 4. `page.terms-and-conditions` sec-1 — `Royahalonghotel.com` → `royalhalonghotel.com`.
+ * 5. Địa chỉ website của khách sạn để dưới dạng CHỮ THUẦN, không bọc thành
+ *    liên kết. `tests/e2e/routes.spec.ts` cấm mọi `href`/`src` trỏ về domain
+ *    gốc (và nói rõ domain dưới dạng chữ thì hợp lệ) — một site dựng lại mà
+ *    vẫn dẫn khách sang máy chủ cũ là rò rỉ, không phải tiện ích. Riêng bài
+ *    cảnh báo trang Facebook giả mạo thì địa chỉ đó CHÍNH LÀ nội dung cần
+ *    đọc — khách phải so bằng mắt để nhận ra trang giả — nên chuỗi chữ giữ
+ *    nguyên từng ký tự, chỉ bỏ phần `href`.
  * 5. `page.privacy-policy` sec-13, sec-16 — `sales@roalhalonghotel.com` (thiếu
  *    chữ y) → `sales@royalhalonghotel.com`.
  * 6. `page.privacy-policy` sec-15 — `tel:+84904030222/` → `tel:+84904030222`.
@@ -2880,12 +2887,12 @@ const POST_FB_BODY = [
     `- เพจเฟซบุ๊ก: [${FB_URL}](${FB_URL})`,
   ),
   L(
-    '- Website: [https://royalhalonghotel.com](https://royalhalonghotel.com)',
-    '- Website: [https://royalhalonghotel.com](https://royalhalonghotel.com)',
-    '- 网站：[https://royalhalonghotel.com](https://royalhalonghotel.com)',
-    '- 웹사이트: [https://royalhalonghotel.com](https://royalhalonghotel.com)',
-    '- ウェブサイト：[https://royalhalonghotel.com](https://royalhalonghotel.com)',
-    '- เว็บไซต์: [https://royalhalonghotel.com](https://royalhalonghotel.com)',
+    '- Website: https://royalhalonghotel.com',
+    '- Website: https://royalhalonghotel.com',
+    '- 网站：https://royalhalonghotel.com',
+    '- 웹사이트: https://royalhalonghotel.com',
+    '- ウェブサイト：https://royalhalonghotel.com',
+    '- เว็บไซต์: https://royalhalonghotel.com',
   ),
   L(
     '- Hotline: +84 203 3848 777 | 0904 030 222',
@@ -2992,12 +2999,12 @@ const POST_FB_BODY = [
     'สายด่วน: 0203 3848 777 | 0904 030 222',
   ),
   L(
-    'Website: [www.royalhalonghotel.com](https://www.royalhalonghotel.com)',
-    'Website: [www.royalhalonghotel.com](https://www.royalhalonghotel.com)',
-    '网站：[www.royalhalonghotel.com](https://www.royalhalonghotel.com)',
-    '웹사이트: [www.royalhalonghotel.com](https://www.royalhalonghotel.com)',
-    'ウェブサイト：[www.royalhalonghotel.com](https://www.royalhalonghotel.com)',
-    'เว็บไซต์: [www.royalhalonghotel.com](https://www.royalhalonghotel.com)',
+    'Website: www.royalhalonghotel.com',
+    'Website: www.royalhalonghotel.com',
+    '网站：www.royalhalonghotel.com',
+    '웹사이트: www.royalhalonghotel.com',
+    'ウェブサイト：www.royalhalonghotel.com',
+    'เว็บไซต์: www.royalhalonghotel.com',
   ),
   L(
     'Email: info@royalhalonghotel.com',

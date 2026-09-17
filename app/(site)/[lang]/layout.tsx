@@ -4,6 +4,7 @@ import { VisualEditing } from 'next-sanity/visual-editing'
 import { notFound } from 'next/navigation'
 import { lora } from '@/lib/fonts'
 import { isLocale, LOCALES } from '@/lib/i18n'
+import { ui } from '@/lib/ui-strings'
 import { SanityLive } from '@/sanity/lib/live'
 import '../../globals.css'
 
@@ -49,6 +50,29 @@ export default async function SiteLayout({ children, params }: LayoutProps<'/[la
   return (
     <html lang={lang} className={lora.variable}>
       <body>
+        {/* Link "bỏ qua điều hướng" phải nằm ở LAYOUT, không phải trong
+            `Header`.
+
+            `app/(site)/[lang]/loading.tsx` là Suspense fallback cấp route,
+            nên toàn bộ `{children}` — kể cả `SiteChrome` và `Header` — bị
+            treo cho tới khi trang stream xong. Khi skip link còn nằm trong
+            `Header`, cửa sổ đó là một vùng CHẾT với bàn phím: đo trên bản
+            production, bấm Tab ngay sau sự kiện `load` cho
+            `document.activeElement === BODY` (trang mới hiện "Đang tải"), và
+            skip link chỉ focus được ở ~253ms. Người dùng bàn phím bấm Tab
+            phát đầu tiên rơi vào hư không — mà skip link tồn tại chính xác
+            để phục vụ họ.
+
+            Ở đây nó nằm NGOÀI ranh giới treo, là phần tử focus được đầu tiên
+            của tài liệu ngay từ byte HTML đầu tiên, đúng định nghĩa của một
+            skip link. `tests/e2e/a11y.spec.ts` kiểm đúng điều đó bằng một
+            phát Tab, không chờ đợi gì. */}
+        <a
+          href="#main"
+          className="focus:bg-gold focus:text-cream-hi sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2"
+        >
+          {ui('skipNav', lang)}
+        </a>
         {children}
         <SanityLive includeDrafts={isDraftMode} />
         {isDraftMode && <VisualEditing />}

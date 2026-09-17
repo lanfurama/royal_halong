@@ -124,14 +124,11 @@ export function Header({
   return (
     // Nền, chiều cao và hai trạng thái màu nằm ở `.rhl-header`
     // (`app/globals.css`); `HeaderShell` chỉ gắn `data-scrolled`.
+    // Link "bỏ qua điều hướng" KHÔNG còn ở đây — nó đã chuyển lên
+    // `app/(site)/[lang]/layout.tsx`. Lý do ở ghi chú tại đó: `Header` nằm
+    // trong ranh giới Suspense của `loading.tsx`, nên trong lúc màn hình chờ
+    // còn hiện thì skip link chưa tồn tại để focus.
     <HeaderShell>
-      <a
-        href="#main"
-        className="focus:bg-gold focus:text-cream-hi sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2"
-      >
-        {ui('skipNav', lang)}
-      </a>
-
       {/* --- MỘT hàng duy nhất: logo nằm GIỮA menu ---
           Bản trước tách làm hai hàng (logo ở trên, menu ngang ở dưới) vì tám
           mục cấp 1 tiếng Việt cần ~614px ở cỡ chữ nhỏ nhất và không hàng đơn
