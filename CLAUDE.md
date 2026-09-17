@@ -37,8 +37,8 @@ ra từ `LOCALES`):
    bản dịch (`satisfies Record<string, Record<Locale, string>>`). Đây là
    lưới an toàn chính, đừng bỏ `satisfies`.
 3. Font: kiểm tra `--font-display` / `--font-body` trong `app/globals.css` có
-   phủ hệ chữ mới chưa (Playfair Display và Be Vietnam Pro chỉ có Latin +
-   Vietnamese; CJK và Thái đang dùng font hệ thống, cố ý không nạp webfont).
+   phủ hệ chữ mới chưa (Lora chỉ có Latin + Vietnamese; CJK và Thái đang
+   dùng font hệ thống, cố ý không nạp webfont).
 
 Schema Sanity (`localeString` / `localeText` / `localeBlock` / `localeSlug`)
 sinh field từ `LOCALES` qua `sanity/schemaTypes/objects/localeFields.ts`.
@@ -53,8 +53,8 @@ dạng `lang === 'vi' ? … : …` rải rác trong component.
 
 Hệ thiết kế hiện tại dựng theo bản Claude Design **"Royal Ha Long Home v2
 Light"**: nền kem `#faf6ee`, trục vàng đồng `#b8892b` / `#8f6a1c`, chữ nâu
-mực `#2a2110`, Playfair Display + Be Vietnam Pro, **góc vuông** (không bo
-góc ở bất cứ đâu ngoài các thành phần tròn thật). Toàn bộ token nằm ở
+mực `#2a2110`, **Lora** cho toàn bộ chữ (tiêu đề lẫn thân bài), **góc
+vuông** (không bo góc ở bất cứ đâu ngoài các thành phần tròn thật). Toàn bộ token nằm ở
 `@theme` trong `app/globals.css`.
 
 ⚠️ **Tương phản — ngoại lệ đã chốt.** Chủ dự án chọn "bám sát design 100%",

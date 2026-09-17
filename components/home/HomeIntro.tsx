@@ -56,7 +56,7 @@ export function HomeIntro({
               đè lên 15% khung (1/4 bề ngang video) — đủ để kính mờ thật sự
               có hình động phía sau. Thẻ là "kính mờ": nền kem
               55% + blur 3px (mờ nhẹ, vẫn nhận ra hình), hai viền vàng lồng nhau, chữ cái đầu đoạn văn
-              dựng lớn bằng Playfair (drop cap). Nút phát của video nằm ở
+              dựng lớn bằng font tiêu đề (drop cap). Nút phát của video nằm ở
               tâm (x ≈ 70%), ngoài vùng thẻ che (kết thúc ở 55%).
             - Cả hai `items-center` trong CÙNG một ô hàng, nên nếu đoạn văn
               dài hơn khung video thì hàng cao theo chữ, không tràn — khác với

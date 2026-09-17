@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { display, body } from '@/lib/fonts'
+import { lora } from '@/lib/fonts'
+import { ui } from '@/lib/ui-strings'
 import { DEFAULT_LOCALE } from '@/lib/i18n'
 import './globals.css'
 
@@ -40,16 +41,17 @@ export const metadata: Metadata = {
  * lý nhất có thể, còn hơn hẳn không có `lang` nào cả.
  */
 export default function GlobalNotFound() {
-  const fontVars = [display, body].map((f) => f.variable).join(' ')
-
   return (
-    <html lang={DEFAULT_LOCALE} className={fontVars}>
+    <html lang={DEFAULT_LOCALE} className={lora.variable}>
       <body>
         <div className="mx-auto max-w-2xl px-6 py-32 text-center">
-          <h1 className="font-display text-gold-deep text-4xl">Không tìm thấy trang</h1>
-          <p className="mt-4">Trang bạn tìm không tồn tại hoặc đã được chuyển đi.</p>
-          <Link href="/vi" className="bg-gold text-ink mt-8 inline-block px-6 py-3 font-medium">
-            Về trang chủ
+          <h1 className="font-display text-gold-deep text-4xl">{ui('notFoundTitle', DEFAULT_LOCALE)}</h1>
+          <p className="mt-4">{ui('notFoundBody', DEFAULT_LOCALE)}</p>
+          <Link
+            href={`/${DEFAULT_LOCALE}`}
+            className="bg-gold text-ink mt-8 inline-block px-6 py-3 font-medium"
+          >
+            {ui('backHome', DEFAULT_LOCALE)}
           </Link>
         </div>
       </body>

@@ -25,7 +25,7 @@ export function RichTextSection({
       <Container size={narrow ? 'narrow' : 'default'}>
         {heading && (
           // Tiêu đề màu NÂU MỰC, không phải vàng. Trong bản thiết kế mới,
-          // vàng chỉ dành cho nhãn nhỏ, viền và nút — tiêu đề Playfair lấy
+          // vàng chỉ dành cho nhãn nhỏ, viền và nút — tiêu đề serif lấy
           // sức nặng từ kiểu chữ chứ không từ màu. (Tiện thể: ink trên kem
           // đo được 14:1, so với 4.59:1 của vàng đậm.)
           <h2

@@ -5,7 +5,7 @@ import { HeroBookingBar, type RoomChoice } from './HeroBookingBar'
 
 /**
  * Hero trang chủ theo bản thiết kế: ảnh tràn viền, lớp phủ nâu vàng, tiêu đề
- * Playfair, và thanh đặt phòng ĐÈ LÊN mép dưới.
+ * Lora, và thanh đặt phòng ĐÈ LÊN mép dưới.
  *
  * Khác `components/sections/HeroSection.tsx` (dùng cho mọi trang con) ở đúng
  * hai điểm: dòng địa danh phía trên tiêu đề, và thanh đặt phòng. Không gộp

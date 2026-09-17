@@ -82,7 +82,7 @@ export function MobileMenu({
     buttonRef.current?.focus()
   }
 
-  // Link cấp 1 trong panel: Playfair cỡ lớn, gạch chân bằng đường vàng mảnh
+  // Link cấp 1 trong panel: font tiêu đề cỡ lớn, gạch chân bằng đường vàng mảnh
   // — đúng bản thiết kế, và nhân tiện cho mỗi hàng chiều cao thật > 44px.
   const topLink =
     'font-display text-ink hover:text-gold border-gold/25 flex min-h-14 items-center border-b text-2xl transition-colors'

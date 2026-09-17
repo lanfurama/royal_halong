@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { VisualEditing } from 'next-sanity/visual-editing'
 import { notFound } from 'next/navigation'
-import { display, body } from '@/lib/fonts'
+import { lora } from '@/lib/fonts'
 import { isLocale, LOCALES } from '@/lib/i18n'
 import { SanityLive } from '@/sanity/lib/live'
 import '../../globals.css'
@@ -40,7 +40,6 @@ export default async function SiteLayout({ children, params }: LayoutProps<'/[la
   if (!isLocale(lang)) notFound()
 
   const { isEnabled: isDraftMode } = await draftMode()
-  const fontVars = [display, body].map((f) => f.variable).join(' ')
 
   // Header/Footer/JsonLd chuyển xuống từng PAGE qua `<SiteChrome>` (xem
   // `components/layout/SiteChrome.tsx`) — layout này không có `slug` của
@@ -48,7 +47,7 @@ export default async function SiteLayout({ children, params }: LayoutProps<'/[la
   // không thể truyền slug đúng xuống `LangSwitcher`. `{children}` ở đây giờ
   // LÀ `<SiteChrome>...</SiteChrome>` do page trả về.
   return (
-    <html lang={lang} className={fontVars}>
+    <html lang={lang} className={lora.variable}>
       <body>
         {children}
         <SanityLive includeDrafts={isDraftMode} />

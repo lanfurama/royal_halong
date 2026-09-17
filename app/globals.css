@@ -99,35 +99,36 @@
   --color-line: #e9dcc2;
 
   /* --- Chữ ---
-     Playfair Display và Be Vietnam Pro KHÔNG có glyph cho chữ Hán, Kana,
-     Hangul hay chữ Thái. Site có sáu ngôn ngữ (xem `lib/i18n.ts`), nên bốn
-     ngôn ngữ trong đó sẽ rơi hết vào font dự phòng — mà `serif`/`sans-serif`
-     trần thì mỗi hệ điều hành chọn một kiểu khác nhau, có máy ra font bitmap
-     xấu. Liệt kê tường minh font hệ thống của từng hệ chữ, theo thứ tự
-     macOS/iOS -> Windows -> Android/Linux.
+     Toàn site dùng một họ chữ duy nhất: Lora (xem `lib/fonts.ts`). Hai token
+     dưới đây giữ nguyên TÊN (`display` / `body`) vì hàng trăm chỗ trong
+     `components/` đang dùng class `font-display`; chúng chỉ không còn trỏ về
+     hai họ chữ khác nhau nữa.
 
-     Không nạp webfont CJK: một họ Noto Sans SC/JP/KR đầy đủ nặng 4–8 MB và
+     Lora KHÔNG có glyph cho chữ Hán, Kana, Hangul hay chữ Thái. Site có sáu
+     ngôn ngữ (xem `lib/i18n.ts`), nên bốn ngôn ngữ trong đó sẽ rơi hết vào
+     font dự phòng — mà `serif` trần thì mỗi hệ điều hành chọn một kiểu khác
+     nhau, có máy ra font bitmap xấu. Liệt kê tường minh font hệ thống của
+     từng hệ chữ, theo thứ tự macOS/iOS -> Windows -> Android/Linux. Cả hai
+     token cùng dùng một danh sách SERIF: Lora là serif, để thân bài CJK rơi
+     về font sans thì trong một câu tiếng Nhật chữ Latin sẽ có chân còn kana
+     thì không.
+
+     Không nạp webfont CJK: một họ Noto Serif SC/JP/KR đầy đủ nặng 4–8 MB và
      `next/font` không subset được chữ Hán theo cách có ý nghĩa (khác với
      `latin`/`vietnamese`, tập chữ Hán không chia thành subset nhỏ dùng
      được). Font hệ thống hiển thị đúng ngay, không tốn byte nào.
 
      Việc rơi font diễn ra THEO TỪNG GLYPH, nên một trang tiếng Nhật vẫn
-     dùng Playfair cho chữ Latin (tên khách sạn, số) và font hệ thống cho
-     phần kana/kanji — không phải đổi cả trang. */
+     dùng Lora cho chữ Latin (tên khách sạn, số) và font hệ thống cho phần
+     kana/kanji — không phải đổi cả trang. */
   --font-display:
-    var(--font-playfair), 'Playfair Display',
+    var(--font-lora), Lora,
     /* Trung */ 'Songti SC', 'Noto Serif SC', SimSun,
     /* Nhật */ 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP',
     /* Hàn */ 'Apple SD Gothic Neo', 'Noto Serif KR', Batang,
     /* Thái */ Thonburi, 'Noto Serif Thai', 'Leelawadee UI',
     Georgia, serif;
-  --font-body:
-    var(--font-be-vietnam), 'Be Vietnam Pro',
-    /* Trung */ 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC',
-    /* Nhật */ 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, 'Noto Sans JP',
-    /* Hàn */ 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR',
-    /* Thái */ Thonburi, 'Leelawadee UI', 'Noto Sans Thai',
-    system-ui, sans-serif;
+  --font-body: var(--font-display);
 
   /* --- Bo góc ---
      Bản thiết kế KHÔNG bo góc ở bất cứ đâu: thẻ, ảnh, nút, form đặt phòng
@@ -181,7 +182,7 @@
        dòng cuối trơ trọi một hai chữ — đã thấy ở cả 390px và 1440px.
        `balance` chia đều các dòng; chỉ áp cho tiêu đề (spec giới hạn ~6
        dòng), không áp cho đoạn văn.
-       `font-weight: 400`: Playfair Display ở cỡ lớn trông sang nhất ở nét
+       `font-weight: 400`: Lora ở cỡ lớn trông sang nhất ở nét
        thường — bản thiết kế dùng 400 cho mọi tiêu đề. Không để mặc định
        `bold` của trình duyệt. */
     font-weight: 400;
@@ -194,9 +195,9 @@
      Tailwind nào. Mặc định của trình duyệt là `font-weight: bolder` — một
      giá trị TƯƠNG ĐỐI: trong đoạn văn 400 nó thành 700, nhưng nằm trong một
      khối đã 600 thì nhảy lên 900. Quét 8 trang bản production thấy đúng hai
-     mức 700 và 900 bị yêu cầu, trong khi `lib/fonts.ts` không khai mức nào
-     trong hai mức đó -> trình duyệt làm đậm giả (kéo giãn nét, chữ bệt).
-     Ghim về một giá trị TUYỆT ĐỐI đã có nét thật; xem ghi chú trong
+     mức 700 và 900 bị yêu cầu, còn trục `wght` của Lora dừng ở 700 -> mức 900
+     sẽ bị trình duyệt làm đậm giả (kéo giãn nét, chữ bệt). Ghim về một giá
+     trị TUYỆT ĐỐI nằm trong dải font có thật; xem ghi chú trong
      `lib/fonts.ts`. */
   :where(strong, b) {
     font-weight: 700;
@@ -542,10 +543,41 @@
     );
   }
 
-  /* Thẻ có chữ đè ảnh (lưới dịch vụ, thư viện). Trong suốt ở 30% trên cùng
-     để giữ chi tiết ảnh, đặc dần tới 0.97 ở đáy nơi đặt chữ. */
+  /* Thẻ có chữ đè ảnh (lưới dịch vụ `HomeServices`, lưới thẻ `cardGridSection`).
+     Lớp phủ này KHÔNG trải theo chiều cao thẻ — nó chỉ bọc đúng KHỐI CHỮ ở
+     đáy, và `pt-20`/`pt-24` của khối đó chính là vùng chuyển từ ảnh sang nền
+     đặc. Vì thế các mốc dưới đây tính bằng **px tuyệt đối**, không phải `%`.
+
+     Bản cũ (`0` ở 30%, `0.97` ở 100%) hỏng vì lý do này: phần trăm được tính
+     trên chiều cao khối CHỮ, mà chiều cao đó thay đổi theo độ dài tiêu đề.
+     Tiêu đề rơi vào khoảng 40% khối -> độ đục thực tế chỉ **0.22**, và tiêu
+     đề càng nhiều dòng thì khối càng cao, tiêu đề càng trôi lên vùng loãng
+     hơn. Đo ở 1440px trên lưới thẻ trang Ẩm thực: chỗ xấu nhất **1.25:1**
+     (một mảng khăn ăn trắng sau vài chữ là đủ). Trang chủ dùng cùng
+     component nên cũng chìm y hệt — "CUNG HỘI NGHỊ QUỐC TẾ" là ví dụ.
+
+     Ngưỡng cần đạt, tính bằng công thức WCAG chứ không bằng mắt: chữ TRẮNG
+     trên nền `rgb(120 86 18)` phủ lên **ảnh trắng** (ca xấu nhất tuyệt đối)
+     cần độ đục >= 0.84 mới qua 4.5:1.
+
+       α=0.70 -> 3.38:1     α=0.84 -> 4.60:1
+       α=0.80 -> 4.20:1     α=0.86 -> 4.82:1     α=0.97 -> 6.23:1
+
+     Nên mốc `0.88` đặt ở **70px** — trước mép trên của chữ (80px với `pt-20`,
+     96px với `pt-24`) — và giữ `0.97` từ 84px xuống đáy. Chữ luôn nằm dưới
+     84px bất kể tiêu đề dài mấy dòng, nên lời hứa ">= 86% đục" trong
+     `CardGridSection.tsx` giờ mới đúng là thứ CSS thật sự làm.
+
+     Đổi các mốc thì đo lại bằng công thức WCAG, đừng chỉnh bằng mắt. */
   .scrim-card {
-    background-image: linear-gradient(180deg, rgb(143 106 28 / 0) 30%, rgb(120 86 18 / 0.97) 100%);
+    background-image: linear-gradient(
+      180deg,
+      rgb(143 106 28 / 0) 0,
+      rgb(138 101 24 / 0.2) 24px,
+      rgb(130 94 21 / 0.58) 48px,
+      rgb(120 86 18 / 0.88) 70px,
+      rgb(120 86 18 / 0.97) 84px
+    );
   }
 
   /* Thẻ lớn cuối trang chủ (`HomeFeatureDuo`) — TRUNG TÍNH, cùng lý do với
@@ -582,10 +614,18 @@
     );
   }
 
-  /* Giữ tên cũ cho các section chưa chuyển hết — trỏ về cùng gradient thẻ,
-     không để hai công thức song song trôi khỏi nhau. */
+  /* Giữ tên cũ cho các section chưa chuyển hết. Trỏ về ĐÚNG công thức của
+     `.scrim-card` — trước đây hai chỗ chép tay cùng một chuỗi gradient, nên
+     lần sửa tương phản đầu tiên chỉ vá được một nửa. Một công thức, một chỗ. */
   .scrim-bottom {
-    background-image: linear-gradient(180deg, rgb(143 106 28 / 0) 30%, rgb(120 86 18 / 0.97) 100%);
+    background-image: linear-gradient(
+      180deg,
+      rgb(143 106 28 / 0) 0,
+      rgb(138 101 24 / 0.2) 24px,
+      rgb(130 94 21 / 0.58) 48px,
+      rgb(120 86 18 / 0.88) 70px,
+      rgb(120 86 18 / 0.97) 84px
+    );
   }
 }
 
