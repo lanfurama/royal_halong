@@ -4,14 +4,15 @@ import { Container } from '@/components/ui/Container'
 import { SmartLink } from '@/components/ui/SmartLink'
 import { CTA_BAND_BUTTON_CLASSES } from '@/components/ui/Button'
 
-// `vh` trên iOS Safari đo theo viewport KHI thanh địa chỉ đã thu nhỏ, nên
-// `85vh` thực tế cao hơn màn hình thấy được lúc mới tải — hero bị cắt mất
-// phần đáy. `dvh` bám theo viewport động; `vh` đứng trước làm dự phòng cho
-// trình duyệt cũ (thứ tự khai báo quyết định, cái sau ghi đè nếu hiểu được).
+// Ba mức chiều cao nằm ở `app/globals.css` (`--hero-unit` và các class
+// `.rhl-hero--*`), không phải ở `min-h-[85dvh]` như bản trước: công thức phải
+// bám CẢ bề ngang thì khung mới không bị bóp thành 2:1 trên cửa sổ bẹt — lúc
+// đó `object-cover` cắt mất một phần tư chiều cao ảnh nền. Cả `dvh` lẫn dự
+// phòng `vh` cũng đã xử lý ở đó, một chỗ cho mọi hero.
 const HEIGHTS = {
-  full: 'min-h-[85vh] min-h-[85dvh]',
-  medium: 'min-h-[68vh] min-h-[68dvh]',
-  short: 'min-h-[42vh] min-h-[42dvh]',
+  full: 'rhl-hero--full',
+  medium: 'rhl-hero--medium',
+  short: 'rhl-hero--short',
 } as const
 
 export function HeroSection({

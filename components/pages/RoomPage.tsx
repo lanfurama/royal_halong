@@ -27,7 +27,7 @@ export async function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) 
           header, nên tiêu đề nằm giữa phần NHÌN THẤY chứ không bị header ăn
           mất một nửa lề trên — với `items-center` đó là khác biệt thấy rõ.
           `on-dark` để viền focus đổi sang `gold-hi`, đọc được trên nền tối. */}
-      <section className="rhl-hero on-dark relative flex min-h-[55vh] items-center">
+      <section className="rhl-hero rhl-hero--compact on-dark relative flex items-center">
         {doc.heroImage != null && (
           <div className="absolute inset-0 -z-10">
             <SanityImage

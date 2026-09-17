@@ -45,20 +45,22 @@ export function HomeHero({
     <>
       <section
         id="booking"
-        // `dvh` bám viewport động của iOS Safari (thanh địa chỉ thu/giãn);
-        // `vh` đứng trước làm dự phòng cho trình duyệt cũ — thứ tự khai báo
-        // quyết định, cái sau ghi đè nếu hiểu được.
+        // `rhl-hero--tall`: chiều cao (và phần đệm đáy chừa cho thanh đặt
+        // phòng) đến từ `--hero-unit` trong `app/globals.css` — công thức bám
+        // CẢ bề ngang, không chỉ `dvh`. Lý do đầy đủ ở ghi chú `--hero-vp`
+        // trong file đó: khung chỉ theo viewport bị bóp thành 2:1 trên cửa sổ
+        // bẹt và `object-cover` cắt mất một phần tư chiều cao ảnh.
         //
-        // `pb-*` chừa chỗ cho phần thanh đặt phòng kéo ngược lên (`-mt-*` bên
-        // dưới, cùng cặp số): chữ hero nằm sát đáy vì `justify-end`, không có
-        // đệm này thì thanh che mất dòng mô tả.
+        // Đừng thêm `min-h-*` hay `pb-*` của Tailwind vào đây: utility nằm ở
+        // layer sau, ghi đè cả chiều cao lẫn phần bù khi hero cao hơn màn
+        // hình — đúng hai thứ mà class kia tồn tại để tính.
         //
         // `rhl-hero`: đánh dấu "section này là hero tối". Header đọc dấu ấy
         // qua `body:has(main > .rhl-hero:first-child)` để tự chuyển sang trạng
         // thái trôi trên ảnh, và `<main>` nhờ đó biết KHÔNG phải chừa chỗ cho
         // header (xem `app/globals.css`). Class cũng tự đặt `padding-top`
         // bằng đúng chiều cao header.
-        className="rhl-hero on-dark relative flex min-h-[95vh] min-h-[95dvh] flex-col justify-end pb-28 lg:pb-32"
+        className="rhl-hero rhl-hero--tall on-dark relative flex flex-col justify-end"
       >
         {section?.background && (
           <div className="absolute inset-0 overflow-hidden">
