@@ -8,7 +8,11 @@ import { SectionRenderer } from '@/components/sections/SectionRenderer'
 import { RoomPage } from '@/components/pages/RoomPage'
 import { PostPage } from '@/components/pages/PostPage'
 import { OfferPage } from '@/components/pages/OfferPage'
+import { CasinoPage } from '@/components/pages/CasinoPage'
 import { SiteChrome } from '@/components/layout/SiteChrome'
+
+/** `_id` tất định do script import sinh ra — xem nhánh dùng nó ở cuối file. */
+const CASINO_PAGE_ID = 'page.casino'
 
 export async function generateMetadata({ params }: PageProps<'/[lang]/[slug]'>): Promise<Metadata> {
   const { lang, slug } = await params
@@ -73,6 +77,21 @@ export default async function DynamicPage({ params }: PageProps<'/[lang]/[slug]'
       )
     default: {
       const widgetId = (settings as any)?.secureBookingsWidgetId as string | undefined
+
+      // Trang /casino có BỐ CỤC RIÊNG, không phải một chuỗi section xếp dọc —
+      // lý do đầy đủ ở đầu `components/pages/CasinoPage.tsx`. Nhận diện bằng
+      // `_id` TẤT ĐỊNH (`page.<slug-vi>`, do script import sinh ra) chứ không
+      // bằng slug đang hiển thị: slug đổi theo từng ngôn ngữ và biên tập viên
+      // sửa được, `_id` thì không. Cùng cơ chế mà `RESERVATION_SLUG_QUERY` và
+      // `GALLERY_PAGE_ID` (trang chủ) đã dùng.
+      if (doc._id === CASINO_PAGE_ID) {
+        return (
+          <SiteChrome lang={lang} slug={slugField}>
+            <CasinoPage doc={doc} lang={lang} settings={settings} currentSlug={slug} />
+          </SiteChrome>
+        )
+      }
+
       return (
         <SiteChrome lang={lang} slug={slugField}>
           <SectionRenderer

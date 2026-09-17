@@ -31,6 +31,11 @@ export async function getDoc(id: string) {
 /**
  * Kiểm tra CHỐT trước khi coi là xong: đi khắp document, tìm mọi object đa
  * ngữ và báo cái nào chưa đủ sáu ngôn ngữ. In ra đường dẫn field để sửa.
+ *
+ * `slug` được bỏ qua — xem `IGNORED_PATHS` trong `audit.ts` để biết lý do
+ * (localeSlug cố ý để trống ngoài `vi`, `resolveSlug()` tự rơi về đường dẫn
+ * tiếng Việt). Hai chỗ phải dùng CÙNG quy tắc, nếu không thì script trang báo
+ * xanh còn bản soi toàn dataset báo đỏ trên cùng một document.
  */
 export async function assertFullyTranslated(id: string): Promise<number> {
   const LOC = ['vi', 'en', 'zh', 'ko', 'ja', 'th']
@@ -43,6 +48,7 @@ export async function assertFullyTranslated(id: string): Promise<number> {
     const keys = Object.keys(node).filter((k) => !k.startsWith('_'))
     const isLocale = keys.length > 0 && keys.every((k) => LOC.includes(k))
     if (isLocale) {
+      if (/(^|\.)slug$/.test(path)) return
       const missing = LOC.filter((l) => {
         const v = node[l]
         return v === undefined || v === null || (typeof v === 'string' && !v.trim()) || (Array.isArray(v) && !v.length)

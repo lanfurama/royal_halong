@@ -11,6 +11,24 @@ const SLUG_MATCH_ANY_LOCALE = LOCALES.map((l) => `slug.${l}.current == $slug`).j
 
 const IMAGE = `{ ..., asset->{ _id, url, metadata { dimensions, lqip } } }`
 
+/**
+ * Chiếu một field `localeBlock` sao cho `figure` chèn giữa dòng chữ cũng được
+ * mở `asset->`.
+ *
+ * Vì sao cần: `localeBlock` nhận `figure` làm phần tử mảng (xem
+ * `sanity/schemaTypes/objects/localeBlock.ts`), nhưng projection trước đây chỉ
+ * mở `asset->` cho các field ẢNH ĐỨNG RIÊNG (`image`, `background`,
+ * `heroImage`…). Ảnh nằm trong nội dung rich text tới component chỉ có
+ * `asset._ref` trần — mất `metadata.dimensions` và `lqip`, nên `SanityImage`
+ * phải đoán 1600×1067 và không có ảnh mờ chờ tải. Sai tỉ lệ thật thì ảnh bị
+ * méo và trang nhảy layout khi ảnh tải xong.
+ *
+ * Sinh từ `LOCALES` chứ không liệt kê tay sáu nhánh — cùng lý do với
+ * `ROUTE_SLUGS` ngay trên.
+ */
+const localeBlockWithFigures = (field: string) =>
+  `${field}{ ${LOCALES.map((l) => `${l}[]{ ..., _type == "figure" => ${IMAGE} }`).join(', ')} }`
+
 const LINK = `{
   kind,
   label,
@@ -37,6 +55,7 @@ const SECTIONS = `sections[]{
   background ${IMAGE},
   image ${IMAGE},
   cta ${LINK},
+  ${localeBlockWithFigures('content')},
   cards[]{ ..., image ${IMAGE}, cta ${LINK} },
   _type == "galleryCarouselSection" => { album-> { _id, title, images[] ${IMAGE} } },
   _type == "roomListSection" => {
@@ -81,6 +100,11 @@ export const ALL_ROUTES_QUERY = defineQuery(`
 }
 `)
 
+// `cta ${LINK}` ở CẤP DOCUMENT (không chỉ trong `sections[]`): `offer` có
+// field `cta` riêng ngoài mọi section. Thiếu dòng này thì `cta` tới
+// `SmartLink` mà KHÔNG có `internalSlug` (nó do `reference->slug` sinh ra),
+// nên mọi nút "nội bộ" trên trang ưu đãi lặng lẽ trỏ về trang chủ thay vì
+// trang đích — không lỗi, không cảnh báo, chỉ là một cái nút dẫn sai chỗ.
 export const DOC_BY_SLUG_QUERY = defineQuery(`
 *[
   (_type == "page" || _type == "room" || _type == "post" || _type == "offer")
@@ -93,6 +117,9 @@ export const DOC_BY_SLUG_QUERY = defineQuery(`
   gallery[] ${IMAGE},
   features[]{ ..., icon ${IMAGE} },
   seo{ ..., ogImage ${IMAGE} },
+  cta ${LINK},
+  ${localeBlockWithFigures('body')},
+  ${localeBlockWithFigures('description')},
   ${SECTIONS}
 }
 `)

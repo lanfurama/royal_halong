@@ -6,6 +6,7 @@ import { SanityImage } from '@/components/ui/SanityImage'
 import { RichText } from '@/components/ui/PortableText'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
+import { ui } from '@/lib/ui-strings'
 
 export async function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) {
   const roomTitle = t<string>(doc.title as any, lang)
@@ -60,7 +61,7 @@ export async function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) 
             <div>
               <RichText value={doc.description} lang={lang} />
               <Button href={reservationHref} className="mt-6">
-                Đặt phòng
+                {ui('bookNow', lang)}
               </Button>
             </div>
 
@@ -69,7 +70,7 @@ export async function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) 
                 {/* 20px trong khối phụ (aside) cạnh h1 lớn — giữ cỡ chữ nhỏ để không
                     lấn tiêu đề trang, đổi màu sang gold-text (5.32:1 trên trắng) thay
                     vì tăng lên 24px. */}
-                <h2 className="font-display text-gold-text mb-4 text-xl">Tiện nghi phòng</h2>
+                <h2 className="font-display text-gold-text mb-4 text-xl">{ui('roomAmenities', lang)}</h2>
                 <ul className="space-y-3">
                   {(doc.features as any[]).map((feature: any, index: number) => (
                     <li key={feature._key ?? index} className="flex items-center gap-3 text-sm">
@@ -95,7 +96,7 @@ export async function RoomPage({ doc, lang }: { doc: SanityDoc; lang: Locale }) 
       {Array.isArray(doc.gallery) && doc.gallery.length > 0 && (
         <section className="bg-cream-alt py-16">
           <Container size="wide">
-            <h2 className="font-display mb-8 text-center text-3xl">Hình ảnh phòng</h2>
+            <h2 className="font-display mb-8 text-center text-3xl">{ui('roomPhotos', lang)}</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {(doc.gallery as any[]).map((image: any, index: number) => (
                 <Reveal key={image._key ?? index} delay={index * 60}>

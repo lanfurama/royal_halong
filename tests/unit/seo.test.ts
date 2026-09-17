@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildMetadata, absoluteUrl } from '@/lib/seo'
+import { buildMetadata, absoluteUrl, titleWithBrand } from '@/lib/seo'
 
 const settings = { brandName: { vi: 'Royal Hạ Long' } }
 
@@ -102,5 +102,42 @@ describe('buildMetadata()', () => {
   it('không có openGraph.images khi seo.ogImage không có asset', () => {
     const meta = buildMetadata({ doc, lang: 'vi', settings, siteUrl: 'https://e.com' })
     expect(meta.openGraph?.images).toBeUndefined()
+  })
+})
+
+describe('titleWithBrand()', () => {
+  // Lớp lỗi này đã xảy ra thật trên mọi trang của site: người viết nội dung
+  // đặt `seo.metaTitle` kèm luôn tên khách sạn (cách đặt tiêu đề SEO tự
+  // nhiên nhất), rồi `buildMetadata()` nối `brandName` lần nữa. Ở tiếng
+  // Nhật/Trung/Thái nó còn ra HAI DẠNG khác nhau của cùng một cái tên:
+  //   `ニュース・プレス — Royal Ha Long Hotel — ロイヤル・ハロン・ホテル`
+  // Điều kiện cũ (`pageTitle === brand`) chỉ bắt được trùng khít tuyệt đối.
+  it('nối tên khách sạn khi tiêu đề CHƯA có', () => {
+    expect(titleWithBrand('Ẩm thực', 'Royal Ha Long Hotel')).toBe('Ẩm thực — Royal Ha Long Hotel')
+  })
+
+  it('KHÔNG nối khi tiêu đề đã chứa tên khách sạn', () => {
+    expect(titleWithBrand('News & press — Royal Ha Long Hotel', 'Royal Ha Long Hotel')).toBe(
+      'News & press — Royal Ha Long Hotel',
+    )
+    expect(titleWithBrand('ニュース・プレス — Royal Ha Long Hotel', 'Royal Ha Long Hotel')).toBe(
+      'ニュース・プレス — Royal Ha Long Hotel',
+    )
+  })
+
+  it('bỏ qua khác biệt DẤU tiếng Việt khi so sánh', () => {
+    // Trang tiếng Việt dùng `Royal Hạ Long Hotel`, năm ngôn ngữ kia dùng bản
+    // không dấu. Cùng một cái tên, phải nhận ra là một.
+    expect(titleWithBrand('Tin tức — Royal Ha Long Hotel', 'ROYAL HẠ LONG HOTEL')).toBe(
+      'Tin tức — Royal Ha Long Hotel',
+    )
+  })
+
+  it('không nối khi tiêu đề CHÍNH LÀ tên khách sạn', () => {
+    expect(titleWithBrand('Royal Ha Long Hotel', 'Royal Ha Long Hotel')).toBe('Royal Ha Long Hotel')
+  })
+
+  it('giữ nguyên tiêu đề khi thiếu tên khách sạn', () => {
+    expect(titleWithBrand('Ẩm thực', '')).toBe('Ẩm thực')
   })
 })

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, it, expect, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import { SectionRenderer } from '@/components/sections/SectionRenderer'
+import { SectionRenderer, groupSections } from '@/components/sections/SectionRenderer'
 
 afterEach(() => {
   cleanup()
@@ -159,6 +159,7 @@ describe('SectionRenderer — mọi _type trong registry sống sót qua hình d
     warn.mockClear()
   })
 
+
   for (const [type, fixture] of Object.entries(SECTION_FIXTURES)) {
     it(`${type}: không throw với field null do projection chiếu vào, không render heading rỗng`, () => {
       const section = { _key: 'k', _type: type, ...fixture }
@@ -176,4 +177,47 @@ describe('SectionRenderer — mọi _type trong registry sống sót qua hình d
       }
     })
   }
+})
+
+describe('groupSections() — khối gập liền nhau gộp thành một cụm accordion', () => {
+  const collapsible = (key: string, type = 'richTextSection') => ({
+    _key: key,
+    _type: type,
+    heading: { vi: key },
+    content: { vi: [] },
+    collapsible: true,
+  })
+  const plain = (key: string) => ({ _key: key, _type: 'richTextSection', content: { vi: [] } })
+
+  it('gom đúng các khối gập ĐỨNG LIỀN NHAU, không nuốt khối thường ở giữa', () => {
+    const items = groupSections([
+      plain('p1'),
+      collapsible('c1'),
+      collapsible('c2', 'tableSection'),
+      plain('p2'),
+      collapsible('c3'),
+    ])
+    expect(items.map((i) => i.kind)).toEqual(['single', 'group', 'single', 'group'])
+    expect((items[1] as any).sections.map((s: any) => s._key)).toEqual(['c1', 'c2'])
+    expect((items[3] as any).sections.map((s: any) => s._key)).toEqual(['c3'])
+  })
+
+  it('giữ NGUYÊN chỉ số gốc của section — `isFirst` (priority ảnh hero) bám chỉ số đó', () => {
+    const items = groupSections([collapsible('c1'), collapsible('c2'), plain('p1')])
+    // `p1` là phần tử thứ 3 trong mảng gốc dù đứng thứ 2 sau khi gom.
+    expect(items[1]).toMatchObject({ kind: 'single', index: 2 })
+  })
+
+  it('cờ `collapsible` trên _type KHÔNG hỗ trợ thì bỏ qua, khối vẫn render bằng component của nó', () => {
+    const items = groupSections([
+      { _key: 'h', _type: 'heroSection', collapsible: true },
+      collapsible('c1'),
+    ])
+    expect(items.map((i) => i.kind)).toEqual(['single', 'group'])
+  })
+
+  it('không có khối gập nào -> mọi phần tử vẫn là "single", thứ tự không đổi', () => {
+    const items = groupSections([plain('a'), plain('b'), plain('c')])
+    expect(items.map((i) => (i as any).section._key)).toEqual(['a', 'b', 'c'])
+  })
 })

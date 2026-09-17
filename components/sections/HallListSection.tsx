@@ -2,6 +2,7 @@ import { t, type Locale } from '@/lib/i18n'
 import { Container } from '@/components/ui/Container'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { RichText } from '@/components/ui/PortableText'
+import { ui } from '@/lib/ui-strings'
 
 export function HallListSection({ heading, resolved, lang }: any & { lang: Locale }) {
   // Xem chú thích cùng lớp lỗi ở CardGridSection/VenueListSection — default
@@ -35,8 +36,10 @@ export function HallListSection({ heading, resolved, lang }: any & { lang: Local
                   <h3 className="font-display text-2xl">{hallName}</h3>
                   <p className="text-gold-text mt-1 text-xs tracking-widest uppercase">
                     {[
-                      hall.areaSqm ? `Diện tích: ${hall.areaSqm} m²` : null,
-                      t<string>(hall.capacity, lang) ? `Sức chứa: ${t<string>(hall.capacity, lang)}` : null,
+                      hall.areaSqm ? `${ui('labelArea', lang)}: ${hall.areaSqm} m²` : null,
+                      t<string>(hall.capacity, lang)
+                        ? `${ui('labelCapacity', lang)}: ${t<string>(hall.capacity, lang)}`
+                        : null,
                     ]
                       .filter(Boolean)
                       .join(' | ')}

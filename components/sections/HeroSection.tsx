@@ -18,11 +18,17 @@ export function HeroSection({
   heading,
   subheading,
   background,
+  facts,
   cta,
   height = 'medium',
   lang,
   isFirst,
 }: any & { lang: Locale; isFirst?: boolean }) {
+  // Xem chú thích cùng lớp lỗi ở CardGridSection/VenueListSection — projection
+  // GROQ trả `null` TƯỜNG MINH cho field vắng mặt, mà default parameter chỉ
+  // bắt `undefined`.
+  const factList: any[] = facts ?? []
+
   return (
     <section
       // `rhl-hero`: dấu cho biết section này là hero tối. Header đọc nó qua
@@ -31,7 +37,11 @@ export function HeroSection({
       // (xem `app/globals.css`). Đặt ở MỌI hero chứ không chỉ khi `isFirst`:
       // điều kiện "có phải section đầu không" đã do `:first-child` trả lời,
       // giữ một nguồn sự thật thay vì hai.
-      className={`rhl-hero on-dark relative flex items-end overflow-hidden ${
+      // `flex-col justify-end` thay cho `items-end`: cùng kết quả khi hero chỉ
+      // có khối chữ (cả hai dồn nội dung xuống đáy), nhưng khi có thêm dải số
+      // liệu thì dải đó xếp DƯỚI khối chữ và tràn hết bề ngang, thay vì đứng
+      // cạnh nó trên một hàng ngang.
+      className={`rhl-hero on-dark relative flex flex-col justify-end overflow-hidden ${
         HEIGHTS[height as keyof typeof HEIGHTS] ?? HEIGHTS.medium
       }`}
     >
@@ -70,6 +80,43 @@ export function HeroSection({
           {cta && <SmartLink link={cta} lang={lang} className={CTA_BAND_BUTTON_CLASSES} />}
         </div>
       </Container>
+
+      {factList.length > 0 && (
+        /* Dải số liệu neo ĐÁY hero. Đây là chỗ trả lời "đây là gì, tôi có
+           được vào không" trước khi khách đọc bất cứ dòng nào — trên /casino
+           nó mang giờ mở cửa và điều kiện vào cửa (hộ chiếu nước ngoài, từ đủ
+           18 tuổi), hai thứ trước đây nằm lẫn giữa trang và khách chỉ gặp sau
+           khi cuộn qua 8.000px luật chơi.
+
+           `bg-ink/60` + blur chứ không phải nền đặc: dải này nằm TRÊN ảnh, và
+           phần dưới cùng của `.scrim-hero` đã tối sẵn (0.78) nên chữ kem đạt
+           tương phản mà vẫn thấy ảnh chạy qua phía sau. */
+        <div className="border-gold-hi/30 bg-ink/60 relative border-t backdrop-blur-md">
+          <Container size="wide">
+            <ul className="grid grid-cols-2 gap-x-6 lg:grid-cols-4 lg:gap-x-0">
+              {factList.map((fact: any, index: number) => (
+                <li
+                  key={fact._key ?? index}
+                  className={`flex items-baseline gap-3 py-3.5 ${
+                    // Ở 2 cột (điện thoại) hàng thứ hai cần kẻ NGANG; ở 4 cột
+                    // mọi ô trừ ô đầu cần kẻ DỌC. Hai điều kiện khác nhau nên
+                    // viết rời, không gộp thành `divide-*` (grid `divide-x`
+                    // kẻ nhầm vào ô mở đầu mỗi hàng).
+                    index >= 2 ? 'border-gold-hi/20 border-t lg:border-t-0' : ''
+                  } ${index > 0 ? 'lg:border-gold-hi/20 lg:border-l lg:pl-6' : ''}`}
+                >
+                  <span className="font-display text-gold-hi text-2xl leading-none lg:text-3xl">
+                    {t<string>(fact.value, lang)}
+                  </span>
+                  <span className="text-cream-dim text-[0.625rem] tracking-[0.18em] uppercase">
+                    {t<string>(fact.label, lang)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </div>
+      )}
     </section>
   )
 }

@@ -19,6 +19,7 @@ export function ImageTextSection({
   content,
   image,
   imageSide = 'left',
+  imageFit = 'cover',
   tone = 'white',
   cta,
   lang,
@@ -27,6 +28,18 @@ export function ImageTextSection({
   // ý nghĩa. Dữ liệu liền kề duy nhất là tiêu đề của chính khối này.
   const headingText = t<string>(heading, lang)
   const dark = tone === 'ink'
+
+  // `cover` + khung 4:3 cứng là mặc định đúng cho ẢNH CHỤP: mọi khối ảnh-chữ
+  // trên site cao bằng nhau bất kể biên tập viên tải lên ảnh ngang hay dọc.
+  // Nhưng nó PHÁ HỎNG ảnh mà nội dung nằm ở rìa: dải 3 mã QR (935×340) của
+  // /casino bị 4:3 cắt mất hai mã ngoài cùng, mã còn lại bị xén mất góc định
+  // vị — quét không ra. Với `contain`, ảnh giữ đúng tỉ lệ gốc (`aspect-auto`)
+  // và `SanityImage` đã phát ra `width`/`height` thật nên không có layout
+  // shift.
+  const contain = imageFit === 'contain'
+  const imageClasses = contain
+    ? 'w-full object-contain'
+    : 'shadow-card aspect-[4/3] w-full rounded-media object-cover'
 
   return (
     <section className={`py-16 lg:py-24 ${BG[tone as keyof typeof BG] ?? BG.white}`}>
@@ -43,7 +56,7 @@ export function ImageTextSection({
               lang={lang}
               sizes="(max-width: 1024px) 100vw, 620px"
               fallbackAlt={headingText}
-              className="shadow-card aspect-[4/3] w-full rounded-media object-cover"
+              className={imageClasses}
             />
           </Reveal>
 

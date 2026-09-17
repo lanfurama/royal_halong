@@ -8,6 +8,41 @@ export function absoluteUrl(path: string, siteUrl: string): string {
   return `${siteUrl.replace(/\/+$/, '')}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+/**
+ * Chuẩn hoá để so tên thương hiệu: bỏ dấu tiếng Việt, gộp khoảng trắng, về
+ * chữ thường. `ROYAL HẠ LONG HOTEL` và `Royal Ha Long Hotel` phải coi là MỘT.
+ */
+function normalizeBrand(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+/**
+ * Ghép tiêu đề trang với tên khách sạn, KHÔNG lặp lại tên nếu tiêu đề đã có.
+ *
+ * Trước đây điều kiện là `pageTitle === brand` — chỉ bắt được trường hợp
+ * trùng khít tuyệt đối. Nhưng `seo.metaTitle` do người viết nội dung đặt, và
+ * cách đặt tự nhiên nhất cho một tiêu đề SEO là kèm luôn tên khách sạn
+ * ("Tin tức & báo chí — Royal Ha Long Hotel"). Kết quả: thẻ `<title>` mang
+ * tên khách sạn HAI LẦN, mà ở các ngôn ngữ khác còn là hai DẠNG khác nhau —
+ * `ニュース・プレス — Royal Ha Long Hotel — ロイヤル・ハロン・ホテル`. Google cắt
+ * `<title>` quanh 60 ký tự, nên phần lặp đó ăn mất chỗ của nội dung thật.
+ *
+ * So sánh sau khi bỏ dấu để `ROYAL HẠ LONG HOTEL` (tiếng Việt) khớp với
+ * `Royal Ha Long Hotel` (năm ngôn ngữ còn lại).
+ */
+export function titleWithBrand(pageTitle: string, brand: string): string {
+  const title = normalizeBrand(pageTitle)
+  const name = normalizeBrand(brand)
+  if (!name || title === name || title.includes(name)) return pageTitle
+  return `${pageTitle} — ${brand}`
+}
+
 export function buildMetadata({
   doc,
   lang,
@@ -68,7 +103,7 @@ export function buildMetadata({
     : undefined
 
   return {
-    title: pageTitle === brand ? brand : `${pageTitle} — ${brand}`,
+    title: titleWithBrand(pageTitle, brand),
     description,
     // `ogImageUrl` ở trên luôn là URL tuyệt đối (cdn.sanity.io) nên tự nó
     // không cần `metadataBase` để resolve — nhưng Next dùng field này chung

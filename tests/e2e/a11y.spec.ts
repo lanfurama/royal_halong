@@ -62,6 +62,26 @@ const DESIGN_SURFACES = new Set([
   '#fffdf7', // --color-cream-soft (mặt thẻ, form)
   '#f3ebdb', // --color-cream-alt (dải xen kẽ)
   '#8f6a1c', // --color-gold-deep (chân trang)
+
+  // Mặt kính mờ của `HomeIntro`: `bg-cream-soft/55` nằm trên nền trang, nên
+  // màu axe đo được là màu TRỘN chứ không phải token nào cả. Đây không phải
+  // một ngoại lệ MỚI — nó là chính `--color-cream-soft` đã có ở trên, chỉ
+  // trong suốt 55%, và phép trộn kiểm được bằng tay:
+  //
+  //   R  0.55×255 + 0.45×250 = 252.75 -> FD
+  //   G  0.55×253 + 0.45×246 = 249.85 -> FA
+  //   B  0.55×247 + 0.45×238 = 242.95 -> F3
+  //
+  // Tương phản của `#b8892b` trên ba mặt nền này xếp đúng theo thứ tự đó:
+  //
+  //   #faf6ee  2.93:1   (đã chấp nhận)
+  //   #fdfaf3  3.03:1   <- dòng này
+  //   #fffdf7  3.10:1   (đã chấp nhận)
+  //
+  // tức nó NẰM GIỮA hai mặt nền đã chốt, không nới rộng ngoại lệ thêm chút
+  // nào. Thêm một mặt kính mờ mới với tỉ lệ khác sẽ sinh một mã màu khác và
+  // vẫn làm test đỏ — đúng như thiết kế của bộ kiểm này.
+  '#fdfaf3', // --color-cream-soft ở 55% trên --color-cream (HomeIntro)
 ])
 
 /** Rút cặp màu ra khỏi `failureSummary` mà axe sinh cho rule color-contrast. */

@@ -2,6 +2,7 @@ import { t, type Locale } from '@/lib/i18n'
 import { Container } from '@/components/ui/Container'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { RichText } from '@/components/ui/PortableText'
+import { ui } from '@/lib/ui-strings'
 
 function MetaRow({ label, value }: { label: string; value?: string }) {
   if (!value) return null
@@ -48,10 +49,10 @@ export function VenueListSection({ heading, resolved, lang }: any & { lang: Loca
                     <RichText value={venue.description} lang={lang} />
                   </div>
                   <dl className="mt-4 space-y-2">
-                    <MetaRow label="Địa điểm" value={t<string>(venue.location, lang)} />
-                    <MetaRow label="Sức chứa" value={t<string>(venue.capacity, lang)} />
-                    <MetaRow label="Mở cửa" value={t<string>(venue.hours, lang)} />
-                    <MetaRow label="Điện thoại" value={venue.phone} />
+                    <MetaRow label={ui('labelLocation', lang)} value={t<string>(venue.location, lang)} />
+                    <MetaRow label={ui('labelCapacity', lang)} value={t<string>(venue.capacity, lang)} />
+                    <MetaRow label={ui('labelHours', lang)} value={t<string>(venue.hours, lang)} />
+                    <MetaRow label={ui('labelPhone', lang)} value={venue.phone} />
                   </dl>
                   {venue.highlights?.length > 0 && (
                     <ul className="mt-4 flex flex-wrap gap-2">
@@ -69,7 +70,7 @@ export function VenueListSection({ heading, resolved, lang }: any & { lang: Loca
                       rel="noopener noreferrer"
                       className="text-gold-text mt-4 inline-block text-xs font-semibold tracking-wide uppercase underline underline-offset-4"
                     >
-                      Xem menu
+                      {ui('viewMenu', lang)}
                     </a>
                   )}
                 </div>

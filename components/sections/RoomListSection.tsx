@@ -4,6 +4,7 @@ import { SanityImage } from '@/components/ui/SanityImage'
 import { Button } from '@/components/ui/Button'
 import { hrefFor } from '@/lib/routes'
 import { Reveal } from '@/components/ui/Reveal'
+import { ui } from '@/lib/ui-strings'
 
 export function RoomListSection({ heading, resolved, lang }: any & { lang: Locale }) {
   // Xem chú thích cùng lớp lỗi ở CardGridSection/VenueListSection — default
@@ -47,7 +48,7 @@ export function RoomListSection({ heading, resolved, lang }: any & { lang: Local
                     </p>
                     {room.summary && <p className="mt-3 text-sm">{t<string>(room.summary, lang)}</p>}
                     <Button href={hrefFor(lang, room.slug)} variant="ghost" className="mt-4">
-                      Xem chi tiết
+                      {ui('viewDetails', lang)}
                     </Button>
                   </div>
                 </article>

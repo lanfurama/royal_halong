@@ -1,8 +1,43 @@
 import { PortableText, type PortableTextComponents } from '@portabletext/react'
 import Link from 'next/link'
 import { t, type Locale } from '@/lib/i18n'
+import { SanityImage } from './SanityImage'
 
-const components: PortableTextComponents = {
+/**
+ * `components` phải nhận `lang`: `figure` bên trong một `localeBlock` có
+ * `alt`/`caption` đa ngữ, mà `@portabletext/react` không truyền ngôn ngữ
+ * xuống renderer. Dựng bảng component theo từng locale thay vì để hằng số
+ * toàn cục.
+ */
+function buildComponents(lang: Locale): PortableTextComponents {
+  return {
+  /**
+   * `localeBlock` cho phép chèn `figure` giữa dòng chữ (xem
+   * `sanity/schemaTypes/objects/localeBlock.ts`), nhưng trước đây không có
+   * renderer nào cho nó — `@portabletext/react` gặp type lạ thì render một
+   * `<div style="display:none">`, tức là ẢNH BIẾN MẤT KHÔNG BÁO LỖI. Biên tập
+   * viên chèn ảnh trong Studio, lưu, xem trang và không thấy gì.
+   */
+  types: {
+    figure: ({ value }: any) => {
+      if (!value?.asset) return null
+      const caption = t<string>(value.caption, lang)
+      return (
+        <figure className="my-8">
+          <SanityImage
+            image={value}
+            lang={lang}
+            sizes="(max-width: 768px) 100vw, 768px"
+            className="h-auto w-full object-cover"
+          />
+          {caption && (
+            <figcaption className="text-muted mt-3 text-sm">{caption}</figcaption>
+          )}
+        </figure>
+      )
+    },
+  },
+
   block: {
     normal: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
     h2: ({ children }) => (
@@ -42,10 +77,11 @@ const components: PortableTextComponents = {
       )
     },
   },
+  }
 }
 
 export function RichText({ value, lang }: { value: any; lang: Locale }) {
   const blocks = t<any[]>(value, lang)
   if (!blocks || blocks.length === 0) return null
-  return <PortableText value={blocks} components={components} />
+  return <PortableText value={blocks} components={buildComponents(lang)} />
 }

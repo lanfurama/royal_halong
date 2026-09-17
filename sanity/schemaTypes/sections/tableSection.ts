@@ -41,6 +41,14 @@ export const tableSection = defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'collapsible',
+      title: 'Gập lại, bấm tiêu đề mới mở',
+      type: 'boolean',
+      initialValue: false,
+      description:
+        'Dùng cho bảng tra cứu dài (nguyên tắc rút bài, bảng trả thưởng). PHẢI có Tiêu đề — tiêu đề chính là chỗ bấm. Các khối gập LIỀN NHAU tự gộp thành một danh sách xếp chồng.',
+    }),
   ],
   preview: { select: { title: 'heading.vi' }, prepare: ({ title }) => ({ title: `Bảng — ${title ?? ''}` }) },
 })

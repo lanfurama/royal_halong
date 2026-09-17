@@ -5,6 +5,7 @@ import useEmblaCarousel from 'embla-carousel-react'
 import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 import { t, type Locale } from '@/lib/i18n'
+import { ui } from '@/lib/ui-strings'
 import { urlFor } from '@/sanity/lib/image'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { Container } from '@/components/ui/Container'
@@ -46,8 +47,17 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
   const controlClasses =
     'flex size-11 shrink-0 items-center justify-center rounded-pill border border-line bg-cream-soft text-gold-text transition-colors hover:bg-cream disabled:opacity-40'
 
+  // Neo cuộn để một mục lục album (`cardGridSection` ở đầu /our-gallery) nhảy
+  // thẳng xuống đúng dải ảnh. Suy từ `album._id` — projection của section chỉ
+  // mở `album->{_id, title, images}` (xem SECTIONS trong queries.ts), không có
+  // `slug`, và thêm field mới vào schema chỉ để lấy một cái id là thừa.
+  // `scroll-margin-top` cho `section` đã khai toàn cục trong globals.css nên
+  // neo không chui xuống dưới header `fixed`.
+  const albumId: string | undefined = album?._id
+  const anchorId = albumId ? `album-${albumId.replace(/^galleryAlbum\./, '')}` : undefined
+
   return (
-    <section className="bg-cream-alt py-16 lg:py-24">
+    <section id={anchorId} className="bg-cream-alt py-16 lg:py-24">
       <Container size="wide">
         <SectionHeading heading={heading ?? album?.title} lang={lang} />
       </Container>
@@ -78,7 +88,7 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
                 onClick={() => setOpenAt(index)}
                 className="group min-w-0 shrink-0 basis-[78%] overflow-hidden rounded-card sm:basis-[46%] lg:basis-[31%] xl:basis-[23%]"
               >
-                <span className="sr-only">Phóng to ảnh {index + 1}</span>
+                <span className="sr-only">{`${ui('zoomImage', lang)} ${index + 1}`}</span>
                 {/* Tên truy cập của nút đã có từ span sr-only ở trên. Accessible
                     name của <button> nối cả text con lẫn alt của <img> bên trong
                     nó — để ảnh có alt riêng ở đây sẽ đọc thành "Phóng to ảnh N"
@@ -100,7 +110,7 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
 
       <Container size="wide" className="mt-6 flex items-center justify-center gap-4">
         <button type="button" onClick={scrollPrev} className={controlClasses}>
-          <span className="sr-only">Ảnh trước</span>
+          <span className="sr-only">{ui('prevImage', lang)}</span>
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M10 3L5 8l5 5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -134,7 +144,7 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
         )}
 
         <button type="button" onClick={scrollNext} className={controlClasses}>
-          <span className="sr-only">Ảnh sau</span>
+          <span className="sr-only">{ui('nextImage', lang)}</span>
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M6 3l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

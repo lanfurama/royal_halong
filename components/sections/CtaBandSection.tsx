@@ -22,10 +22,11 @@ export function CtaBandSection({
             decorative
             className="h-full w-full object-cover"
           />
-          {/* Cùng scrim với Hero (xem HeroSection) thay cho `bg-black/50`
-              phẳng — hai dải ảnh-chữ trên cùng một trang phải xử lý nền
-              giống nhau, nếu không mắt bắt ngay sự lệch tông. */}
-          <div className="scrim-hero absolute inset-0" />
+          {/* `.scrim-band` — công thức riêng cho dải CTA, khác ba scrim kia vì
+              chữ ở đây canh vào GIỮA khung chứ không nằm sát đáy. Chi tiết
+              số đo và cách tính alpha ở ngay khối `.scrim-band` trong
+              `app/globals.css`. */}
+          <div className="scrim-band absolute inset-0" />
         </div>
       )}
       <Container className="relative text-center text-white">
