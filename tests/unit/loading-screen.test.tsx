@@ -46,13 +46,20 @@ describe('LoadingScreen', () => {
     for (const img of imgs) expect(img.getAttribute('alt')).toBe('')
   })
 
-  it('mỗi kinh tuyến nhận một góc riêng, không trùng nhau', () => {
-    const { container } = render(<LoadingScreen lang="vi" />)
-    const angles = [...container.querySelectorAll('.rhl-loader__meridian')].map((el) =>
-      (el as HTMLElement).style.getPropertyValue('--rhl-meridian'),
-    )
-    expect(angles.length).toBeGreaterThan(1)
-    expect(new Set(angles).size).toBe(angles.length)
+  it('mỗi nền lấy đúng MỘT file logo — nền kem lấy bản vàng, nền mực lấy bản trắng', () => {
+    // Đây là lý do `theme` là prop chứ không phải class CSS: CSS không đổi
+    // được `src`, nên cách duy nhất để chuyển bằng class là render cả hai rồi
+    // ẩn một — và trình duyệt vẫn tải đủ hai file trên một màn hình chờ.
+    const { container: cream } = render(<LoadingScreen lang="vi" />)
+    const creamSrcs = new Set([...cream.querySelectorAll('img')].map((i) => i.getAttribute('src')))
+    expect([...creamSrcs]).toEqual(['/logo-royal-halong-gold.png'])
+    expect(cream.firstElementChild?.className).not.toContain('rhl-loader--ink')
+
+    cleanup()
+    const { container: ink } = render(<LoadingScreen lang="vi" theme="ink" />)
+    const inkSrcs = new Set([...ink.querySelectorAll('img')].map((i) => i.getAttribute('src')))
+    expect([...inkSrcs]).toEqual(['/logo-royal-halong-white.png'])
+    expect(ink.firstElementChild?.className).toContain('rhl-loader--ink')
   })
 
   it('`fullscreen` quyết định lớp phủ kín viewport', () => {

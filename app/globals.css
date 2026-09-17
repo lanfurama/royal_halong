@@ -511,234 +511,193 @@
   /* -------------------------------------------------------------------------
      Màn hình chờ — `components/ui/LoadingScreen.tsx`.
 
-     Mọi chuyển động ở đây là CSS thuần, KHÔNG một dòng JS, và đó là điều kiện
-     chứ không phải sở thích: component này là fallback của `<Suspense>`, nó
-     phải chạy đúng ở khung hình mà React chưa hydrate xong và bundle của
-     trang đích còn đang tải.
+     Bản này thay cho bản đầu (nền nâu tối + hoa văn lặp dày + khung dây quả
+     cầu). Ba thứ đã bỏ vì chúng kéo màn hình chờ ra khỏi ngôn ngữ của site:
 
-     Cả cụm neo vào hai biến ở `.rhl-loader` — đường kính quả cầu và chu kỳ
-     quay. Mọi kích thước con viết bằng % của quả cầu, nên phóng to/thu nhỏ
-     màn hình chờ là sửa MỘT dòng, không phải rà sáu chỗ.
+     - Nền nâu đậm: site là kem `#faf6ee`, màn hình chờ tối om rồi loé sang
+       kem khi trang về là một cú giật. Bản kem còn ĐÚNG hệ thiết kế hơn.
+     - Hoa văn lặp ở độ đục .15: ở mức đó nó là GIẤY DÁN TƯỜNG, át cả huy
+       hiệu. Nay là DẤU CHÌM (.06) — nhìn thẳng mới thấy, như giấy in sang
+       trọng có dập nổi.
+     - Khung dây kinh tuyến + vòng chấm + trục quay: ba lớp đường nét quay
+       quanh một logo nhỏ đọc ra là đồ hoạ "mạng toàn cầu", không phải khách
+       sạn. Nay chỉ còn MỘT vành mảnh, và huy hiệu được phóng to lên làm
+       nhân vật chính.
+
+     Thay vào đó là mô-típ giấy tờ khách sạn: khung kẻ đôi có bốn hạt kim
+     cương ở góc, mặt giấy có hạt, và rất nhiều khoảng trống.
+
+     Toàn bộ màu đi qua tám biến `--ldr-*` khai ngay dưới đây, để bản nền tối
+     (`.rhl-loader--ink`) chỉ phải khai lại màu chứ không chép lại bố cục.
      ------------------------------------------------------------------------- */
   .rhl-loader {
-    /* Đường kính quả cầu. `clamp` chứ không breakpoint: cụm này là một khối
-       tròn duy nhất giữa màn hình, nó không có bố cục nào phải gãy ở một bề
-       ngang nhất định — chỉ cần lớn dần cho tới trần 18.5rem. */
-    --rhl-globe: clamp(12.5rem, 40vw, 18.5rem);
-    /* Chu kỳ quay. 7s chậm hơn hẳn nhịp 1s của spinner mặc định — đây phải
-       là nhịp của một vật NẶNG đang xoay (trái đất, quả địa cầu để bàn), chứ
-       không phải của một thứ đang sốt ruột. Chậm hơn nữa (>10s) thì ở nhiều
-       khung hình liền nhau nó trông như đứng yên. */
-    --rhl-spin: 7s;
-    /* Lề của bốn hoa văn góc so với mép màn hình. */
-    --rhl-corner-gap: clamp(0.5rem, 2.4vw, 1.75rem);
+    --ldr-bg: var(--color-cream);
+    --ldr-lift: #fffdf7;
+    /* Chữ nhãn. `gold-deep` 4.59:1 trên kem chứ không phải `gold-text`
+       2.92:1 — ngoại lệ tương phản ở đầu file chỉ dành cho nhãn trang trí,
+       còn dòng này là THÔNG TIN trạng thái. */
+    --ldr-ink: var(--color-gold-deep);
+    --ldr-rule: rgb(184 137 43 / 0.45);
+    --ldr-rule-soft: rgb(184 137 43 / 0.2);
+    --ldr-pattern: 0.05;
+    --ldr-grain: 0.045;
+    --ldr-grain-blend: multiply;
+
+    /* Bề ngang huy hiệu. Đây là nhân vật chính nên nó ĂN chỗ: 54vw ở điện
+       thoại, trần 23rem. Bản đầu để 18.5rem và logo lọt thỏm giữa một mảng
+       nền trống. */
+    --ldr-stage: clamp(15rem, 54vw, 23rem);
+    /* Chu kỳ quay. 9s — chậm hơn bản đầu (7s). Một tấm huy chương lớn quay
+       nhanh trông như đang bị lắc; chậm mới ra dáng nặng. */
+    --ldr-spin: 9s;
+    /* Lề khung kẻ so với mép màn hình. */
+    --ldr-inset: clamp(0.875rem, 2.6vw, 2.25rem);
 
     position: relative;
-    /* `isolation: isolate`: các lớp nền dùng `z-index` ÂM. Không có stacking
-       context riêng thì chúng chui xuống dưới nền của phần tử cha (thường là
-       `<body>` màu kem) và biến mất. */
     isolation: isolate;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    color: var(--color-cream-hi);
-
-    /* Nền nâu mực sáng dần về tâm. Hai lớp radial đặt LỆCH nhau (một quanh
-       quả cầu, một hắt lên từ đáy) để mảng nền có chiều sâu thay vì phẳng
-       như một lớp sơn. Tông vẫn là trục vàng đồng của site, không phải xám. */
-    background-color: #120d04;
-    background-image:
-      radial-gradient(118% 88% at 50% 40%, rgb(96 70 19 / 0.5) 0%, rgb(38 28 10 / 0) 60%),
-      radial-gradient(96% 62% at 50% 106%, rgb(143 106 28 / 0.26) 0%, rgb(20 15 5 / 0) 72%),
-      linear-gradient(180deg, #1d1507 0%, #100b03 100%);
+    background-color: var(--ldr-bg);
+    /* Một vệt sáng rất nhạt quanh huy hiệu. Không phải "quầng sáng" — trên
+       nền sáng, quầng sáng không tồn tại; đây là chỗ mặt giấy hơi nâng lên. */
+    background-image: radial-gradient(64% 52% at 50% 44%, var(--ldr-lift) 0%, transparent 100%);
   }
 
-  /* Dùng cho `loading.tsx` của route: phủ kín viewport, nằm trên cả header
-     (`z-index: 40`) lẫn panel menu điện thoại. */
+  /* Bản nền tối — giữ nguyên bố cục, chỉ đổi màu. Dùng khi màn hình chờ nằm
+     trên một trang tối, hoặc khi chủ ý muốn hiệu ứng sân khấu. */
+  .rhl-loader--ink {
+    --ldr-bg: #15100a;
+    --ldr-lift: #2a2011;
+    --ldr-ink: var(--color-gold-soft);
+    --ldr-rule: rgb(240 215 138 / 0.4);
+    --ldr-rule-soft: rgb(240 215 138 / 0.16);
+    --ldr-pattern: 0.08;
+    --ldr-grain: 0.05;
+    /* `screen` chứ không `multiply`: trên nền tối, hạt nhân với nền ra một
+       mảng đen phẳng, chẳng thấy hạt đâu. */
+    --ldr-grain-blend: screen;
+  }
+
   .rhl-loader--fullscreen {
     position: fixed;
     inset: 0;
     z-index: 100;
   }
 
-  /* Bản trong luồng — bọc `<Suspense>` quanh một khối nhỏ giữa trang. Cao
-     tối thiểu 60vh để quả cầu không bị bóp vào một dải mỏng. */
   .rhl-loader:not(.rhl-loader--fullscreen) {
     min-height: 60vh;
     padding-block: clamp(3rem, 8vw, 5rem);
   }
 
-  /* --- Lớp nền 1: hoạ tiết damask lặp ---
-     Khung ogee (vòm nhọn) lồng nhau + sao bốn cánh ở tâm mỗi ô — mô-típ giấy
-     dán tường hoàng gia, và ngôi sao là cùng một ngôn ngữ hình với năm sao
-     trong logo.
-
-     `mask` khoét rỗng phần giữa: hoạ tiết chạy ngang qua logo trắng sẽ ăn
-     mất nét của huy hiệu. Nó là TEXTURE ở rìa, không phải hình nền sau chủ
-     thể. */
+  /* --- Dấu chìm ---
+     Hoa văn fleur-de-lis trong khung ogee, lặp ở ô 132px. `mask` khoét rỗng
+     phần giữa để hoa văn không chạy ngang qua huy hiệu — nó là mặt giấy, dứt
+     khoát không phải nền của logo. */
   .rhl-loader__damask {
     position: absolute;
     inset: 0;
     z-index: -3;
-    /* 0.15 + ô 128px: đủ thấy là hoa văn khi nhìn thẳng, đủ chìm để không
-       tranh chú ý với huy hiệu. Đậm hơn (0.25) thì nền đọc ra thành giấy dán
-       tường và logo trắng bị nhiễu nét ở rìa. */
-    opacity: 0.15;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23b8892b' stroke-width='1.1'%3E%3Cpath d='M48 0C72 12 96 26 96 48C96 70 72 84 48 96C24 84 0 70 0 48C0 26 24 12 48 0Z'/%3E%3Cpath d='M48 13C64 22 79 32 79 48C79 64 64 74 48 83C32 74 17 64 17 48C17 32 32 22 48 13Z' opacity='.45'/%3E%3C/g%3E%3Cpath d='M48 34C49.5 42.5 53.5 46.5 62 48C53.5 49.5 49.5 53.5 48 62C46.5 53.5 42.5 49.5 34 48C42.5 46.5 46.5 42.5 48 34Z' fill='%23b8892b'/%3E%3Ccircle cx='0' cy='48' r='2.2' fill='%23b8892b'/%3E%3Ccircle cx='96' cy='48' r='2.2' fill='%23b8892b'/%3E%3Ccircle cx='48' cy='0' r='2.2' fill='%23b8892b'/%3E%3Ccircle cx='48' cy='96' r='2.2' fill='%23b8892b'/%3E%3C/svg%3E");
-    background-size: 128px 128px;
-    -webkit-mask-image: radial-gradient(58% 54% at 50% 44%, transparent 0%, #000 76%);
-    mask-image: radial-gradient(58% 54% at 50% 44%, transparent 0%, #000 76%);
+    opacity: var(--ldr-pattern);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath fill='none' stroke='%23b8892b' stroke-width='1' d='M60 0C90 15 120 32 120 60C120 88 90 105 60 120C30 105 0 88 0 60C0 32 30 15 60 0Z'/%3E%3Cg fill='%23b8892b'%3E%3Cpath d='M50 6C59 22 61 40 60 58L60 64L40 64L40 58C39 40 41 22 50 6Z'/%3E%3Cpath d='M40 46C34 37 24 38 21 46C18 55 25 63 34 62C37 61.5 39 60 40 58C36 59 32 58 30 55C28 51 30 47 34 47C37 47 39 50 40 53Z'/%3E%3Cpath d='M60 46C66 37 76 38 79 46C82 55 75 63 66 62C63 61.5 61 60 60 58C64 59 68 58 70 55C72 51 70 47 66 47C63 47 61 50 60 53Z'/%3E%3Crect x='37' y='65' width='26' height='5.5' rx='2.7'/%3E%3Cpath d='M45 72C47 81 49 87 50 95C51 87 53 81 55 72Z'/%3E%3C/g%3E%3Cg fill='%23b8892b'%3E%3Cpath d='M60 0l4 5-4 5-4-5z'/%3E%3Cpath d='M120 60l-5 4-5-4 5-4z'/%3E%3Cpath d='M60 120l4-5-4-5-4 5z'/%3E%3Cpath d='M0 60l5 4 5-4-5-4z'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 88px 88px;
+    -webkit-mask-image: radial-gradient(46% 42% at 50% 44%, transparent 0%, #000 78%);
+    mask-image: radial-gradient(46% 42% at 50% 44%, transparent 0%, #000 78%);
   }
 
-  /* --- Lớp nền 2: bốn hoa văn cuộn ở góc ---
-     MỘT hình SVG duy nhất, vẽ ở tư thế góc DƯỚI-TRÁI, ba góc còn lại là bản
-     soi gương của nó. Vẽ tay bốn biến thể thì lần chỉnh nét đầu tiên sẽ chỉ
-     sửa được một góc. */
-  .rhl-loader__corner {
-    position: absolute;
-    z-index: -2;
-    width: clamp(4.5rem, 12vw, 9rem);
-    /* `aspect-ratio` chứ không `height: auto`: SVG chỉ suy ra chiều cao từ
-       `viewBox` khi thuộc tính `height` vắng mặt, mà `height: auto` của CSS
-       không phải lúc nào cũng tương đương ở Safari cũ. Ô vốn vuông. */
-    aspect-ratio: 1;
-    color: var(--color-gold);
-    opacity: 0.34;
-  }
-  .rhl-loader__corner--bl {
-    bottom: var(--rhl-corner-gap);
-    left: var(--rhl-corner-gap);
-  }
-  .rhl-loader__corner--br {
-    right: var(--rhl-corner-gap);
-    bottom: var(--rhl-corner-gap);
-    transform: scaleX(-1);
-  }
-  .rhl-loader__corner--tl {
-    top: var(--rhl-corner-gap);
-    left: var(--rhl-corner-gap);
-    transform: scaleY(-1);
-  }
-  .rhl-loader__corner--tr {
-    top: var(--rhl-corner-gap);
-    right: var(--rhl-corner-gap);
-    transform: scale(-1);
-  }
-
-  /* --- Lớp nền 3: màn tối viền ngoài --- */
-  .rhl-loader__vignette {
+  /* --- Hạt giấy ---
+     `feTurbulence` khử màu. Đây là thứ rẻ nhất để một mảng màu phẳng thôi
+     trông như file xuất từ trình duyệt: nó phá dải chuyển màu (banding) của
+     gradient nền và cho mặt giấy một bề mặt. */
+  .rhl-loader__grain {
     position: absolute;
     inset: 0;
+    z-index: -2;
+    opacity: var(--ldr-grain);
+    mix-blend-mode: var(--ldr-grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+
+  /* --- Khung kẻ đôi ---
+     Mô-típ của thực đơn / thiếp mời khách sạn: một nét ngoài rõ, một nét
+     trong mảnh hơn cách 6px, bốn hạt kim cương đậu ở góc. Đây là chi tiết
+     làm cả màn hình đọc ra là "một tấm thiệp" chứ không phải "một trang web
+     đang tải". */
+  .rhl-loader__frame {
+    position: absolute;
+    inset: var(--ldr-inset);
     z-index: -1;
     pointer-events: none;
-    background-image: radial-gradient(
-      78% 66% at 50% 44%,
-      rgb(16 11 3 / 0) 0%,
-      rgb(16 11 3 / 0.45) 74%,
-      rgb(16 11 3 / 0.78) 100%
-    );
+    border: 1px solid var(--ldr-rule);
   }
 
-  /* --- Sân khấu 3D ---
+  .rhl-loader__frame::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid var(--ldr-rule-soft);
+  }
+
+  .rhl-loader__pin {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    background-color: var(--ldr-rule);
+    /* Hình thoi thật (xoay 45°) chứ không phải `border-radius` — hệ thiết
+       kế của site là GÓC VUÔNG, hạt bo tròn sẽ lạc tông ngay. */
+    transform: rotate(45deg);
+  }
+  .rhl-loader__pin--tl {
+    top: -4px;
+    left: -4px;
+  }
+  .rhl-loader__pin--tr {
+    top: -4px;
+    right: -4px;
+  }
+  .rhl-loader__pin--bl {
+    bottom: -4px;
+    left: -4px;
+  }
+  .rhl-loader__pin--br {
+    bottom: -4px;
+    right: -4px;
+  }
+
+  /* --- Huy hiệu ---
      `perspective` PHẢI khai ở tổ tiên, không phải trên chính phần tử quay:
      đặt lên `.rhl-loader__spin` thì mỗi con nhận một điểm nhìn riêng và khối
-     cầu vỡ ra thành mấy mảnh phẳng chồng nhau.
-
-     `perspective-origin` nhích lên trên tâm một chút — người xem nhìn quả
-     địa cầu từ hơi cao xuống, đó là góc quen thuộc của một quả cầu đặt bàn. */
+     3D vỡ ra thành mấy mảnh phẳng chồng nhau. */
   .rhl-loader__stage {
     position: relative;
-    width: var(--rhl-globe);
-    height: var(--rhl-globe);
-    perspective: 900px;
-    perspective-origin: 50% 42%;
-    animation: rhl-loader-in 0.55s ease both;
+    width: var(--ldr-stage);
+    height: var(--ldr-stage);
+    perspective: 1100px;
+    perspective-origin: 50% 44%;
+    animation: rhl-loader-in 0.6s ease both;
   }
 
-  /* Quầng vàng — TĨNH, chỉ thở. Đứng sau quả cầu nên logo trắng luôn có một
-     nền ấm để nổi lên, kể cả ở hai khoảnh khắc logo nằm nghiêng đúng 90° và
-     gần như biến mất. */
-  .rhl-loader__halo {
+  /* Vành huy chương — TĨNH, một nét duy nhất. Nó có việc thật chứ không chỉ
+     trang trí: hai lần mỗi vòng, tấm logo quay đúng 90° và mỏng gần như biến
+     mất; vành giữ cho giữa màn hình vẫn có hình. */
+  .rhl-loader__ring {
     position: absolute;
-    inset: -24%;
-    border-radius: 50%;
-    background-image: radial-gradient(
-      circle at 50% 50%,
-      rgb(240 215 138 / 0.32) 0%,
-      rgb(184 137 43 / 0.18) 40%,
-      rgb(184 137 43 / 0) 70%
-    );
-    animation: rhl-loader-halo 4.2s ease-in-out infinite;
-  }
-
-  /* Vòng 48 chấm quanh cầu — echo hàng chấm đầu kim quanh huy hiệu trong
-     logo. Quay NGƯỢC chiều quả cầu và chậm hơn 5 lần: hai lớp cùng chiều sẽ
-     dính lại thành một khối quay, ngược chiều thì mắt tách được chúng ra. */
-  .rhl-loader__rays {
-    position: absolute;
-    inset: -14%;
-    opacity: 0.5;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='96' fill='none' stroke='%23f0d78a' stroke-width='3.4' stroke-linecap='round' stroke-dasharray='0.1 12.466'/%3E%3C/svg%3E");
-    background-size: 100% 100%;
-    animation: rhl-loader-orbit 34s linear infinite reverse;
-  }
-
-  /* Vành mảnh tĩnh — khung của huy hiệu, giữ cho cụm có một đường viền dứt
-     khoát thay vì tan dần vào quầng sáng. */
-  .rhl-loader__rim {
-    position: absolute;
-    inset: -6%;
-    border: 1px solid rgb(184 137 43 / 0.36);
+    /* 5% chứ không 0: logo rộng 84% ô vuông mà cao chỉ 72% (tỉ lệ 1200×1033),
+       nên một vành ôm sát mép ô để hở quá nhiều ở trên dưới và đọc ra là một
+       vòng tròn rỗng chứ không phải cái vành của tấm huy chương. */
+    inset: 5%;
+    border: 1px solid var(--ldr-rule-soft);
     border-radius: 50%;
   }
 
-  /* Trục quay. Đây là chi tiết nói rõ nhất "quay như trái đất": không có nét
-     dọc xuyên qua và thò ra hai đầu, chuyển động rất dễ bị đọc thành một tấm
-     thẻ đang lật chứ không phải một khối tròn đang xoay quanh trục. Nằm
-     TRƯỚC `.rhl-loader__spin` trong DOM nên bị logo che — đúng ý: trục chỉ
-     lộ ra ở hai đầu, như trục của quả địa cầu để bàn. */
-  .rhl-loader__axis {
-    position: absolute;
-    top: -17%;
-    bottom: -17%;
-    left: calc(50% - 0.5px);
-    width: 1px;
-    /* HAI mẩu chứ không một nét liền. Nét liền chạy suốt sẽ xuyên qua giữa
-       huy hiệu — logo là ảnh PNG nền trong, nên đường kẻ hiện rõ ngay giữa
-       chữ "R" và cắt ngang dòng "ROYAL HALONG HOTEL".
-       23%/77% là mép an toàn đo từ hình học của cụm: logo chiếm 76% bề ngang
-       quả cầu, tức 65,4% chiều cao nó, mà quả cầu lại chỉ chiếm 74,6% chiều
-       cao phần tử này -> mép trên của logo rơi vào 25,6%. Đổi `width` của
-       `.rhl-loader__face` hay `top/bottom` ở đây thì phải tính lại hai mốc. */
-    background-image: linear-gradient(
-      180deg,
-      rgb(240 215 138 / 0) 0%,
-      rgb(240 215 138 / 0.45) 8%,
-      rgb(240 215 138 / 0.45) 17%,
-      rgb(240 215 138 / 0) 23%,
-      rgb(240 215 138 / 0) 77%,
-      rgb(240 215 138 / 0.45) 83%,
-      rgb(240 215 138 / 0.45) 92%,
-      rgb(240 215 138 / 0) 100%
-    );
-  }
-
-  /* Khối quay: bốn kinh tuyến + hai mặt logo, tất cả là MỘT vật thể. */
   .rhl-loader__spin {
     position: absolute;
     inset: 0;
     transform-style: preserve-3d;
-    animation: rhl-loader-spin var(--rhl-spin) linear infinite;
-  }
-
-  .rhl-loader__meridian {
-    position: absolute;
-    inset: 4%;
-    border: 1px solid rgb(240 215 138 / 0.2);
-    border-radius: 50%;
-    transform: rotateY(var(--rhl-meridian, 0deg));
+    animation: rhl-loader-spin var(--ldr-spin) linear infinite;
   }
 
   /* Hai mặt của tấm huy hiệu.
@@ -752,12 +711,12 @@
      KHÔNG đặt `filter: drop-shadow` lên hai tấm này: `filter` làm phần tử bị
      làm phẳng khỏi ngữ cảnh 3D của cha và ở một số trình duyệt còn vô hiệu
      hoá luôn `backface-visibility`, tức cả hai mặt cùng hiện và chữ chồng
-     lên nhau. Phần đổ bóng/ánh sáng do `.rhl-loader__halo` lo. */
+     lên nhau. */
   .rhl-loader__face {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 76%;
+    width: 84%;
     height: auto;
     transform: translate(-50%, -50%);
     -webkit-backface-visibility: hidden;
@@ -768,42 +727,38 @@
     transform: translate(-50%, -50%) rotateY(180deg);
   }
 
-  /* --- Nhãn + thanh tiến trình --- */
+  /* --- Nhãn + nét tiến trình --- */
   .rhl-loader__label {
-    margin-top: clamp(1.75rem, 4.5vw, 2.75rem);
-    font-size: 0.6875rem;
-    letter-spacing: 0.34em;
+    margin-top: clamp(1.25rem, 3.5vw, 2rem);
+    font-size: 0.625rem;
+    letter-spacing: 0.42em;
     text-transform: uppercase;
-    color: var(--color-gold-soft);
+    color: var(--ldr-ink);
     /* Giãn chữ để lại một khoảng thừa SAU ký tự cuối; không bù lại thì dòng
-       chữ lệch trái so với trục quả cầu đúng bằng khoảng đó. */
-    text-indent: 0.34em;
-    animation: rhl-loader-in 0.55s ease 0.1s both;
+       chữ lệch trái so với trục huy hiệu đúng bằng khoảng đó. */
+    text-indent: 0.42em;
+    animation: rhl-loader-in 0.6s ease 0.12s both;
   }
 
   .rhl-loader__bar {
     position: relative;
-    width: clamp(6.5rem, 22vw, 10.5rem);
+    width: clamp(5rem, 16vw, 7.5rem);
     height: 1px;
     margin-top: clamp(0.875rem, 2.5vw, 1.25rem);
-    overflow: hidden;
-    background-color: rgb(184 137 43 / 0.3);
-    animation: rhl-loader-in 0.55s ease 0.16s both;
+    background-color: var(--ldr-rule-soft);
+    animation: rhl-loader-in 0.6s ease 0.18s both;
   }
 
+  /* Nét vàng MỌC TỪ GIỮA ra hai bên rồi tắt, không phải một vệt sáng chạy
+     qua chạy lại. Vệt chạy là ngôn ngữ của thanh tiến trình phần mềm; nét mọc
+     từ giữa là một nhịp thở, hợp với phần còn lại. */
   .rhl-loader__bar::after {
     content: '';
     position: absolute;
-    inset-block: 0;
-    left: 0;
-    width: 38%;
-    background-image: linear-gradient(
-      90deg,
-      rgb(240 215 138 / 0) 0%,
-      var(--color-gold-hi) 50%,
-      rgb(240 215 138 / 0) 100%
-    );
-    animation: rhl-loader-sweep 1.8s ease-in-out infinite;
+    inset: 0;
+    background-color: var(--ldr-ink);
+    transform-origin: center;
+    animation: rhl-loader-draw 2.6s ease-in-out infinite;
   }
 }
 
@@ -1020,9 +975,9 @@ html:lang(th) body {
 }
 
 /* --- Màn hình chờ (`.rhl-loader`) ---
-   Năm nhịp độc lập, cố ý KHÔNG chia hết cho nhau (7s / 34s / 4.2s / 1.8s):
-   các chu kỳ bội số của nhau sẽ gặp lại nhau ở cùng một khung hình và cả cụm
-   nhấp nháy thành một nhịp chung, thấy rõ khi phải chờ lâu. */
+   Hai nhịp lặp vô tận, cố ý KHÔNG chia hết cho nhau (9s và 2,6s): hai chu kỳ
+   là bội số của nhau sẽ gặp lại nhau ở cùng một khung hình và cả cụm nhấp
+   nháy thành một nhịp chung, thấy rõ khi phải chờ lâu. */
 
 /* Quay quanh trục DỌC — quả cầu, không phải cái vòng của spinner. */
 @keyframes rhl-loader-spin {
@@ -1034,38 +989,23 @@ html:lang(th) body {
   }
 }
 
-/* Vòng chấm quanh cầu. Quay phẳng (2D) là đúng: nó nằm trên mặt phẳng màn
-   hình chứ không thuộc khối cầu. */
-@keyframes rhl-loader-orbit {
-  from {
-    transform: rotate(0deg);
+/* Nét tiến trình mọc từ giữa ra hai bên rồi tắt. `scaleX` chứ không `width`:
+   `width` buộc trình duyệt bố cục lại mỗi khung hình, `transform` thì không. */
+@keyframes rhl-loader-draw {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes rhl-loader-halo {
-  0%,
-  100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
+  14% {
     opacity: 1;
-    transform: scale(1.05);
   }
-}
-
-/* Vệt sáng chạy hết thanh. 263% = 100/38 — phần tử rộng 38% thanh, nên phải
-   dịch 2,63 lần bề ngang CỦA CHÍNH NÓ mới ra khỏi mép phải. Đổi `width` của
-   `::after` thì phải tính lại con số này. */
-@keyframes rhl-loader-sweep {
-  from {
-    transform: translateX(-100%);
+  68% {
+    opacity: 1;
+    transform: scaleX(1);
   }
-  to {
-    transform: translateX(263%);
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
   }
 }
 
@@ -1108,16 +1048,13 @@ html:lang(th) body {
      đủ, chỉ là hiện ngay thay vì trôi lên. Logo đứng yên ở mặt chính diện vì
      `.rhl-loader__spin` không còn transform nào. */
   .rhl-loader__spin,
-  .rhl-loader__rays,
-  .rhl-loader__halo,
   .rhl-loader__stage,
   .rhl-loader__label,
-  .rhl-loader__bar {
+  .rhl-loader__bar,
+  .rhl-loader__bar::after {
     animation: none !important;
   }
-  /* Vệt sáng đứng yên giữa thanh trông như một lỗi hiển thị — bỏ hẳn, chỉ
-     còn nét vàng mảnh làm gạch chân cho nhãn. */
-  .rhl-loader__bar::after {
-    display: none;
-  }
+  /* Tắt animation cũng tắt `rhl-loader-draw`, nên `::after` quay về trạng
+     thái khai sẵn: `inset: 0`, `scaleX` mặc định 1 — nét vàng nằm đủ bề
+     ngang thanh, đọc ra là một gạch chân dứt khoát dưới nhãn. */
 }
