@@ -510,9 +510,14 @@
 
 @layer utilities {
   /* --- Lớp phủ gradient ---
-     Các gradient thẻ (`scrim-card`, `scrim-feature`) vẫn là NÂU VÀNG theo
-     bản thiết kế — chúng phủ lên ảnh nhỏ, nơi tông ấm nối liền với nền kem.
-     Riêng hero thì KHÔNG: xem ghi chú ngay dưới. */
+     Hai nhóm, đừng trộn:
+
+     TRUNG TÍNH (`scrim-hero`, `scrim-feature`) — phủ lên ảnh LỚN, nơi bức
+     ảnh chính là nội dung. Đen thuần: chỉ hạ độ sáng, giữ nguyên sắc độ.
+
+     NÂU VÀNG (`scrim-card`, `scrim-bottom`) — phủ lên thẻ ảnh NHỎ trong
+     lưới dịch vụ / thư viện, nơi ảnh là hình minh hoạ và tông ấm nối liền
+     với nền kem của trang. Giữ theo bản thiết kế. */
 
   /* Hero: TRUNG TÍNH và trong suốt ở đỉnh.
      Chủ dự án chốt "ảnh banner phải ra đúng màu gốc" — màn nâu vàng cũ
@@ -543,9 +548,38 @@
     background-image: linear-gradient(180deg, rgb(143 106 28 / 0) 30%, rgb(120 86 18 / 0.97) 100%);
   }
 
-  /* Thẻ lớn (tiệc cưới): phủ gần kín vì khối chữ cao hơn. */
+  /* Thẻ lớn cuối trang chủ (`HomeFeatureDuo`) — TRUNG TÍNH, cùng lý do với
+     `.scrim-hero`: hai bức ảnh này là nội dung do biên tập viên chọn, không
+     phải một mảng nền để tô màu lên.
+
+     Bản cũ `linear-gradient(rgb(143 106 28/.05), rgb(120 86 18/.97))` hỏng
+     ở cả hai mặt. Về màu: đã đạt 0.23 độ đục ngay ở 20% chiều cao thẻ, nên
+     phần ảnh "sáng" cũng đã ngả mù tạt. Về tương phản: nâu phủ lên ảnh
+     trắng cho ra một nền TRUNG TÍNH SÁNG, chữ kem trên đó chỉ đạt **2.1:1**
+     tại tiêu đề và **2.1:1** tại đoạn mô tả (đo trên ảnh hoa cưới nền trắng
+     đang dùng) — chữ mờ đúng như nhìn thấy trên trang.
+
+     Công thức mới giữ 26% trên cùng gần như trong suốt (0.03) rồi dựng dốc
+     ở giữa thẻ, nơi khối chữ bắt đầu (~50% chiều cao). Cùng ảnh trắng đó,
+     đo lại:
+
+       kẻ vàng trang trí  50%   2.6:1   (trang trí, có bóng đổ riêng)
+       tiêu đề 28–40px    52%   4.3:1   (AA chữ lớn cần 3:1)
+       mô tả 14px         64%   7.1:1
+       CTA 12px           80%  11.3:1
+
+     Đổi các stop thì đo lại bằng `tests/` hoặc công thức WCAG — đừng chỉnh
+     bằng mắt, vùng 42–54% là chỗ tương phản đổi nhanh nhất. */
   .scrim-feature {
-    background-image: linear-gradient(180deg, rgb(143 106 28 / 0.05), rgb(120 86 18 / 0.97));
+    background-image: linear-gradient(
+      180deg,
+      rgb(0 0 0 / 0) 0%,
+      rgb(0 0 0 / 0.03) 26%,
+      rgb(0 0 0 / 0.22) 42%,
+      rgb(0 0 0 / 0.6) 54%,
+      rgb(0 0 0 / 0.8) 70%,
+      rgb(0 0 0 / 0.88) 100%
+    );
   }
 
   /* Giữ tên cũ cho các section chưa chuyển hết — trỏ về cùng gradient thẻ,

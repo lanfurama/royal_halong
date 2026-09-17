@@ -5,6 +5,29 @@ import { SmartLink } from '@/components/ui/SmartLink'
 import { blocksToPlainText } from '@/lib/home-stats'
 
 /**
+ * Bốn góc của khung vàng lồng trong thẻ — hoạ tiết "khung tranh".
+ *
+ * Viết đủ CẢ BỐN chuỗi class thay vì ghép động (`border-${side}-2`):
+ * Tailwind quét mã nguồn như văn bản thuần, class ghép lúc chạy không bao
+ * giờ có mặt trong CSS xuất ra. Đây là lỗi im lặng — không báo gì, chỉ là
+ * góc khung không hiện.
+ */
+const FRAME_CORNERS = [
+  'top-3.5 left-3.5 border-t-2 border-l-2 lg:top-5 lg:left-5',
+  'top-3.5 right-3.5 border-t-2 border-r-2 lg:top-5 lg:right-5',
+  'bottom-3.5 left-3.5 border-b-2 border-l-2 lg:bottom-5 lg:left-5',
+  'bottom-3.5 right-3.5 border-b-2 border-r-2 lg:bottom-5 lg:right-5',
+]
+
+/**
+ * Nét vàng mảnh nằm trên ảnh sáng thì gần như biến mất (kẻ `gold-hi` trên
+ * ảnh hoa cưới trắng đo được 2.6:1). Bóng đổ tối 1px kéo nó bật ra khỏi mọi
+ * nền, kể cả vùng ảnh chưa bị lớp phủ chạm tới. Dùng chung cho khung, bốn
+ * góc và kẻ trang trí trên tiêu đề để ba thứ cùng một độ "dày" thị giác.
+ */
+const GOLD_EDGE = 'drop-shadow-[0_1px_2px_rgb(0_0_0/0.5)]'
+
+/**
  * Hai thẻ lớn cuối trang: "Tiệc cưới" và "Chương trình ưu đãi".
  *
  * Nguồn là hai `imageTextSection` cuối của trang chủ. Bản thiết kế bày
@@ -12,13 +35,24 @@ import { blocksToPlainText } from '@/lib/home-stats'
  * `components/sections/ImageTextSection.tsx` (ảnh một bên, chữ một bên,
  * dùng ở các trang con).
  *
- * Thẻ thứ hai mang sắc thái khác thẻ thứ nhất (nền vàng chuyển sắc + chữ R
- * cỡ lớn làm hoa văn) đúng như bản thiết kế: nhịp "ảnh — khối màu" là thứ
- * giữ cho hai thẻ cạnh nhau không đọc thành một cặp song sinh. Khác bản
- * thiết kế một điểm: ở đó thẻ vàng KHÔNG có ảnh, còn ở đây ảnh thật do biên
- * tập viên chọn vẫn được dùng, đặt dưới lớp vàng với độ đục thấp — bỏ hẳn
- * một ảnh đã được chọn chỉ vì bản minh hoạ không có ảnh là quyết định của
- * người dựng, không phải của người biên tập.
+ * ẢNH LÀ NHÂN VẬT CHÍNH — ĐỌC TRƯỚC KHI THÊM LỚP MÀU.
+ * Bản trước làm thẻ thứ hai thành một mảng vàng đặc
+ * (`linear-gradient(160deg,#c9a24a,#8f6a1c)`) với ảnh nằm DƯỚI ở
+ * `opacity-40 mix-blend-multiply`; thẻ thứ nhất thì phủ gradient nâu vàng
+ * kín mặt. Kết quả: cả hai bức ảnh do biên tập viên chọn đều chìm trong một
+ * mảng mù tạt, và tiêu đề kem trên ảnh cưới nền trắng chỉ đạt **2.1:1** —
+ * vừa xấu vừa không đọc được. Chủ dự án chốt: bỏ màn vàng, trả ảnh về đúng
+ * màu.
+ *
+ * Nay cả hai thẻ dùng CHUNG một cách xử lý: ảnh thật, lớp phủ ĐEN trung
+ * tính chỉ đậm ở nửa dưới (`.scrim-feature`), và một khung vàng lồng bên
+ * trong. Đen chứ không phải nâu vì đen chỉ hạ độ sáng, giữ nguyên sắc độ
+ * ảnh; nâu là "tô màu".
+ *
+ * Hai thẻ vẫn KHÔNG đọc thành một cặp song sinh — nhịp khác nhau nay nằm ở
+ * hoạ tiết và nút, không nằm ở việc bỏ đi một bức ảnh: thẻ thứ hai mang chữ
+ * R vàng cỡ lớn làm dấu triện và nút nền kem đặc, thẻ thứ nhất chỉ có link
+ * chữ + mũi tên.
  */
 export function HomeFeatureDuo({
   sections,
@@ -43,9 +77,13 @@ export function HomeFeatureDuo({
             const summary = blocksToPlainText(t<any[]>(section.content, lang))
             const gold = index % 2 === 1
 
-            const shell = `text-cream-hi on-dark group relative isolate flex min-h-[27.5rem] flex-col justify-end overflow-hidden ${
-              gold ? 'bg-[linear-gradient(160deg,#c9a24a,#8f6a1c)]' : 'border-gold/30 border'
-            }`
+            // `bg-ink` KHÔNG phải trang trí: nó là trạng thái "thẻ chưa có
+            // ảnh". Mọi chữ trong thẻ đều là màu kem/vàng sáng (`text-cream-hi`
+            // ở đây, `gold-soft` ở eyebrow và CTA) — thiếu ảnh mà nền là kem
+            // của trang thì cả khối chữ TRẮNG TRÊN TRẮNG. Nền nâu mực đưa
+            // trường hợp đó về 15:1.
+            const shell =
+              'text-cream-hi on-dark group bg-ink border-gold/35 relative flex min-h-[27.5rem] flex-col justify-end overflow-hidden border'
 
             const body = (
               <>
@@ -56,66 +94,62 @@ export function HomeFeatureDuo({
                       lang={lang}
                       sizes="(max-width: 1024px) 100vw, 50vw"
                       fallbackAlt={heading}
-                      className={`h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
-                        // `mix-blend-multiply`, KHÔNG phải `luminosity`.
-                        // Luminosity lấy độ sáng của ảnh đè lên màu nền: một
-                        // bức ảnh phòng ngủ sáng sẽ LÀM SÁNG mảng vàng, và
-                        // chữ kem trên đó tụt xuống ~3.3:1 — đo được trên
-                        // chính ảnh đang dùng. Multiply thì kết quả luôn TỐI
-                        // BẰNG HOẶC HƠN nền vàng, nên tương phản chữ không
-                        // bao giờ tệ hơn nền trơn (4.67:1) dù biên tập viên
-                        // đổi sang ảnh sáng cỡ nào.
-                        gold ? 'opacity-40 mix-blend-multiply' : ''
-                      }`}
+                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                     />
                   </span>
                 )}
 
-                {/* Thẻ vàng: điểm sáng toả từ góc trên phải + chữ R hoa văn,
-                    đúng bản thiết kế. Cả hai `aria-hidden`, thuần trang trí. */}
+                {/* Dấu triện R của thẻ thứ hai. Nằm TRƯỚC lớp phủ nên chân
+                    chữ chìm dần vào vùng tối ở đáy thay vì nổi đều — một dấu
+                    chìm, không phải một chữ dán lên ảnh. Vàng chứ không còn
+                    trắng: trên ảnh thật, trắng 14% chỉ là một vệt mờ bạc;
+                    vàng đọc ra là hoa văn. */}
                 {gold && (
-                  <>
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgb(255_255_255/0.28),transparent_55%)]"
-                    />
-                    <span
-                      aria-hidden="true"
-                      className="font-display pointer-events-none absolute -top-24 -right-12 text-[22.5rem] leading-none font-semibold text-[rgb(255_248_232/0.14)] select-none"
-                    >
-                      R
-                    </span>
-                    {/* Làm tối nửa dưới của thẻ vàng.
-                        Dải `linear-gradient(160deg,#c9a24a,#8f6a1c)` của bản
-                        thiết kế chỉ đủ tối ở GÓC DƯỚI PHẢI; ở giữa thẻ nó vẫn
-                        là `#c9a24a`, mà chữ kem trên màu đó đo được 2.27:1.
-                        Bản thiết kế thoát được vì khối chữ của nó nằm sát đáy;
-                        ở đây khối chữ cao hơn (tiêu đề tiếng Việt hai dòng +
-                        đoạn mô tả + nút) nên mép trên của nó rơi vào vùng
-                        sáng. Lớp này kéo nền dưới khối chữ về `#8f6a1c`,
-                        cream trên đó đạt 6.3:1. */}
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_35%,rgb(120_86_18/0.92)_100%)]"
-                    />
-                  </>
-                )}
-
-                {/* Lớp phủ trải TOÀN thẻ, không chỉ dưới khối chữ.
-                    Bản thiết kế đặt gradient ở `inset:0` và đó là điều kiện
-                    để nó đủ tối ở vị trí tiêu đề: khối chữ cao 242px trong
-                    thẻ 440px, nên nếu gradient chỉ chạy trong 242px đó thì ở
-                    chỗ tiêu đề nó mới đạt ~0.42 độ đục — chữ kem trên ảnh
-                    cưới nền trắng gần như không đọc được (đo trên chính ảnh
-                    đang dùng). Trải hết thẻ thì cũng vị trí ấy đạt ~0.77. */}
-                {!gold && (
                   <span
                     aria-hidden="true"
-                    className="scrim-feature pointer-events-none absolute inset-0"
-                  />
+                    className="font-display pointer-events-none absolute -top-24 -right-12 text-[22.5rem] leading-none font-semibold text-[rgb(240_215_138/0.18)] select-none"
+                  >
+                    R
+                  </span>
                 )}
 
+                {/* Lớp phủ trải TOÀN thẻ, không chỉ dưới khối chữ: khối chữ
+                    bắt đầu ở khoảng 50% chiều cao thẻ, nên một gradient chỉ
+                    chạy trong phần chữ sẽ còn quá nhạt ngay tại tiêu đề. Chi
+                    tiết công thức và số đo tương phản ở `.scrim-feature`
+                    trong `app/globals.css`. */}
+                <span
+                  aria-hidden="true"
+                  className="scrim-feature pointer-events-none absolute inset-0"
+                />
+
+                {/* Khung vàng lồng trong thẻ + bốn góc nhấn. Đặt SAU lớp phủ
+                    để khung nằm trên vùng tối (nếu nằm dưới, nửa khung phía
+                    đáy bị phủ đen mất một nửa độ sáng), và TRƯỚC khối chữ để
+                    chữ luôn ở trên cùng — thứ tự DOM quyết định, không cần
+                    `z-index` nào. */}
+                <span
+                  aria-hidden="true"
+                  className={`border-gold-hi/35 group-hover:border-gold-hi/65 pointer-events-none absolute inset-3.5 border transition-colors duration-500 motion-reduce:transition-none lg:inset-5 ${GOLD_EDGE}`}
+                />
+                {FRAME_CORNERS.map((corner) => (
+                  <span
+                    key={corner}
+                    aria-hidden="true"
+                    className={`border-gold-hi pointer-events-none absolute h-7 w-7 ${GOLD_EDGE} ${corner}`}
+                  />
+                ))}
+
                 <span className="relative px-8 pt-24 pb-9 lg:px-10 lg:pb-10">
+                  {/* Kẻ vàng ngắn — cùng một hoạ tiết với `HeroSection`,
+                      `HomeIntro`, `CtaBandSection`. Đây là thứ neo hai thẻ
+                      này vào ngôn ngữ thị giác của cả trang, và là hoạ tiết
+                      DUY NHẤT chắc chắn hiện: `eyebrow` có thể trống trong
+                      Sanity (hiện đang trống ở cả hai thẻ). */}
+                  <span
+                    aria-hidden="true"
+                    className={`bg-gold-hi mb-5 block h-0.5 w-14 ${GOLD_EDGE}`}
+                  />
                   {eyebrow && (
                     <span className="text-gold-soft block text-[0.625rem] tracking-[0.1em] uppercase">
                       {eyebrow}
