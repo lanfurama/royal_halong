@@ -336,50 +336,52 @@ function VenueCourse({ venue, index, lang }: { venue: any; index: number; lang: 
 
   return (
     <article id={anchorId(venue, index)} className="scroll-mt-[calc(var(--header-h)+1.5rem)]">
-      {/* Ngưỡng đổi bố cục là `nav` (1180px), KHÔNG phải `lg` (1024px) — hai
-          lý do, cả hai đo được:
+      {/* Ảnh và tấm thực đơn ĐỨNG CẠNH NHAU, không cái nào đè lên cái nào:
+          bức ảnh là nội dung của khối này ngang với phần chữ, nên nó phải
+          hiện trọn — không bị một tấm thiệp cắt mất một góc.
 
-          1. Đó đúng là ngưỡng header đổi giữa menu ngang và hamburger (xem
-             `--breakpoint-nav` trong `app/globals.css`), nên trang không rơi
-             vào cảnh chạy bố cục "desktop" trong khi điều hướng vẫn "mobile".
-          2. Ở bố cục đè, chiều cao ẢNH bám chiều cao TẤM THIỆP (xem ghi chú
-             bên dưới). Đo ở 1024px: thiệp cao 865px trong khi cột ảnh chỉ
-             rộng 542px — `object-cover` cắt ảnh nhà hàng (gốc 3:2) xuống một
-             dải dọc 0.57, mất hai phần ba bề ngang khung hình. Từ 1180px trở
-             lên tỉ lệ về 0.73–0.91, tức vẫn là ảnh chứ không phải một vệt. */}
-      <div className="grid nav:grid-cols-12">
-        <Reveal
-          className={`nav:row-start-1 ${
-            flip ? 'nav:col-start-6 nav:col-end-13' : 'nav:col-start-1 nav:col-end-8'
-          }`}
-        >
+          Ngưỡng đổi bố cục là `nav` (1180px) chứ không `lg` (1024px): đó
+          đúng là ngưỡng header đổi giữa menu ngang và hamburger (xem
+          `--breakpoint-nav` trong `app/globals.css`), nên trang không rơi vào
+          cảnh chạy bố cục "desktop" trong khi điều hướng vẫn "mobile". Dưới
+          ngưỡng đó, ảnh nằm trên và thiệp nằm dưới — vẫn rời nhau.
+
+          Ảnh giữ tỉ lệ 3:2 CỐ ĐỊNH, không kéo cao bằng tấm thiệp. Cho ảnh bám
+          chiều cao thiệp nghe thì gọn hơn nhưng nó là một vòng lặp tự siết:
+          thiệp càng hẹp thì càng cao, ảnh càng phải cao theo trong một cột
+          hẹp, và `object-cover` càng cắt sâu — đo được 0.67 ở 1180px, tức
+          ảnh nhà hàng thành một khung dọc. Tỉ lệ cố định cắt vòng lặp đó.
+
+          3:2 chứ không phải 4:3 (tỉ lệ `ImageTextSection` dùng): đo trên
+          chính bốn tấm ảnh này, ba tấm là 1600×1067 = ĐÚNG 3:2 và tấm thứ tư
+          (Piano Bar) là 1.86. Nên 3:2 gần như không cắt gì ở ba tấm, còn 4:3
+          thì cắt cả bốn.
+
+          Đổi lại, hàng nào có thiệp cao hơn ảnh (chỉ Phúc Viên — ba đoạn mô
+          tả, đủ bốn thông số, năm món) thì hai bên ảnh có khoảng thở. Đó là
+          hành xử bình thường của một lưới hai cột `items-center`, không phải
+          lỗi dựng.
+
+          Cột ẢNH luôn là cột rộng (7fr) ở cả hai chiều lật, nên hai chuỗi
+          class khai tường minh chứ không đảo thứ tự một chuỗi: Tailwind quét
+          mã nguồn bằng văn bản, class dựng lúc chạy sẽ không có trong CSS
+          xuất ra. */}
+      <div
+        className={`grid gap-y-8 nav:items-center nav:gap-x-10 ${
+          flip ? 'nav:grid-cols-[6fr_7fr]' : 'nav:grid-cols-[7fr_6fr]'
+        }`}
+      >
+        <Reveal className={flip ? 'nav:order-2' : ''}>
           <SanityImage
             image={venue.image}
             lang={lang}
-            sizes="(max-width: 1180px) 100vw, 60vw"
+            sizes="(max-width: 1180px) 100vw, 55vw"
             fallbackAlt={name}
-            className="h-64 w-full object-cover sm:h-80 lg:h-[26rem] nav:h-full"
+            className="aspect-[3/2] w-full object-cover"
           />
         </Reveal>
 
-        {/* Tấm thiệp đè lên mép trong của ảnh: từ `nav` nó đè đúng MỘT cột
-            lưới (~110px ở 1440px) và thụt 40px trên–dưới, nên ảnh vẫn lộ ra ở
-            cả bốn phía và cả khối đọc ra là "thiệp đặt trên ảnh" — đồng thời
-            chiều cao ảnh bám theo chiều cao thiệp, không phải một con số chép
-            tay. Dưới `nav` không còn bề ngang để đè ngang, nên nó kéo lên đè
-            mép DƯỚI của ảnh — cùng cách xoay xở mà `CasinoPage` dùng.
-
-            `nav:mt-10` (không phải `nav:my-10`): `-mt-14` và `my-*` là hai
-            thuộc tính khác nhau, thứ tự thắng thua giữa chúng do thứ tự trong
-            stylesheet quyết định chứ không do thứ tự trong chuỗi className —
-            cùng lớp bẫy đã ghi ở `components/ui/Button.tsx`. Ghi đè cùng một
-            thuộc tính (`mt`) thì biến thể `nav:` chắc chắn đứng sau. */}
-        <Reveal
-          delay={120}
-          className={`relative z-10 -mt-14 px-4 sm:px-8 nav:row-start-1 nav:mt-10 nav:mb-10 nav:px-0 ${
-            flip ? 'nav:col-start-1 nav:col-end-7' : 'nav:col-start-7 nav:col-end-13'
-          }`}
-        >
+        <Reveal delay={120}>
           <div className="rhl-menucard border-gold/40 border p-7 sm:p-9 lg:p-10">
             <div aria-hidden="true" className="flex items-center gap-4">
               <span className="font-display text-gold-deep text-[1.75rem] leading-none">
@@ -572,7 +574,10 @@ function ThingsToDo({ sections, lang }: { sections: any[]; lang: Locale }) {
                       className="aspect-[3/2] w-full object-cover"
                     />
                   )}
-                  <div className="rhl-menucard border-gold/35 relative z-10 -mt-12 mx-4 flex flex-1 flex-col border p-7 sm:mx-8 lg:p-9">
+                  {/* Thiệp nằm ngay DƯỚI ảnh, chung một mép — không kéo lên
+                      đè mất một dải ảnh. Hai phần vẫn đọc ra là MỘT khối nhờ
+                      dùng chung bề ngang và dính mép nhau. */}
+                  <div className="rhl-menucard border-gold/35 flex flex-1 flex-col border p-7 lg:p-9">
                     {eyebrow && <p className={`text-gold-text ${EYEBROW}`}>{eyebrow}</p>}
                     {heading && (
                       <h2 className="font-display mt-3 text-[clamp(1.375rem,2.6vw,1.75rem)]">
