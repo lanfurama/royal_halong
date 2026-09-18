@@ -7,7 +7,11 @@ import AxeBuilder from '@axe-core/playwright'
 // dependency chỉ để mượn một kiểu.
 type ContrastViolation = { id: string; nodes: { failureSummary?: string }[] }
 
-const SAMPLE = ['', 'deluxe', 'casino', 'our-gallery', 'news']
+// Mẫu quét: mỗi đường render một lần. `casino` và `culinary` là hai trang
+// có BỐ CỤC RIÊNG (`components/pages/*Page.tsx`), tức là hai bộ khối không
+// đi qua `SectionRenderer` — chúng không được bảo hiểm bởi bất kỳ trang nào
+// khác trong danh sách này.
+const SAMPLE = ['', 'deluxe', 'casino', 'culinary', 'our-gallery', 'news']
 
 // `components/ui/Reveal.tsx` hiện nội dung dần bằng transition opacity 700ms
 // khi cuộn tới, và đã tôn trọng prefers-reduced-motion sẵn: `reduced` thì

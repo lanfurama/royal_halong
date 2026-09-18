@@ -9,10 +9,12 @@ import { RoomPage } from '@/components/pages/RoomPage'
 import { PostPage } from '@/components/pages/PostPage'
 import { OfferPage } from '@/components/pages/OfferPage'
 import { CasinoPage } from '@/components/pages/CasinoPage'
+import { CulinaryPage } from '@/components/pages/CulinaryPage'
 import { SiteChrome } from '@/components/layout/SiteChrome'
 
 /** `_id` tất định do script import sinh ra — xem nhánh dùng nó ở cuối file. */
 const CASINO_PAGE_ID = 'page.casino'
+const CULINARY_PAGE_ID = 'page.culinary'
 
 export async function generateMetadata({ params }: PageProps<'/[lang]/[slug]'>): Promise<Metadata> {
   const { lang, slug } = await params
@@ -88,6 +90,19 @@ export default async function DynamicPage({ params }: PageProps<'/[lang]/[slug]'
         return (
           <SiteChrome lang={lang} slug={slugField}>
             <CasinoPage doc={doc} lang={lang} settings={settings} currentSlug={slug} />
+          </SiteChrome>
+        )
+      }
+
+      // Trang /culinary cũng vậy — bố cục "tấm thực đơn" của nó gộp và sắp
+      // lại các section theo cách `SectionRenderer` không diễn đạt được (mục
+      // lục rút từ danh sách điểm ẩm thực, bốn đoạn của một khối thành bốn
+      // mốc trên trục, hai khối có nút xếp cạnh nhau). Lý do đầy đủ ở đầu
+      // `components/pages/CulinaryPage.tsx`.
+      if (doc._id === CULINARY_PAGE_ID) {
+        return (
+          <SiteChrome lang={lang} slug={slugField}>
+            <CulinaryPage doc={doc} lang={lang} settings={settings} currentSlug={slug} />
           </SiteChrome>
         )
       }

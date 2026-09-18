@@ -81,7 +81,22 @@ function buildComponents(lang: Locale): PortableTextComponents {
 }
 
 export function RichText({ value, lang }: { value: any; lang: Locale }) {
-  const blocks = t<any[]>(value, lang)
+  return <RichTextBlocks blocks={t<any[]>(value, lang)} lang={lang} />
+}
+
+/**
+ * Cùng bộ renderer, nhưng nhận mảng block ĐÃ giải theo ngôn ngữ.
+ *
+ * Dùng khi nơi gọi cần tự tách nội dung thành từng đơn vị trước khi render —
+ * trang /culinary xếp bốn đoạn của khối "Nhịp một ngày" thành bốn mốc trên
+ * một trục dọc, mỗi đoạn một mốc riêng.
+ *
+ * Tách theo BLOCK (hình dạng dữ liệu), không tách theo dấu câu hay theo cụm
+ * chữ mở đầu: mọi cách bóc chuỗi đều vỡ ở ngôn ngữ thứ hai, nơi trật tự từ
+ * và dấu câu khác hẳn. Một đoạn trong Sanity = một mốc, sáu ngôn ngữ cùng ra
+ * đúng ngần ấy mốc.
+ */
+export function RichTextBlocks({ blocks, lang }: { blocks?: any[] | null; lang: Locale }) {
   if (!blocks || blocks.length === 0) return null
   return <PortableText value={blocks} components={buildComponents(lang)} />
 }

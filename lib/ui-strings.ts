@@ -317,6 +317,30 @@ const DICT = {
     ja: '広さ',
     th: 'พื้นที่',
   },
+  // Nhãn của mảng `highlights` trên `venue` — schema gọi field đó là "Món đặc
+  // trưng / Điểm nhấn", và dữ liệu thật đúng là cả hai: năm MÓN ở nhà hàng
+  // Phúc Viên, nhưng ở ba quầy bar lại là đặc điểm không gian ("Âm nhạc du
+  // dương", "Không gian xanh"). Nên nhãn phải trung tính — gọi tất cả là
+  // "món đặc trưng" thì dòng của La Terrasse đọc ra sai.
+  labelHighlights: {
+    vi: 'Điểm nhấn',
+    en: 'Highlights',
+    zh: '亮点',
+    ko: '하이라이트',
+    ja: 'おすすめ',
+    th: 'ไฮไลต์',
+  },
+  // Tên truy cập của dải mục lục nhảy tới từng điểm ẩm thực (trang /culinary).
+  // Dùng ĐÚNG cách gọi "điểm ẩm thực" mà tiêu đề khối trong Sanity đã chốt ở
+  // cả sáu ngôn ngữ, không đặt thêm một cách gọi thứ hai.
+  diningIndex: {
+    vi: 'Mục lục điểm ẩm thực',
+    en: 'Where to eat & drink — index',
+    zh: '餐饮场所目录',
+    ko: '식음 시설 목차',
+    ja: 'レストラン＆バー一覧',
+    th: 'สารบัญร้านอาหารและบาร์',
+  },
   viewMenu: {
     vi: 'Xem menu',
     en: 'View menu',

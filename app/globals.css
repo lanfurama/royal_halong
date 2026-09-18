@@ -199,6 +199,15 @@
   }
 }
 
+/* Hoa văn fleur-de-lis trong khung ogee — mô-típ "giấy tờ khách sạn" của
+   thương hiệu. Khai MỘT chỗ vì hai nơi dùng chung: dấu chìm của màn hình chờ
+   (`.rhl-loader__damask`) và huy hiệu ngăn khối của trang Ẩm thực
+   (`.rhl-ornament`). Chép lần thứ hai là hai hoa văn sẽ trôi khỏi nhau ở lần
+   sửa sau — mà đây là một chuỗi 1.2KB không ai đọc nổi bằng mắt để so. */
+:root {
+  --pattern-damask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath fill='none' stroke='%23b8892b' stroke-width='1' d='M60 0C90 15 120 32 120 60C120 88 90 105 60 120C30 105 0 88 0 60C0 32 30 15 60 0Z'/%3E%3Cg fill='%23b8892b'%3E%3Cpath d='M50 6C59 22 61 40 60 58L60 64L40 64L40 58C39 40 41 22 50 6Z'/%3E%3Cpath d='M40 46C34 37 24 38 21 46C18 55 25 63 34 62C37 61.5 39 60 40 58C36 59 32 58 30 55C28 51 30 47 34 47C37 47 39 50 40 53Z'/%3E%3Cpath d='M60 46C66 37 76 38 79 46C82 55 75 63 66 62C63 61.5 61 60 60 58C64 59 68 58 70 55C72 51 70 47 66 47C63 47 61 50 60 53Z'/%3E%3Crect x='37' y='65' width='26' height='5.5' rx='2.7'/%3E%3Cpath d='M45 72C47 81 49 87 50 95C51 87 53 81 55 72Z'/%3E%3C/g%3E%3Cg fill='%23b8892b'%3E%3Cpath d='M60 0l4 5-4 5-4-5z'/%3E%3Cpath d='M120 60l-5 4-5-4 5-4z'/%3E%3Cpath d='M60 120l4-5-4-5-4 5z'/%3E%3Cpath d='M0 60l5 4 5-4-5-4z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
 @layer base {
   body {
     background: var(--color-cream);
@@ -694,7 +703,7 @@
     inset: 0;
     z-index: -3;
     opacity: var(--ldr-pattern);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath fill='none' stroke='%23b8892b' stroke-width='1' d='M60 0C90 15 120 32 120 60C120 88 90 105 60 120C30 105 0 88 0 60C0 32 30 15 60 0Z'/%3E%3Cg fill='%23b8892b'%3E%3Cpath d='M50 6C59 22 61 40 60 58L60 64L40 64L40 58C39 40 41 22 50 6Z'/%3E%3Cpath d='M40 46C34 37 24 38 21 46C18 55 25 63 34 62C37 61.5 39 60 40 58C36 59 32 58 30 55C28 51 30 47 34 47C37 47 39 50 40 53Z'/%3E%3Cpath d='M60 46C66 37 76 38 79 46C82 55 75 63 66 62C63 61.5 61 60 60 58C64 59 68 58 70 55C72 51 70 47 66 47C63 47 61 50 60 53Z'/%3E%3Crect x='37' y='65' width='26' height='5.5' rx='2.7'/%3E%3Cpath d='M45 72C47 81 49 87 50 95C51 87 53 81 55 72Z'/%3E%3C/g%3E%3Cg fill='%23b8892b'%3E%3Cpath d='M60 0l4 5-4 5-4-5z'/%3E%3Cpath d='M120 60l-5 4-5-4 5-4z'/%3E%3Cpath d='M60 120l4-5-4-5-4 5z'/%3E%3Cpath d='M0 60l5 4 5-4-5-4z'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: var(--pattern-damask);
     background-size: 88px 88px;
     -webkit-mask-image: radial-gradient(46% 42% at 50% 44%, transparent 0%, #000 78%);
     mask-image: radial-gradient(46% 42% at 50% 44%, transparent 0%, #000 78%);
@@ -852,6 +861,116 @@
     background-color: var(--ldr-ink);
     transform-origin: center;
     animation: rhl-loader-draw 2.6s ease-in-out infinite;
+  }
+
+  /* -------------------------------------------------------------------------
+     Trang Ẩm thực — mô-típ "tấm thực đơn in"
+
+     Bố cục của trang nằm ở `components/pages/CulinaryPage.tsx`; ba chi tiết
+     dưới đây là phần NHÌN dùng lại ở nhiều chỗ trong trang đó (bốn điểm ẩm
+     thực, khối đặt bàn, khối tiệc cưới), nên khai một lần ở đây thay vì nhân
+     bản một chuỗi utility dài trong JSX — viết bằng utility thì mỗi chỗ sẽ
+     thành một dị bản, đúng thứ đã xảy ra với tiêu đề khối trước khi có
+     `SectionHeading`.
+
+     Cùng ngôn ngữ hình với `.rhl-loader__*` (giấy tờ khách sạn: khung kẻ đôi,
+     hoa văn chìm). `.rhl-ornament` dùng CHUNG `--pattern-damask` với dấu chìm
+     của màn hình chờ, không chép hoa văn lần thứ hai.
+
+     Vì sao mô-típ thực đơn chứ không phải một biến thể thẻ ảnh nữa: nội dung
+     của trang này ĐÚNG LÀ một tờ thực đơn (tên điểm ăn, vị trí, sức chứa, giờ
+     mở, món đặc trưng, link menu PDF). Khung kẻ đôi và hàng chấm nối là hai
+     quy ước in ấn mà khách nhận ra ngay, không cần một nhãn nào giải thích.
+  ------------------------------------------------------------------------- */
+
+  /* Tấm thực đơn: mặt kem sáng + nét viền thứ hai lồng bên trong.
+     Nét NGOÀI do nơi gọi đặt bằng `border` của Tailwind (độ đục đổi theo nền
+     đặt thẻ), nét TRONG luôn mảnh hơn — đó là thứ làm khối chữ đọc ra là một
+     tấm thiệp đặt lên ảnh chứ không phải một hộp trắng.
+
+     KHÔNG đặt hoa văn chìm lên chính mặt thẻ: `axe` đọc màu nền của phần tử
+     mang chữ để tính tương phản, gặp `background-image` thì nó bỏ phiếu
+     "incomplete" — tức là cả vùng chữ chính của trang lặng lẽ rơi khỏi phạm
+     vi kiểm tương phản. Hoa văn chỉ xuất hiện ở `.rhl-ornament`, nơi không
+     có chữ nào nằm trên. */
+  .rhl-menucard {
+    position: relative;
+    background-color: var(--color-cream-soft);
+  }
+
+  .rhl-menucard::before {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 1px solid rgb(184 137 43 / 0.24);
+    pointer-events: none;
+  }
+
+  /* Huy hiệu hoa văn giữa hai nét kẻ — dấu ngăn giữa các phần lớn của trang. */
+  .rhl-ornament {
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    background-image: var(--pattern-damask);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.6;
+  }
+
+  /* Hai nét kẻ ôm hai bên một đứa con (hạt kim cương hoặc huy hiệu). */
+  .rhl-rule {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .rhl-rule::before,
+  .rhl-rule::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 1px;
+    background-color: var(--color-line);
+  }
+
+  /* Trên nền tối, nét kem mảnh thay cho nét kem đậm. */
+  .rhl-rule--dark::before,
+  .rhl-rule--dark::after {
+    background-color: rgb(240 215 138 / 0.28);
+  }
+
+  /* Hàng "nhãn · · · · · giá trị" — quy ước của thực đơn in.
+     Dấu chấm nằm ở `::after` của chính `<dt>` chứ không phải một `<span>`
+     riêng: con trực tiếp của `<dl>` (hay của `<div>` bọc trong `<dl>`) chỉ
+     được phép là `<dt>`/`<dd>`, một `<span>` chen vào giữa là HTML sai —
+     `axe` bắt đúng lỗi đó (`definition-list`). */
+  .rhl-leader {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .rhl-leader > dt {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .rhl-leader > dt::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 0;
+    /* Nét chấm nằm ngay trên đường chân chữ; nhấc 0.2em để nó chạy ngang
+       giữa phần thân chữ thay vì gạch dưới nhãn. */
+    transform: translateY(-0.2em);
+    border-bottom: 1px dotted rgb(184 137 43 / 0.5);
+  }
+
+  .rhl-leader > dd {
+    flex: 0 1 auto;
+    text-align: right;
   }
 }
 
