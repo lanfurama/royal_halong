@@ -45,7 +45,7 @@
  * - Đơn vị diện tích: zh/ko/ja giữ "m²", th dùng "ตร.ม." theo lối viết bản địa.
  */
 import { LOCALES, type Locale } from '../../lib/i18n'
-import { key, resetKeys, loc, blockLoc, fig, linkTo } from './build'
+import { key, resetKeys, loc, blockLoc, fig, linkTo, linkOut } from './build'
 import { patchDoc, assertFullyTranslated } from './write'
 
 resetKeys()
@@ -105,6 +105,15 @@ function cell(value: Six) {
  * không báo giả — `resolveSlug()` vốn đã rơi về `vi`, nên kết quả định tuyến
  * trước và sau khi điền là y hệt nhau.
  */
+/**
+ * Liên kết NEO trong cùng trang (`#tu-van`). `blank: false` — mở một neo của
+ * chính trang đang xem ở tab mới là vô nghĩa, mà `linkOut()` mặc định
+ * `blank: true`.
+ */
+function anchor(href: string, label: Six) {
+  return linkOut(href, loc(label), false)
+}
+
 function slugAll(current: string) {
   return Object.fromEntries(
     LOCALES.map((l) => [l, { _type: 'slug', current }]),
@@ -209,6 +218,92 @@ function capacityCell(value: unknown) {
   if (typeof value === 'number') return cell(n(value))
   return cell(value as Six)
 }
+
+/**
+ * Tám hàng cho khối tra sức chứa của trang Tiệc cưới.
+ *
+ * `CAPACITY_ROWS` ở trên là bảng TRA CỨU đầy đủ (17 phòng × 6 kiểu kê bàn,
+ * mọi ô là CHỮ). Khối tra sức chứa cần thứ khác: ít hàng hơn, và sức chứa
+ * phải là SỐ để thanh trượt so sánh được. Nên đây là một bảng riêng — nhưng
+ * lấy số từ đúng cùng một nguồn, và `assertCapacityRowsAgree()` ngay dưới
+ * bắt mọi sai lệch lúc chạy script chứ không để tới lúc lên trang.
+ *
+ * Bay Lounge và Royal Lounge tách thành HAI hàng (bản thiết kế gộp một):
+ * hai phòng cùng 36 m² nhưng một kê bàn tròn 16 khách, một kê bàn dài 18 —
+ * gộp lại là xoá đúng thông tin dùng để chọn phòng dạm ngõ.
+ *
+ * `null` = sơ đồ mặt bằng KHÔNG ghi số cho kiểu kê bàn đó ở phòng đó. Không
+ * được đoán: bản thiết kế gán cho Royal/Bay Lounge cả tiệc đứng, nhà hát và
+ * lớp học trong khi sơ đồ để trống cả ba.
+ */
+type PickerRow = {
+  name: string
+  area: number
+  banquet: number | null
+  cocktail: number | null
+  theatre: number | null
+  classroom: number | null
+}
+
+const PICKER_ROWS: PickerRow[] = [
+  { name: 'Ha Long Ball Room', area: 768, banquet: 550, cocktail: 1000, theatre: 1000, classroom: 430 },
+  { name: 'Ha Long 1', area: 384, banquet: 230, cocktail: 300, theatre: 350, classroom: 200 },
+  { name: 'Hoang Gia Ball Room', area: 672, banquet: 350, cocktail: 650, theatre: 360, classroom: 220 },
+  { name: 'Hoang Gia 1+2', area: 504, banquet: 240, cocktail: 500, theatre: 280, classroom: 150 },
+  { name: 'Bái Tử Long 1', area: 64, banquet: 50, cocktail: 50, theatre: 50, classroom: 40 },
+  { name: 'Bái Tử Long 2', area: 32, banquet: 24, cocktail: 30, theatre: 30, classroom: 24 },
+  { name: 'Bay Lounge', area: 36, banquet: 16, cocktail: null, theatre: null, classroom: null },
+  { name: 'Royal Lounge', area: 36, banquet: 18, cocktail: null, theatre: null, classroom: null },
+]
+
+/**
+ * Bắt hai bảng trôi khỏi nhau.
+ *
+ * Mỗi hàng của `PICKER_ROWS` phải khớp hàng CÙNG TÊN trong `CAPACITY_ROWS`
+ * ở bốn cột dùng chung. Sửa một con số ở bảng tra cứu mà quên bảng kia sẽ
+ * làm script dừng ngay tại đây, kèm tên phòng và tên cột — thay vì để hai
+ * con số khác nhau cho cùng một sảnh cùng hiện trên một trang.
+ *
+ * Hai phòng Lounge là ngoại lệ có chủ ý: `CAPACITY_ROWS` ghi cột tiệc ngồi
+ * của chúng là CHỮ ('16 (bàn tròn)' / '18 (bàn dài)') vì bảng tra cứu cần
+ * nói rõ kiểu bàn, còn ở đây phải là số để so sánh. Kiểm bằng cách đối
+ * chiếu số nằm trong chuỗi tiếng Việt.
+ */
+function assertCapacityRowsAgree() {
+  const source = new Map(CAPACITY_ROWS.map((row) => [row[0] as string, row]))
+  for (const row of PICKER_ROWS) {
+    const ref = source.get(row.name)
+    if (!ref) throw new Error(`PICKER_ROWS: "${row.name}" không có trong CAPACITY_ROWS`)
+    const [, area, , , banquet, classroom, , theatre, , cocktail] = ref
+    const expectBanquet =
+      typeof banquet === 'number' ? banquet : Number(String((banquet as Six).vi).match(/\d+/)?.[0])
+    const checks: [string, unknown, unknown][] = [
+      ['diện tích', row.area, area],
+      ['tiệc ngồi', row.banquet, expectBanquet],
+      ['tiệc đứng', row.cocktail, cocktail],
+      ['nhà hát', row.theatre, theatre],
+      ['lớp học', row.classroom, classroom],
+    ]
+    for (const [label, mine, theirs] of checks) {
+      if (mine !== theirs) {
+        throw new Error(
+          `PICKER_ROWS "${row.name}" cột ${label}: ${String(mine)} != ${String(theirs)} (CAPACITY_ROWS)`,
+        )
+      }
+    }
+  }
+}
+
+const capacityPickerRows = PICKER_ROWS.map((row) => ({
+  _type: 'capacityRow',
+  _key: key('cr'),
+  name: same(row.name),
+  area: row.area,
+  banquet: row.banquet,
+  cocktail: row.cocktail,
+  theatre: row.theatre,
+  classroom: row.classroom,
+}))
 
 const capacityTable = {
   _type: 'tableSection',
@@ -560,6 +655,11 @@ const weddingSections = [
   {
     _type: 'heroSection',
     _key: 'sec-hero',
+    // Khung kẻ đôi căn giữa thay cho khối chữ căn trái của năm hero còn lại
+    // trên site. Đây là trang DUY NHẤT dùng kiểu này: bố cục cân đối hai bên
+    // là quy ước của chính tấm thiệp cưới.
+    variant: 'invitation',
+    eyebrow: same('Royal Hạ Long Hotel'),
     heading: loc(WEDDINGS_CAPS),
     subheading: loc(PALACE_CAPS),
     background: image('653704045_1776947343727583_6583787246099743279_n-1.jpg', {
@@ -571,6 +671,185 @@ const weddingSections = [
       th: 'เวทีงานแต่งงานในบอลรูม ฉากหลังดอกไม้กระดาษสีขาวขนาดใหญ่ ทางเดินขนาบด้วยดอกไม้โทนพาสเทลทอดสู่แท่นพิธี และไฟสีม่วงน้ำเงินสาดลงมาจากรางไฟบนเพดาน',
     }),
     height: 'full',
+    // Hai đường đi song song ngay trên ảnh hero: điền biểu mẫu, hoặc gọi
+    // thẳng. Cặp đôi đang chọn nơi cưới thường gọi trước khi điền gì — mà
+    // trước bản này số hotline chỉ nằm trong câu trả lời CUỐI của khối Hỏi
+    // đáp, tức sau khi đã cuộn gần hết trang.
+    cta: anchor('#tu-van', {
+      vi: 'Nhận tư vấn tiệc cưới',
+      en: 'Talk to the wedding team',
+      zh: '咨询婚礼团队',
+      ko: '웨딩 상담 신청',
+      ja: 'ウエディング相談',
+      th: 'ปรึกษาทีมงานแต่งงาน',
+    }),
+    secondaryCta: linkOut(
+      'tel:+842033848777',
+      loc({
+        vi: 'Gọi 2033 848 777',
+        en: 'Call 2033 848 777',
+        zh: '致电 2033 848 777',
+        ko: '2033 848 777 전화',
+        ja: '2033 848 777 に電話',
+        th: 'โทร 2033 848 777',
+      }),
+      false,
+    ),
+    // Bốn con số neo đáy hero. Mọi số tra được ở `CAPACITY_ROWS` phía trên
+    // hoặc ở đoạn giới thiệu đã duyệt ("hai phòng ballroom và ba phòng họp
+    // chức năng, tổng sức chứa gần 2.000 khách"). Bản thiết kế có ô thứ năm
+    // "Từ 400.000đ / khách" — giá do người thiết kế tự đặt, không đưa lên.
+    facts: [
+      {
+        _type: 'fact',
+        _key: key('f'),
+        value: same('768 m²'),
+        label: loc({
+          vi: 'Sảnh lớn nhất',
+          en: 'Largest hall',
+          zh: '最大宴会厅',
+          ko: '가장 큰 홀',
+          ja: '最大のホール',
+          th: 'ห้องใหญ่สุด',
+        }),
+      },
+      {
+        _type: 'fact',
+        _key: key('f'),
+        value: n(1000),
+        label: loc({
+          vi: 'Khách tiệc đứng',
+          en: 'Standing guests',
+          zh: '鸡尾酒会式',
+          ko: '칵테일식',
+          ja: 'カクテル形式',
+          th: 'แบบค็อกเทล',
+        }),
+      },
+      {
+        _type: 'fact',
+        _key: key('f'),
+        value: same('5'),
+        label: loc({
+          vi: 'Sảnh & phòng tiệc',
+          en: 'Halls & rooms',
+          zh: '宴会厅与会议室',
+          ko: '홀·회의실',
+          ja: 'ホールと会議室',
+          th: 'ห้องจัดงาน',
+        }),
+      },
+      {
+        // Dấu ngã có chủ ý: đoạn giới thiệu ghi "GẦN 2.000 khách". Bỏ dấu đi
+        // là biến một con số xấp xỉ thành một cam kết.
+        _type: 'fact',
+        _key: key('f'),
+        value: loc({
+          vi: '~2.000',
+          en: '~2,000',
+          zh: '~2,000',
+          ko: '~2,000',
+          ja: '~2,000',
+          th: '~2,000',
+        }),
+        label: loc({
+          vi: 'Tổng sức chứa',
+          en: 'Total capacity',
+          zh: '总容纳人数',
+          ko: '총 수용 인원',
+          ja: '総収容人数',
+          th: 'ความจุรวม',
+        }),
+      },
+    ],
+  },
+  {
+    // Thanh mục lục dính. Mỗi `anchor` phải trùng đúng id khối đích phát ra
+    // — xem mô tả field trong `sanity/schemaTypes/sections/pageNavSection.ts`.
+    //
+    // KHÔNG có mục cho khối câu chuyện: nó nằm ngay dưới hero, ai cũng gặp
+    // đầu tiên, và một liên kết nhảy tới thứ đang ở trước mắt chỉ chiếm chỗ.
+    // Cũng không có mục "Đặt hẹn" vì nút bên phải đã trỏ đúng vào đó.
+    _type: 'pageNavSection',
+    _key: 'sec-nav',
+    links: [
+      {
+        _type: 'navLink',
+        _key: key('nv'),
+        anchor: 'khong-gian',
+        label: loc({
+          vi: 'Không gian',
+          en: 'Spaces',
+          zh: '场地',
+          ko: '공간',
+          ja: '会場',
+          th: 'พื้นที่',
+        }),
+      },
+      {
+        _type: 'navLink',
+        _key: key('nv'),
+        anchor: 'suc-chua',
+        label: loc({
+          vi: 'Sức chứa',
+          en: 'Capacity',
+          zh: '容纳人数',
+          ko: '수용 인원',
+          ja: '収容人数',
+          th: 'ความจุ',
+        }),
+      },
+      {
+        _type: 'navLink',
+        _key: key('nv'),
+        anchor: 'quy-trinh',
+        label: loc({
+          vi: 'Quy trình',
+          en: 'How it works',
+          zh: '流程',
+          ko: '진행 절차',
+          ja: 'ご利用の流れ',
+          th: 'ขั้นตอน',
+        }),
+      },
+      {
+        // Khối thư viện tự sinh id từ `album._id`
+        // (`galleryAlbum.tiec-cuoi` -> `#album-tiec-cuoi`), xem
+        // `GalleryCarouselSection`.
+        _type: 'navLink',
+        _key: key('nv'),
+        anchor: 'album-tiec-cuoi',
+        label: loc({
+          vi: 'Thư viện',
+          en: 'Gallery',
+          zh: '图库',
+          ko: '갤러리',
+          ja: 'ギャラリー',
+          th: 'แกลเลอรี',
+        }),
+      },
+      {
+        _type: 'navLink',
+        _key: key('nv'),
+        anchor: 'faq',
+        label: loc({
+          vi: 'Hỏi đáp',
+          en: 'FAQ',
+          zh: '常见问题',
+          ko: '자주 묻는 질문',
+          ja: 'よくある質問',
+          th: 'คำถามที่พบบ่อย',
+        }),
+      },
+    ],
+    cta: anchor('#tu-van', {
+      vi: 'Nhận tư vấn',
+      en: 'Get in touch',
+      zh: '联系我们',
+      ko: '상담 신청',
+      ja: 'お問い合わせ',
+      th: 'ติดต่อเรา',
+    }),
   },
   {
     _type: 'imageTextSection',
@@ -620,14 +899,107 @@ const weddingSections = [
       ja: '白いクロスの円卓に高く積み上げたシャンパンタワー。傍らにピンクのバラとユーカリのブーケ、背後には宴席を整えたボールルームが広がる',
       th: 'ทาวเวอร์แชมเปญวางซ้อนสูงบนโต๊ะกลมปูผ้าขาว ข้าง ๆ เป็นช่อกุหลาบสีชมพูกับใบยูคาลิปตัส ด้านหลังคือบอลรูมที่จัดโต๊ะจัดเลี้ยงไว้เต็มห้อง',
     }),
+    // Ảnh phụ đè lên góc ảnh chính. Mô tả alt lấy NGUYÊN VĂN từ
+    // `scripts/content/thu-vien.ts` — cùng một tấm ảnh thì phải cùng một mô
+    // tả; viết lại bằng chữ khác là mở đường cho hai bản trôi khỏi nhau.
+    secondaryImage: image('Royal-Ha-Long-Gallery-Wedding-15.jpg', {
+      vi: 'Bánh cưới bốn tầng đặt trên khăn kim tuyến, hoa hồng phấn đổ xuống một bên, phông sao đen phía sau',
+      en: 'A four-tier wedding cake on a sequinned cloth, blush roses spilling down one side against a dark star curtain',
+      zh: '四层婚礼蛋糕摆在亮片桌布上，一侧垂落粉玫瑰，背景是深色星幕',
+      ko: '시퀸 천 위의 4단 웨딩 케이크, 한쪽으로 흘러내린 연분홍 장미와 어두운 별무늬 커튼',
+      ja: 'スパンコールのクロスに置いた四段のウエディングケーキ、片側に流れる淡いピンクの薔薇と暗い星幕',
+      th: 'เค้กแต่งงานสี่ชั้นบนผ้าปักเลื่อม กุหลาบสีชมพูอ่อนไหลลงด้านหนึ่ง ฉากหลังผ้าม่านดาวสีเข้ม',
+    }),
+    // Ba câu trả lời cho "vì sao cưới ở ĐÂY". Mỗi câu tra ngược được về nội
+    // dung đã duyệt: câu 1 = phần chia sảnh trong mô tả `hallHaLong` /
+    // `hallHoangGia`, câu 2 = `faq-stay`, câu 3 = `faq-contact`. Không câu
+    // nào hứa dịch vụ chưa kiểm chứng được (MC, thử thực đơn, trang trí
+    // trọn gói) — bản thiết kế có, ở đây thì không.
+    highlights: [
+      {
+        _type: 'highlight',
+        _key: key('hl'),
+        title: loc({
+          vi: 'Lễ thành hôn và tiệc tối liền kề nhau',
+          en: 'Ceremony and dinner side by side',
+          zh: '婚礼仪式与晚宴相邻举行',
+          ko: '예식과 만찬을 나란히',
+          ja: '挙式と披露宴を隣り合わせで',
+          th: 'พิธีและงานเลี้ยงอยู่ติดกัน',
+        }),
+        text: loc({
+          vi: 'Ballroom chia được bằng vách ngăn, nên hai nghi thức diễn ra ở hai không gian liền nhau trong cùng một buổi.',
+          en: 'The ballrooms divide by partition, so both parts of the day happen in adjoining spaces in one evening.',
+          zh: '宴会厅可用活动隔断分隔，两个环节能在相邻空间于同一晚完成。',
+          ko: '볼룸은 파티션으로 나뉘어, 두 순서를 같은 저녁 나란한 공간에서 진행할 수 있습니다.',
+          ja: 'ボールルームは可動間仕切りで分割できるため、二つの儀礼を同じ夜、隣り合う空間で行えます。',
+          th: 'บอลรูมแบ่งด้วยผนังกั้นได้ ทั้งสองช่วงของงานจึงจัดในพื้นที่ติดกันภายในคืนเดียว',
+        }),
+      },
+      {
+        _type: 'highlight',
+        _key: key('hl'),
+        title: loc({
+          vi: 'Khách ở xa nghỉ ngay tại khách sạn',
+          en: 'Guests from afar stay on site',
+          zh: '远道宾客就近入住',
+          ko: '먼 곳에서 온 하객도 같은 곳에서 숙박',
+          ja: '遠方の招待客もそのまま宿泊',
+          th: 'แขกจากต่างถิ่นพักในที่เดียวกัน',
+        }),
+        text: loc({
+          vi: 'Cung Hội nghị nằm trong khuôn viên Royal Hạ Long Hotel ở Bãi Cháy — không phải di chuyển giữa nơi nghỉ và nơi tổ chức.',
+          en: 'The Convention Palace sits inside the grounds of Royal Ha Long Hotel in Bai Chay — no travel between where you sleep and where you celebrate.',
+          zh: '会议宫就在拜寨 Royal Ha Long Hotel 的园区内，住宿与场地之间无需奔波。',
+          ko: '컨벤션 팰리스는 바이짜이 Royal Ha Long Hotel 부지 안에 있어, 숙소와 예식장 사이를 오갈 필요가 없습니다.',
+          ja: 'コンベンションパレスはバイチャイのRoyal Ha Long Hotel敷地内にあり、宿泊先と会場の間を移動する必要がありません。',
+          th: 'คอนเวนชัน พาเลซ อยู่ในพื้นที่ของ Royal Ha Long Hotel ที่บ๊ายจ๋าย จึงไม่ต้องเดินทางระหว่างที่พักกับสถานที่จัดงาน',
+        }),
+      },
+      {
+        _type: 'highlight',
+        _key: key('hl'),
+        title: loc({
+          vi: 'Một bộ phận lo từ lúc xem sảnh',
+          en: 'One team from the first viewing',
+          zh: '从看场地起由同一团队负责',
+          ko: '홀 답사부터 같은 담당자가',
+          ja: '会場見学から同じ担当者が',
+          th: 'ทีมเดียวดูแลตั้งแต่เข้าชมห้อง',
+        }),
+        text: loc({
+          vi: 'Bộ phận tiệc cưới nhận cả việc dẫn xem sảnh lẫn đặt tiệc — một số điện thoại, một đầu mối.',
+          en: 'The wedding team handles both the site visit and the booking — one number, one point of contact.',
+          zh: '婚礼部门同时负责带看场地与预订事宜——一个电话，一个对接人。',
+          ko: '웨딩팀이 홀 안내와 예약을 함께 맡습니다 — 전화 한 번, 창구 하나.',
+          ja: 'ウエディング担当が会場のご案内とご予約の両方を承ります。ご連絡先は一つです。',
+          th: 'ฝ่ายงานแต่งงานดูแลทั้งการพาชมห้องและการจอง ติดต่อเบอร์เดียว จุดเดียว',
+        }),
+      },
+    ],
     imageSide: 'left',
     tone: 'white',
     imageFit: 'cover',
   },
   {
-    _type: 'cardGridSection',
+    // Trước bản này là `cardGridSection` — thẻ ẢNH có chữ đè lên. Kiểu đó
+    // hợp với một lưới điểm đến (trang chủ), nhưng ở đây mỗi thẻ mang bốn
+    // con số và chữ đè lên ảnh thì mô tả bị `line-clamp-2` cắt còn hai dòng
+    // — đúng ràng buộc mà chú thích của ba thẻ cũ phải viết ra để né.
+    //
+    // Đổi sang `hallListSection` còn bỏ được một bản chép: ba thẻ cũ viết
+    // lại tay "768 m² — tiệc ngồi 550 khách" trong khi chính ba document
+    // `hall.*` đã giữ `areaSqm`, `dimensions` và `specs`. Hai bản số liệu
+    // cho cùng ba sảnh là chỗ chắc chắn sẽ lệch nhau.
+    _type: 'hallListSection',
     _key: 'sec-spaces',
-    heading: loc({
+    layout: 'cards',
+    halls: [
+      { _type: 'reference', _key: key('h'), _ref: 'hall.ha-long' },
+      { _type: 'reference', _key: key('h'), _ref: 'hall.hoang-gia' },
+      { _type: 'reference', _key: key('h'), _ref: 'hall.royal-bay-lounge' },
+    ],
+    eyebrow: loc({
       vi: 'Không gian tổ chức tiệc',
       en: 'Spaces for the celebration',
       zh: '婚宴场地',
@@ -635,81 +1007,203 @@ const weddingSections = [
       ja: '披露宴の会場',
       th: 'พื้นที่สำหรับงานฉลอง',
     }),
-    subheading: loc({
-      vi: 'Ba lựa chọn trong cùng một toà nhà — từ bữa gặp mặt hai gia đình tới tiệc cưới nghìn khách.',
-      en: 'Three choices in a single building — from a lunch between two families to a thousand-guest reception.',
-      zh: '同一栋楼里的三种选择——从两家人的见面餐叙，到千人婚宴。',
-      ko: '한 건물 안의 세 가지 선택 — 두 집안의 상견례부터 천 명 규모의 피로연까지.',
-      ja: '同じ建物の中に三つの選択肢 — 両家の顔合わせから千名規模の披露宴まで。',
-      th: 'สามทางเลือกในอาคารเดียว ตั้งแต่มื้ออาหารพบปะของสองครอบครัว ไปจนถึงงานเลี้ยงหนึ่งพันท่าน',
+    heading: loc({
+      vi: 'Ba lựa chọn trong cùng một toà nhà',
+      en: 'Three choices in a single building',
+      zh: '同一栋楼里的三种选择',
+      ko: '한 건물 안의 세 가지 선택',
+      ja: '同じ建物の中に三つの選択肢',
+      th: 'สามทางเลือกในอาคารเดียว',
     }),
-    columns: 3,
-    cards: [
+    description: loc({
+      vi: 'Từ bữa gặp mặt hai gia đình tới tiệc cưới nghìn khách — tất cả nằm trong Cung Hội nghị, cách phòng nghỉ vài bước chân.',
+      en: 'From a lunch between two families to a thousand-guest reception — all inside the Convention Palace, a few steps from the rooms.',
+      zh: '从两家人的见面餐叙到千人婚宴，全部在会议宫内，距客房仅几步之遥。',
+      ko: '두 집안의 상견례부터 천 명 규모의 피로연까지, 모두 컨벤션 팰리스 안에 있으며 객실에서 몇 걸음 거리입니다.',
+      ja: '両家の顔合わせから千名規模の披露宴まで、すべてコンベンションパレスの中にあり、客室から数歩です。',
+      th: 'ตั้งแต่มื้ออาหารพบปะของสองครอบครัว ไปจนถึงงานเลี้ยงหนึ่งพันท่าน ทั้งหมดอยู่ในคอนเวนชัน พาเลซ ห่างจากห้องพักเพียงไม่กี่ก้าว',
+    }),
+  },
+  {
+    // Bảng tra sức chứa có thanh trượt. Số lấy từ `PICKER_ROWS`, và
+    // `assertCapacityRowsAgree()` đối chiếu từng ô với `CAPACITY_ROWS` lúc
+    // chạy script.
+    //
+    // KHÔNG lấy số của bản thiết kế: nó ghi Ha Long lớp học 500 (thật 430),
+    // Ha Long 1 tiệc đứng 450 (thật 300), Hoang Gia nhà hát 700 (thật 360),
+    // Bái Tử Long 1 tiệc đứng 70 (thật 50), và gán cho Royal/Bay Lounge ba
+    // kiểu kê bàn mà sơ đồ mặt bằng để trống. "Tiệc ngồi" là cột duy nhất
+    // bản thiết kế ghi đúng.
+    _type: 'capacityPickerSection',
+    _key: 'sec-capacity',
+    eyebrow: loc({
+      vi: 'Sức chứa',
+      en: 'Capacity',
+      zh: '容纳人数',
+      ko: '수용 인원',
+      ja: '収容人数',
+      th: 'ความจุ',
+    }),
+    heading: loc({
+      vi: 'Bao nhiêu khách thì vừa sảnh nào?',
+      en: 'How many guests fit where?',
+      zh: '多少位客人适合哪个厅？',
+      ko: '몇 명이면 어느 홀이 맞을까요?',
+      ja: '何名なら、どの会場が合うか',
+      th: 'แขกกี่ท่าน เหมาะกับห้องไหน',
+    }),
+    description: loc({
+      vi: 'Kéo thanh dưới đây theo số khách bạn dự kiến — những sảnh còn chỗ sẽ sáng lên.',
+      en: 'Drag the slider to the number of guests you expect — the halls that still fit will light up.',
+      zh: '拖动下方滑块至您预计的客人数，仍可容纳的厅会亮起。',
+      ko: '예상 하객 수에 맞춰 아래 막대를 움직여 보세요. 수용 가능한 홀이 밝게 표시됩니다.',
+      ja: 'ご予定の人数までスライダーを動かしてください。対応できる会場が明るく表示されます。',
+      th: 'เลื่อนแถบด้านล่างไปที่จำนวนแขกที่คาดไว้ ห้องที่ยังรองรับได้จะสว่างขึ้น',
+    }),
+    caption: loc({
+      vi: 'Sức chứa tối đa theo kiểu bố trí',
+      en: 'Maximum capacity by layout',
+      zh: '各布置方式下的最大容纳人数',
+      ko: '배치별 최대 수용 인원',
+      ja: 'レイアウト別の最大収容人数',
+      th: 'ความจุสูงสุดตามรูปแบบการจัด',
+    }),
+    // Vị trí thanh trượt lúc mở trang. 350 = sức chứa tiệc ngồi của Hoang
+    // Gia Ball Room, tức một đám cưới cỡ vừa — điển hình hơn 1.000 (chỉ một
+    // sảnh với tới) hay 16 (mọi hàng đều sáng, thanh trượt không nói gì).
+    defaultGuests: 350,
+    headers: {
+      name: loc({
+        vi: 'Sảnh',
+        en: 'Hall',
+        zh: '厅',
+        ko: '홀',
+        ja: '会場',
+        th: 'ห้อง',
+      }),
+      area: loc({
+        vi: 'Diện tích',
+        en: 'Area',
+        zh: '面积',
+        ko: '면적',
+        ja: '面積',
+        th: 'พื้นที่',
+      }),
+      // Bốn nhãn kiểu bố trí dùng CHUNG hằng số với bảng tra cứu đầy đủ của
+      // trang Cung Hội nghị — hai trang gọi cùng một kiểu kê bàn bằng hai
+      // chữ khác nhau là thứ khách nhận ra ngay khi bấm qua lại.
+      banquet: loc(L_BANQUET),
+      cocktail: loc(L_COCKTAIL),
+      theatre: loc(L_THEATRE),
+      classroom: loc(L_CLASSROOM),
+    },
+    rows: capacityPickerRows,
+  },
+  {
+    // Bốn bước, KHÔNG phải năm như bản thiết kế: bước "Thử thực đơn" đã bỏ
+    // vì không có nguồn nào trong dự án nói khách sạn có dịch vụ nếm thử
+    // thực đơn — một lời hứa dịch vụ sai thì khách phát hiện ra đúng lúc họ
+    // đã tin nó.
+    //
+    // Bước 1 lấy lời hứa hồi đáp từ `successMessage` của chính biểu mẫu
+    // ("sớm nhất"), không phải "trong ngày làm việc" như bản thiết kế thêm.
+    _type: 'processSection',
+    _key: 'sec-process',
+    eyebrow: loc({
+      vi: 'Quy trình',
+      en: 'How it works',
+      zh: '流程',
+      ko: '진행 절차',
+      ja: 'ご利用の流れ',
+      th: 'ขั้นตอน',
+    }),
+    heading: loc({
+      vi: 'Từ lần gọi đầu tiên tới ngày cưới',
+      en: 'From the first call to the wedding day',
+      zh: '从第一通电话到婚礼当天',
+      ko: '첫 통화부터 결혼식 당일까지',
+      ja: '最初のお電話から挙式当日まで',
+      th: 'จากสายแรกถึงวันแต่งงาน',
+    }),
+    steps: [
       {
-        _type: 'card',
-        _key: 'card-ha-long',
-        title: same('Ha Long Ball Room'),
-        // Mô tả thẻ bị `line-clamp-2` cắt (xem CardGridSection) — đo ở 1440px
-        // thì khung chữ cao 46px, ba dòng là mất dòng cuối. Giữ đúng hai dòng
-        // Ở CẢ SÁU ngôn ngữ (đo lại bằng scrollHeight === clientHeight); phần
-        // chia sảnh đã nói đủ ở danh sách sảnh và ở FAQ.
-        description: loc({
-          vi: '768 m² — tiệc ngồi 550 khách hoặc tiệc đứng 1.000 khách.',
-          en: '768 m² — 550 guests seated at a banquet, or 1,000 standing.',
-          zh: '768 m² — 宴会式 550 位客人，鸡尾酒会式 1,000 位。',
-          ko: '768 m² — 연회식 550명, 칵테일식 1,000명.',
-          ja: '768 m² — バンケット550名、カクテル1,000名。',
-          th: '768 ตร.ม. — จัดเลี้ยง 550 ท่าน หรือค็อกเทล 1,000 ท่าน',
+        _type: 'step',
+        _key: key('st'),
+        title: loc({
+          vi: 'Liên hệ & nhận tư vấn',
+          en: 'Get in touch',
+          zh: '联系与咨询',
+          ko: '문의 및 상담',
+          ja: 'お問い合わせとご相談',
+          th: 'ติดต่อและรับคำปรึกษา',
         }),
-        image: image('Royal-Ha-Long-Wedding-07.jpg', {
-          vi: 'Tiệc cưới kín khách trong ballroom: các bàn tròn phủ khăn trắng thắt nơ vàng, cô dâu đứng trên sân khấu trước phông hoa trắng và màn hình LED, đèn chùm pha lê sáng khắp trần',
-          en: 'A ballroom packed for a wedding banquet: round tables in white linen with gold sashes, the bride on stage before a white floral backdrop and LED screen, crystal chandeliers lit across the ceiling',
-          zh: '宾客满座的婚宴现场：铺白色桌布、系金色椅背结的圆桌，新娘站在白色花墙与 LED 屏前的舞台上，水晶吊灯照亮整个天花板',
-          ko: '하객으로 가득 찬 결혼 피로연: 흰 리넨에 금색 새시를 두른 원형 테이블, 흰 꽃 배경과 LED 스크린 앞 무대에 선 신부, 천장을 밝히는 크리스털 샹들리에',
-          ja: '満席の披露宴。白いクロスに金のサッシュを結んだ円卓が並び、白い花のバックドロップとLEDスクリーンの前の舞台に新婦が立つ。天井にはクリスタルシャンデリアが灯る',
-          th: 'งานเลี้ยงแต่งงานที่แขกเต็มบอลรูม โต๊ะกลมปูผ้าขาวผูกโบว์สีทอง เจ้าสาวยืนบนเวทีหน้าฉากดอกไม้สีขาวและจอ LED โคมระย้าคริสตัลส่องสว่างทั่วเพดาน',
+        description: loc({
+          vi: 'Gọi hotline (+84) 2033 848 777 hoặc để lại thông tin ở biểu mẫu bên dưới. Bộ phận tiệc cưới sẽ liên hệ lại trong thời gian sớm nhất.',
+          en: 'Call (+84) 2033 848 777 or leave your details in the form below. The wedding team will be in touch shortly.',
+          zh: '致电 (+84) 2033 848 777，或在下方表单留下联系方式，婚礼部门将尽快与您联系。',
+          ko: '(+84) 2033 848 777로 전화하시거나 아래 양식에 연락처를 남겨 주세요. 웨딩팀이 곧 연락드립니다.',
+          ja: '(+84) 2033 848 777 にお電話いただくか、下のフォームにご連絡先をお残しください。ウエディング担当より追ってご連絡いたします。',
+          th: 'โทร (+84) 2033 848 777 หรือฝากข้อมูลไว้ในแบบฟอร์มด้านล่าง ฝ่ายงานแต่งงานจะติดต่อกลับโดยเร็วที่สุด',
         }),
       },
       {
-        _type: 'card',
-        _key: 'card-hoang-gia',
-        title: same('Hoang Gia Ball Room'),
-        description: loc({
-          vi: '672 m² — tiệc ngồi 350 khách hoặc tiệc đứng 650 khách.',
-          en: '672 m² — 350 guests seated at a banquet, or 650 standing.',
-          zh: '672 m² — 宴会式 350 位客人，鸡尾酒会式 650 位。',
-          ko: '672 m² — 연회식 350명, 칵테일식 650명.',
-          ja: '672 m² — バンケット350名、カクテル650名。',
-          th: '672 ตร.ม. — จัดเลี้ยง 350 ท่าน หรือค็อกเทล 650 ท่าน',
+        _type: 'step',
+        _key: key('st'),
+        title: loc({
+          vi: 'Xem sảnh tại chỗ',
+          en: 'See the halls in person',
+          zh: '实地看场',
+          ko: '현장 답사',
+          ja: '会場の下見',
+          th: 'เข้าชมห้องจริง',
         }),
-        image: image('Royal-Ha-Long-Gallery-Convention-19.jpg', {
-          vi: 'Sảnh tiệc trên thảm đỏ hoa văn vàng: các bàn tròn phủ khăn trắng với ghế thắt nơ vàng, rèm đỏ dọc tường và đèn chùm pha lê trên trần',
-          en: 'A banquet hall on red carpet patterned in gold: round tables in white linen with gold-sashed chairs, red drapes along the walls and crystal chandeliers overhead',
-          zh: '铺着金色花纹红地毯的宴会厅：白色桌布圆桌配金色椅背结的座椅，墙面挂红色帷幔，天花板悬水晶吊灯',
-          ko: '금색 문양의 붉은 카펫 위 연회장: 흰 리넨 원형 테이블과 금색 리본을 묶은 의자, 벽을 따라 드리운 붉은 커튼, 천장의 크리스털 샹들리에',
-          ja: '金の紋様が入った赤い絨毯の宴会場。白いクロスの円卓と金のサッシュを結んだ椅子、壁沿いの赤いドレープ、天井のクリスタルシャンデリア',
-          th: 'ห้องจัดเลี้ยงบนพรมแดงลายทอง โต๊ะกลมปูผ้าขาวกับเก้าอี้ผูกโบว์สีทอง ผ้าม่านสีแดงตลอดแนวผนัง และโคมระย้าคริสตัลบนเพดาน',
+        description: loc({
+          vi: 'Đặt lịch tham quan Cung Hội nghị để xem sảnh thật và cách chia sảnh theo số khách của bạn.',
+          en: 'Book a visit to the Convention Palace to see the halls themselves and how they divide for your guest count.',
+          zh: '预约参观会议宫，实地查看宴会厅，以及按您的客人数分隔场地的方式。',
+          ko: '컨벤션 팰리스 방문을 예약해 홀을 직접 보고, 하객 수에 맞춘 분할 방식을 확인하세요.',
+          ja: 'コンベンションパレスの見学をご予約いただき、実際の会場と、ご人数に合わせた分割の仕方をご確認ください。',
+          th: 'นัดเข้าชมคอนเวนชัน พาเลซ เพื่อดูห้องจริงและวิธีแบ่งห้องตามจำนวนแขกของคุณ',
         }),
       },
       {
-        _type: 'card',
-        _key: 'card-lounge',
-        title: same('Royal / Bay Lounge'),
-        description: loc({
-          vi: 'Hai phòng 36 m² — bàn tròn 16 khách hoặc bàn dài 18 khách.',
-          en: 'Two 36 m² rooms — 16 at a round table, or 18 at a long one.',
-          zh: '两间 36 m² — 圆桌 16 位客人或长桌 18 位。',
-          ko: '36 m² 두 개 — 원형 테이블 16명, 긴 테이블 18명.',
-          ja: '36 m²が2室 — 円卓16名、長テーブル18名。',
-          th: 'สองห้อง 36 ตร.ม. — โต๊ะกลม 16 ท่าน หรือโต๊ะยาว 18 ท่าน',
+        _type: 'step',
+        _key: key('st'),
+        title: loc({
+          vi: 'Chốt sảnh và ngày',
+          en: 'Settle the hall and date',
+          zh: '确定场地与日期',
+          ko: '홀과 날짜 확정',
+          ja: '会場と日取りの決定',
+          th: 'สรุปห้องและวันจัดงาน',
         }),
-        image: image('Royal-Ha-Long-Gallery-Convention-26.jpg', {
-          vi: 'Phòng khách nhỏ: hai hàng ghế bành bọc trắng quanh những bàn trà mặt đồng, tường ốp trắng phào chỉ vàng, tranh phong cảnh và một chùm đèn giữa trần',
-          en: 'A small lounge: two rows of white armchairs around brass-topped coffee tables, white panelled walls with gilt mouldings, a landscape painting and a single chandelier at the centre of the ceiling',
-          zh: '小型会客厅：两排白色扶手椅围着铜面茶几，白色护墙板配金色线脚，墙上挂风景画，天花板中央一盏吊灯',
-          ko: '작은 라운지: 황동 상판 티테이블을 둘러싼 흰색 안락의자 두 줄, 금색 몰딩을 두른 흰 패널 벽, 풍경화 한 점과 천장 가운데의 샹들리에',
-          ja: '小さなラウンジ。真鍮天板のティーテーブルを囲む白いアームチェアが二列、金のモールディングを施した白い羽目板の壁、風景画、天井中央のシャンデリア',
-          th: 'เลานจ์ขนาดเล็ก เก้าอี้นวมสีขาวสองแถวล้อมโต๊ะกลางหน้าทองเหลือง ผนังบุไม้สีขาวคาดคิ้วทอง ภาพวาดทิวทัศน์ และโคมระย้าหนึ่งช่อกลางเพดาน',
+        description: loc({
+          vi: 'Chọn sảnh theo số khách — 768 m², 672 m² hoặc hai phòng 36 m² — rồi giữ ngày tổ chức.',
+          en: 'Choose the hall that fits your numbers — 768 m², 672 m² or the two 36 m² rooms — and hold your date.',
+          zh: '按客人数选择场地——768 m²、672 m² 或两间 36 m² 的小厅——并锁定日期。',
+          ko: '하객 수에 맞는 홀 — 768 m², 672 m², 또는 36 m² 두 개 — 을 고르고 날짜를 확정합니다.',
+          ja: 'ご人数に合う会場（768 m²、672 m²、または36 m²の2室）をお選びいただき、日取りを押さえます。',
+          th: 'เลือกห้องตามจำนวนแขก — 768 ตร.ม. 672 ตร.ม. หรือสองห้องขนาด 36 ตร.ม. — แล้วจองวันไว้',
+        }),
+      },
+      {
+        _type: 'step',
+        _key: key('st'),
+        title: loc({
+          vi: 'Ngày cưới',
+          en: 'The wedding day',
+          zh: '婚礼当天',
+          ko: '결혼식 당일',
+          ja: '挙式当日',
+          th: 'วันแต่งงาน',
+        }),
+        description: loc({
+          vi: 'Lễ thành hôn và tiệc tối diễn ra ở hai không gian liền kề trong cùng một buổi; khách ở xa nghỉ ngay trong khuôn viên khách sạn.',
+          en: 'Ceremony and dinner run in adjoining spaces across one evening, with guests from out of town staying on the hotel grounds.',
+          zh: '仪式与晚宴在同一晚于相邻空间进行，远道宾客就住在酒店园区内。',
+          ko: '예식과 만찬이 같은 저녁 나란한 공간에서 이어지고, 먼 곳에서 온 하객은 호텔 부지 안에서 묵습니다.',
+          ja: '挙式と披露宴は同じ夜、隣り合う空間で執り行われ、遠方の招待客はホテル敷地内にご宿泊いただけます。',
+          th: 'พิธีและงานเลี้ยงจัดในพื้นที่ติดกันภายในคืนเดียว ส่วนแขกจากต่างถิ่นพักอยู่ในพื้นที่ของโรงแรม',
         }),
       },
     ],
@@ -726,10 +1220,157 @@ const weddingSections = [
       th: 'งานแต่งงานที่จัดขึ้นที่นี่',
     }),
     album: { _type: 'reference', _ref: 'galleryAlbum.tiec-cuoi' },
+    // Lưới khảm thay dải cuộn ngang: đây là khối thư viện DUY NHẤT của
+    // trang, và chín ảnh trong một tầm mắt nói được "không khí ở đây thế
+    // nào" nhanh hơn mười tám ảnh phải vuốt từng cái. Trang /our-gallery có
+    // sáu album liên tiếp nên vẫn giữ `carousel`.
+    layout: 'mosaic',
+    // Dải tối duy nhất của trang, đặt giữa hai dải kem. Ảnh cưới nổi hẳn
+    // lên, và một trang dài chín màn hình toàn nền sáng có được một nhịp
+    // nghỉ. Không đặt ở khối khác: hai dải tối cách nhau vài màn hình đọc
+    // thành lỗi bố cục chứ không thành nhịp.
+    tone: 'ink',
+    cta: linkTo('page.our-gallery', loc({
+      vi: 'Xem toàn bộ thư viện',
+      en: 'See the full gallery',
+      zh: '查看完整图库',
+      ko: '전체 갤러리 보기',
+      ja: 'ギャラリーをすべて見る',
+      th: 'ดูแกลเลอรีทั้งหมด',
+    })),
+  },
+  {
+    _type: 'leadFormSection',
+    _key: 'sec-form',
+    heading: loc({
+      vi: 'Nhận tư vấn tiệc cưới',
+      en: 'Talk to the wedding team',
+      zh: '咨询婚礼团队',
+      ko: '웨딩팀과 상담하기',
+      ja: 'ウエディング担当に相談する',
+      th: 'ปรึกษาทีมงานแต่งงาน',
+    }),
+    description: loc({
+      vi: 'Để lại thông tin, bộ phận tiệc cưới của Royal Hạ Long sẽ liên hệ tư vấn thực đơn, sảnh tiệc và báo giá theo đúng ngày bạn dự định tổ chức.',
+      en: 'Leave your details and the wedding team at Royal Ha Long Hotel will call you back to go through menus, halls and a quotation for the date you have in mind.',
+      zh: '留下联系方式，Royal Ha Long Hotel 的婚礼部门会按您预定的日期，为您介绍菜单、宴会厅并提供报价。',
+      ko: '연락처를 남겨 주시면 Royal Ha Long Hotel 웨딩팀이 희망하시는 날짜에 맞춰 메뉴와 연회장, 견적을 안내해 드립니다.',
+      ja: 'ご連絡先をお残しください。Royal Ha Long Hotelのウエディング担当より、ご希望の日程に合わせてメニュー、会場、お見積もりをご案内いたします。',
+      th: 'ฝากข้อมูลติดต่อไว้ แล้วฝ่ายงานแต่งงานของ Royal Ha Long Hotel จะติดต่อกลับเพื่อแนะนำเมนู ห้องจัดเลี้ยง และใบเสนอราคาตามวันที่คุณตั้งใจจัดงาน',
+    }),
+    // Hai cột: cách liên hệ bên trái, biểu mẫu bên phải. Biểu mẫu không đổi
+    // field nào — `formType: 'wedding'` vẫn chạy nguyên đường dữ liệu cũ qua
+    // `app/actions/lead.ts`.
+    layout: 'split',
+    eyebrow: loc({
+      vi: 'Đặt hẹn xem sảnh',
+      en: 'Book a viewing',
+      zh: '预约看场',
+      ko: '홀 답사 예약',
+      ja: '会場見学のご予約',
+      th: 'นัดเข้าชมห้อง',
+    }),
+    // Bốn cách liên hệ NHANH HƠN biểu mẫu. Số và địa chỉ email lấy từ
+    // `faq-contact` ngay trên — cùng một nguồn, không gõ lại.
+    contacts: [
+      {
+        _type: 'contactItem',
+        _key: key('ct'),
+        href: 'tel:+842033848777',
+        label: loc({
+          vi: 'Hotline tiệc cưới',
+          en: 'Wedding hotline',
+          zh: '婚礼热线',
+          ko: '웨딩 전용 전화',
+          ja: 'ウエディング専用ダイヤル',
+          th: 'สายด่วนงานแต่งงาน',
+        }),
+        value: same('(+84) 2033 848 777'),
+      },
+      {
+        _type: 'contactItem',
+        _key: key('ct'),
+        href: 'tel:+84904030222',
+        label: loc({
+          vi: 'Di động / Zalo',
+          en: 'Mobile / Zalo',
+          zh: '手机 / Zalo',
+          ko: '휴대전화 / Zalo',
+          ja: '携帯 / Zalo',
+          th: 'มือถือ / Zalo',
+        }),
+        value: same('(+84) 90 4030 222'),
+      },
+      {
+        _type: 'contactItem',
+        _key: key('ct'),
+        href: 'mailto:info@royalhalonghotel.com',
+        label: loc({
+          vi: 'Email',
+          en: 'Email',
+          zh: '邮箱',
+          ko: '이메일',
+          ja: 'メール',
+          th: 'อีเมล',
+        }),
+        value: same('info@royalhalonghotel.com'),
+      },
+      {
+        // Không có `href`: địa chỉ hiện dưới dạng chữ thường, không phải
+        // liên kết. Chỉ đường đã có khối bản đồ riêng của site lo.
+        _type: 'contactItem',
+        _key: key('ct'),
+        label: loc({
+          vi: 'Địa điểm',
+          en: 'Location',
+          zh: '地点',
+          ko: '위치',
+          ja: '場所',
+          th: 'สถานที่',
+        }),
+        value: loc({
+          vi: 'Cung Hội nghị Quốc tế Hoàng Gia, Royal Hạ Long Hotel, Bãi Cháy, Hạ Long',
+          en: 'Royal International Convention Palace, Royal Ha Long Hotel, Bai Chay, Ha Long',
+          zh: '皇家国际会议宫，Royal Ha Long Hotel，拜寨，下龙',
+          ko: '로열 인터내셔널 컨벤션 팰리스, Royal Ha Long Hotel, 바이짜이, 하롱',
+          ja: 'ロイヤル国際コンベンションパレス、Royal Ha Long Hotel、バイチャイ、ハロン',
+          th: 'รอยัล อินเตอร์เนชั่นแนล คอนเวนชัน พาเลซ, Royal Ha Long Hotel, บ๊ายจ๋าย, ฮาลอง',
+        }),
+      },
+    ],
+    formType: 'wedding',
+    successMessage: loc({
+      vi: 'Cảm ơn bạn. Bộ phận tiệc cưới sẽ liên hệ lại trong thời gian sớm nhất.',
+      en: 'Thank you. Our wedding team will be in touch shortly.',
+      zh: '感谢您的留言，婚礼部门将尽快与您联系。',
+      ko: '감사합니다. 웨딩팀이 곧 연락드리겠습니다.',
+      ja: 'ありがとうございます。ウエディング担当より、追ってご連絡いたします。',
+      th: 'ขอบคุณ ฝ่ายงานแต่งงานจะติดต่อกลับโดยเร็วที่สุด',
+    }),
   },
   {
     _type: 'faqSection',
     _key: 'sec-faq',
+    // Hai cột: tiêu đề và số hotline đứng yên bên trái suốt lúc khách đọc
+    // sáu câu hỏi bên phải. Ở bản một cột hẹp, tiêu đề trôi khỏi màn hình
+    // ngay từ câu thứ ba.
+    layout: 'split',
+    eyebrow: loc({
+      vi: 'Hỏi đáp',
+      en: 'FAQ',
+      zh: '常见问题',
+      ko: '자주 묻는 질문',
+      ja: 'よくある質問',
+      th: 'คำถามที่พบบ่อย',
+    }),
+    description: blockLoc({
+      vi: ['Không thấy câu trả lời bạn cần? Gọi (+84) 2033 848 777 — bộ phận tiệc cưới trả lời trực tiếp.'],
+      en: ['Not finding the answer you need? Call (+84) 2033 848 777 and the wedding team will answer directly.'],
+      zh: ['没有找到您需要的答案？致电 (+84) 2033 848 777，婚礼部门会直接为您解答。'],
+      ko: ['원하시는 답을 찾지 못하셨나요? (+84) 2033 848 777로 전화 주시면 웨딩팀이 직접 안내해 드립니다.'],
+      ja: ['お探しの答えが見つかりませんか。(+84) 2033 848 777 にお電話いただければ、ウエディング担当が直接お答えします。'],
+      th: ['ไม่พบคำตอบที่ต้องการ? โทร (+84) 2033 848 777 ฝ่ายงานแต่งงานจะตอบให้โดยตรง'],
+    }),
     heading: loc({
       vi: 'Câu hỏi thường gặp về tiệc cưới',
       en: 'Wedding questions, answered',
@@ -952,35 +1593,6 @@ const weddingSections = [
     ],
   },
   {
-    _type: 'leadFormSection',
-    _key: 'sec-form',
-    heading: loc({
-      vi: 'Nhận tư vấn tiệc cưới',
-      en: 'Talk to the wedding team',
-      zh: '咨询婚礼团队',
-      ko: '웨딩팀과 상담하기',
-      ja: 'ウエディング担当に相談する',
-      th: 'ปรึกษาทีมงานแต่งงาน',
-    }),
-    description: loc({
-      vi: 'Để lại thông tin, bộ phận tiệc cưới của Royal Hạ Long sẽ liên hệ tư vấn thực đơn, sảnh tiệc và báo giá theo đúng ngày bạn dự định tổ chức.',
-      en: 'Leave your details and the wedding team at Royal Ha Long Hotel will call you back to go through menus, halls and a quotation for the date you have in mind.',
-      zh: '留下联系方式，Royal Ha Long Hotel 的婚礼部门会按您预定的日期，为您介绍菜单、宴会厅并提供报价。',
-      ko: '연락처를 남겨 주시면 Royal Ha Long Hotel 웨딩팀이 희망하시는 날짜에 맞춰 메뉴와 연회장, 견적을 안내해 드립니다.',
-      ja: 'ご連絡先をお残しください。Royal Ha Long Hotelのウエディング担当より、ご希望の日程に合わせてメニュー、会場、お見積もりをご案内いたします。',
-      th: 'ฝากข้อมูลติดต่อไว้ แล้วฝ่ายงานแต่งงานของ Royal Ha Long Hotel จะติดต่อกลับเพื่อแนะนำเมนู ห้องจัดเลี้ยง และใบเสนอราคาตามวันที่คุณตั้งใจจัดงาน',
-    }),
-    formType: 'wedding',
-    successMessage: loc({
-      vi: 'Cảm ơn bạn. Bộ phận tiệc cưới sẽ liên hệ lại trong thời gian sớm nhất.',
-      en: 'Thank you. Our wedding team will be in touch shortly.',
-      zh: '感谢您的留言，婚礼部门将尽快与您联系。',
-      ko: '감사합니다. 웨딩팀이 곧 연락드리겠습니다.',
-      ja: 'ありがとうございます。ウエディング担当より、追ってご連絡いたします。',
-      th: 'ขอบคุณ ฝ่ายงานแต่งงานจะติดต่อกลับโดยเร็วที่สุด',
-    }),
-  },
-  {
     _type: 'ctaBandSection',
     _key: 'sec-cta',
     heading: loc({
@@ -1015,12 +1627,68 @@ const weddingSections = [
       ja: 'コンベンションパレス',
       th: 'คอนเวนชัน พาเลซ',
     })),
+    // Đường quay lại biểu mẫu ở cuối trang: nút chính dẫn SANG trang khác,
+    // nên nếu chỉ có nó thì khách đọc hết trang tiệc cưới mà muốn liên hệ
+    // phải cuộn ngược lên.
+    secondaryCta: anchor('#tu-van', {
+      vi: 'Đặt lịch xem sảnh',
+      en: 'Book a viewing',
+      zh: '预约看场',
+      ko: '홀 답사 예약',
+      ja: '会場見学のご予約',
+      th: 'นัดเข้าชมห้อง',
+    }),
   },
 ]
 
 /* ================================================================== *
  * BA PHÒNG HỘI NGHỊ
  * ================================================================== */
+
+/**
+ * Kích thước phòng. `vi` dùng dấu PHẨY cho phần thập phân ('5,2 × 7 m'),
+ * năm ngôn ngữ còn lại dùng dấu chấm — đúng quy ước mà `CAPACITY_ROWS` đang
+ * giữ ở hai cột `dimVi` / `dimEn`.
+ */
+function dims(vi: string, intl: string): Six {
+  return { vi: `${vi} m`, en: `${intl} m`, zh: `${intl} m`, ko: `${intl} m`, ja: `${intl} m`, th: `${intl} ม.` }
+}
+
+/**
+ * Các dòng "nhãn — giá trị" hiện trên THẺ sảnh (kiểu bày `cards` của
+ * `hallListSection`), nối nhau bằng nét chấm.
+ *
+ * Khác `layouts()` ngay dưới: `layouts` là sáu kiểu kê bàn MICE đầy đủ,
+ * dữ liệu tra cứu của trang Cung Hội nghị. `specs` là vài dòng CHỌN cho
+ * thẻ, và nó nói được cả thứ không phải kiểu kê bàn — "Chia nhỏ — 2 sảnh
+ * 384 m²", dòng mà `layouts` không có chỗ nào diễn đạt.
+ */
+function specs(rows: [Six, Six][]) {
+  return rows.map(([label, value]) => ({
+    _type: 'hallSpec',
+    _key: key('sp'),
+    label: loc(label),
+    value: loc(value),
+  }))
+}
+
+const L_SPLIT: Six = {
+  vi: 'Chia nhỏ',
+  en: 'Divides into',
+  zh: '可分隔为',
+  ko: '분할 시',
+  ja: '分割時',
+  th: 'แบ่งเป็น',
+}
+
+const L_USED_FOR: Six = {
+  vi: 'Dùng cho',
+  en: 'Used for',
+  zh: '适用于',
+  ko: '용도',
+  ja: '用途',
+  th: 'เหมาะกับ',
+}
 
 type LayoutSpec = [Six, number]
 
@@ -1037,7 +1705,23 @@ const hallHaLong = {
   name: same('Ha Long Ball Room'),
   slug: slugAll('ha-long'),
   areaSqm: 768,
+  dimensions: dims('32 × 24', '32 × 24'),
   capacity: guests(1000),
+  specs: specs([
+    [L_BANQUET, guests(550)],
+    [L_COCKTAIL, guests(1000)],
+    [
+      L_SPLIT,
+      {
+        vi: '2 sảnh 384 m²',
+        en: 'two 384 m² halls',
+        zh: '两个 384 m² 分厅',
+        ko: '384 m² 홀 2개',
+        ja: '384 m²のホール2室',
+        th: 'สองห้อง 384 ตร.ม.',
+      },
+    ],
+  ]),
   layouts: layouts([
     [L_BANQUET, 550],
     [L_CLASSROOM, 430],
@@ -1104,7 +1788,23 @@ const hallHoangGia = {
   name: same('Hoang Gia Ball Room'),
   slug: slugAll('hoang-gia'),
   areaSqm: 672,
+  dimensions: dims('21 × 32', '21 × 32'),
   capacity: guests(650),
+  specs: specs([
+    [L_BANQUET, guests(350)],
+    [L_COCKTAIL, guests(650)],
+    [
+      L_SPLIT,
+      {
+        vi: '504 / 336 / 168 m²',
+        en: '504 / 336 / 168 m²',
+        zh: '504 / 336 / 168 m²',
+        ko: '504 / 336 / 168 m²',
+        ja: '504 / 336 / 168 m²',
+        th: '504 / 336 / 168 ตร.ม.',
+      },
+    ],
+  ]),
   layouts: layouts([
     [L_BANQUET, 350],
     [L_CLASSROOM, 220],
@@ -1171,6 +1871,45 @@ const hallLounge = {
   name: same('Royal / Bay Lounge'),
   slug: slugAll('royal-bay-lounge'),
   areaSqm: 36,
+  dimensions: dims('5,2 × 7', '5.2 × 7'),
+  // Hai phòng CÙNG 36 m² nhưng kê khác nhau, nên hai dòng riêng chứ không
+  // gộp thành "16 – 18 khách": ai đang tính bàn cho lễ dạm ngõ cần biết
+  // phòng nào kê được bàn tròn, phòng nào bàn dài.
+  specs: specs([
+    [
+      { vi: 'Bay Lounge', en: 'Bay Lounge', zh: 'Bay Lounge', ko: 'Bay Lounge', ja: 'Bay Lounge', th: 'Bay Lounge' },
+      {
+        vi: 'bàn tròn 16 khách',
+        en: 'round table, 16 guests',
+        zh: '圆桌 16 位客人',
+        ko: '원형 테이블 16명',
+        ja: '円卓16名',
+        th: 'โต๊ะกลม 16 ท่าน',
+      },
+    ],
+    [
+      { vi: 'Royal Lounge', en: 'Royal Lounge', zh: 'Royal Lounge', ko: 'Royal Lounge', ja: 'Royal Lounge', th: 'Royal Lounge' },
+      {
+        vi: 'bàn dài 18 khách',
+        en: 'long table, 18 guests',
+        zh: '长桌 18 位客人',
+        ko: '긴 테이블 18명',
+        ja: '長テーブル18名',
+        th: 'โต๊ะยาว 18 ท่าน',
+      },
+    ],
+    [
+      L_USED_FOR,
+      {
+        vi: 'dạm ngõ, gặp mặt hai gia đình',
+        en: 'engagement and family lunches',
+        zh: '订婚与两家见面餐叙',
+        ko: '약혼식과 상견례',
+        ja: '結納・両家の顔合わせ',
+        th: 'งานหมั้นและมื้อพบปะสองครอบครัว',
+      },
+    ],
+  ]),
   capacity: loc({
     vi: '16 – 18 khách',
     en: '16 – 18 guests',
@@ -1266,6 +2005,12 @@ const hallLounge = {
  * ================================================================== */
 
 async function main() {
+  // Chốt chặn số liệu, chạy TRƯỚC mọi lượt ghi: nếu `PICKER_ROWS` lệch
+  // `CAPACITY_ROWS` dù một ô, script dừng ngay kèm tên phòng và tên cột —
+  // thay vì đẩy lên Sanity hai con số khác nhau cho cùng một sảnh rồi để
+  // chúng cùng hiện trên một trang.
+  assertCapacityRowsAgree()
+
   console.log('\n— Ghi hai trang —')
   await patchDoc('page.royal-international-convention-palace', {
     title: loc({

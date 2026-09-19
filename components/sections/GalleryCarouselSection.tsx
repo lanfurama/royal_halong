@@ -10,9 +10,29 @@ import { urlFor } from '@/sanity/lib/image'
 import { SanityImage } from '@/components/ui/SanityImage'
 import { Container } from '@/components/ui/Container'
 import { SectionHeading } from '@/components/ui/SectionHeading'
+import { SmartLink } from '@/components/ui/SmartLink'
 
-export function GalleryCarouselSection({ heading, album, lang }: any & { lang: Locale }) {
+/**
+ * Số ô của bố cục khảm. 9 = 1 ô lớn (2×2) + 8 ô nhỏ, vừa đúng một hình chữ
+ * nhật 4 cột × 3 hàng không còn lỗ. Con số khác sẽ để lại ô trống ở hàng
+ * cuối — thấy rõ vì nền tối làm mỗi lỗ thành một mảng đen.
+ */
+const MOSAIC_TILES = 9
+
+/** Dưới ngưỡng này thì mọi ô bằng nhau: một ô 2×2 giữa ba ô 1×1 không đọc ra
+ * "ảnh chính", nó đọc ra "lưới bị lỗi". */
+const MOSAIC_MIN_FOR_FEATURE = 5
+
+export function GalleryCarouselSection({
+  heading,
+  album,
+  layout = 'carousel',
+  tone = 'cream',
+  cta,
+  lang,
+}: any & { lang: Locale }) {
   const images: any[] = album?.images ?? []
+  const dark = tone === 'ink'
   const albumTitle = t<string>(album?.title, lang)
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start', containScroll: 'trimSnaps' })
   const [openAt, setOpenAt] = useState<number | null>(null)
@@ -57,7 +77,136 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
   const anchorId = albumId ? `album-${albumId.replace(/^galleryAlbum\./, '')}` : undefined
 
   return (
-    <section id={anchorId} className="bg-cream-alt py-16 lg:py-24">
+    <section
+      id={anchorId}
+      className={`py-16 lg:py-24 ${dark ? 'bg-ink on-dark' : 'bg-cream-alt'}`}
+    >
+      {layout === 'mosaic' ? (
+        /* --- Bố cục khảm ---
+           Lưới tĩnh thay cho dải cuộn ngang. Dùng cho trang có MỘT khối thư
+           viện là điểm dừng chính (tiệc cưới): ở đó khách muốn quét nhanh
+           mười ảnh cùng lúc để cảm nhận không khí, không phải vuốt từng ảnh.
+           Trang /our-gallery với sáu album liên tiếp thì ngược lại — sáu lưới
+           khảm chồng nhau là một trang dài 12.000px, nên `carousel` vẫn là
+           mặc định. */
+        <Container size="wide">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+            {/* `mb-0`: `SectionHeading` tự mang `mb-10 lg:mb-14`, mà ở đây
+                khoảng cách dưới do hàng flex cha lo — không bỏ thì tiêu đề
+                cách lưới ảnh gần gấp đôi phần còn lại của trang. */}
+            <div className="[&>div]:mb-0">
+              <SectionHeading
+                heading={heading ?? album?.title}
+                lang={lang}
+                align="left"
+                tone={dark ? 'dark' : 'light'}
+              />
+            </div>
+            {cta && (
+              <SmartLink
+                link={cta}
+                lang={lang}
+                className={`inline-flex min-h-11 items-center text-xs font-semibold tracking-[0.14em] uppercase ${
+                  dark ? 'text-gold-hi' : 'text-gold-text'
+                }`}
+              />
+            )}
+          </div>
+
+          <ul className="grid list-none grid-cols-2 gap-3.5 lg:grid-cols-4">
+            {images.slice(0, MOSAIC_TILES).map((image, index) => {
+              const feature = index === 0 && images.length >= MOSAIC_MIN_FOR_FEATURE
+              return (
+                <li key={image._key ?? index} className={feature ? 'col-span-2 row-span-2' : ''}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenAt(index)}
+                    className="group relative block h-full w-full overflow-hidden"
+                  >
+                    {/* Cùng lý do với thumbnail của carousel: tên truy cập
+                        của nút đã có ở `sr-only`, nên ảnh đặt `decorative`
+                        để screen reader không đọc chồng mô tả dài lên đó.
+                        Mô tả đầy đủ nằm ở lightbox. */}
+                    <span className="sr-only">{`${ui('zoomImage', lang)} ${index + 1}`}</span>
+                    <SanityImage
+                      image={image}
+                      lang={lang}
+                      sizes={
+                        feature
+                          ? '(max-width: 1024px) 100vw, 50vw'
+                          : '(max-width: 1024px) 50vw, 25vw'
+                      }
+                      decorative
+                      className="aspect-square h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                    />
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </Container>
+      ) : (
+        <GalleryCarousel
+          {...{
+            heading,
+            album,
+            albumTitle,
+            images,
+            lang,
+            emblaRef,
+            scrollPrev,
+            scrollNext,
+            selected,
+            snapCount,
+            controlClasses,
+            setOpenAt,
+          }}
+        />
+      )}
+
+      <Lightbox
+        open={openAt !== null}
+        index={openAt ?? 0}
+        close={() => setOpenAt(null)}
+        slides={images.map((image) => ({
+          src: urlFor(image).width(1800).url(),
+          alt: t<string>(image.alt, lang) ?? albumTitle ?? '',
+        }))}
+        // `yet-another-react-lightbox` mặc định gắn nhãn tiếng Anh cứng
+        // ("Close" / "Previous" / "Next") cho ba nút điều khiển, ở MỌI ngôn
+        // ngữ. Mô tả ảnh đã dịch đủ sáu thứ tiếng rồi mà ba nút bấm quanh nó
+        // vẫn tiếng Anh thì người dùng screen reader tiếng Trung/Hàn/Nhật/Thái
+        // nghe một câu tiếng Anh xen giữa — và đây là lớp phủ chiếm trọn màn
+        // hình, không có gì khác để bấm.
+        labels={{
+          Close: ui('closeLightbox', lang),
+          Previous: ui('prevImage', lang),
+          Next: ui('nextImage', lang),
+        }}
+      />
+    </section>
+  )
+}
+
+/** Dải ảnh cuộn ngang — bố cục mặc định, tách ra để hai bố cục không lồng
+ * nhau trong một khối JSX dài 150 dòng. State và lightbox vẫn do component
+ * cha giữ: cả hai bố cục mở CÙNG một lightbox trên cùng một mảng ảnh. */
+function GalleryCarousel({
+  heading,
+  album,
+  albumTitle,
+  images,
+  lang,
+  emblaRef,
+  scrollPrev,
+  scrollNext,
+  selected,
+  snapCount,
+  controlClasses,
+  setOpenAt,
+}: any) {
+  return (
+    <>
       <Container size="wide">
         <SectionHeading heading={heading ?? album?.title} lang={lang} />
       </Container>
@@ -81,7 +230,7 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
           }}
         >
           <div className="flex gap-3 lg:gap-4">
-            {images.map((image, index) => (
+            {images.map((image: any, index: number) => (
               <button
                 key={image._key ?? index}
                 type="button"
@@ -163,27 +312,6 @@ export function GalleryCarouselSection({ heading, album, lang }: any & { lang: L
           </svg>
         </button>
       </Container>
-
-      <Lightbox
-        open={openAt !== null}
-        index={openAt ?? 0}
-        close={() => setOpenAt(null)}
-        slides={images.map((image) => ({
-          src: urlFor(image).width(1800).url(),
-          alt: t<string>(image.alt, lang) ?? albumTitle ?? '',
-        }))}
-        // `yet-another-react-lightbox` mặc định gắn nhãn tiếng Anh cứng
-        // ("Close" / "Previous" / "Next") cho ba nút điều khiển, ở MỌI ngôn
-        // ngữ. Mô tả ảnh đã dịch đủ sáu thứ tiếng rồi mà ba nút bấm quanh nó
-        // vẫn tiếng Anh thì người dùng screen reader tiếng Trung/Hàn/Nhật/Thái
-        // nghe một câu tiếng Anh xen giữa — và đây là lớp phủ chiếm trọn màn
-        // hình, không có gì khác để bấm.
-        labels={{
-          Close: ui('closeLightbox', lang),
-          Previous: ui('prevImage', lang),
-          Next: ui('nextImage', lang),
-        }}
-      />
-    </section>
+    </>
   )
 }

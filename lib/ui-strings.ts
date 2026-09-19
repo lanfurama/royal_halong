@@ -1,4 +1,4 @@
-import { LOCALES, type Locale } from './i18n'
+import { LOCALES, INTL_LOCALES, type Locale } from './i18n'
 
 /**
  * Chuỗi giao diện — thứ KHÔNG nằm trong Sanity vì biên tập viên không sửa
@@ -499,6 +499,52 @@ const DICT = {
     ja: '読み込み中',
     th: 'กำลังโหลด',
   },
+
+  // Tên truy cập của thanh mục lục trong trang (`PageNavSection`). Trang
+  // /wedding có HAI vùng `<nav>` ở đầu trang — menu chính của header và
+  // thanh này. Trùng tên thì người dùng screen reader nghe "navigation" hai
+  // lần mà không biết vùng nào dẫn đi đâu; cùng lý do với `mainMenuMore`.
+  onThisPage: {
+    vi: 'Mục lục trang',
+    en: 'On this page',
+    zh: '本页目录',
+    ko: '이 페이지 목차',
+    ja: 'このページの目次',
+    th: 'สารบัญหน้านี้',
+  },
+
+  // Nhãn thanh trượt số khách (`CapacityPickerSection`).
+  expectedGuests: {
+    vi: 'Số khách dự kiến',
+    en: 'Expected guests',
+    zh: '预计客人数',
+    ko: '예상 하객 수',
+    ja: '予定人数',
+    th: 'จำนวนแขกโดยประมาณ',
+  },
+
+  // Huy hiệu trên hàng sảnh còn nhận được số khách đang chọn. Một TÍNH TỪ
+  // ngắn, không phải câu — nó đứng ngay sau tên sảnh trong cùng một ô.
+  capacityFits: {
+    vi: 'Vừa',
+    en: 'Fits',
+    zh: '可容纳',
+    ko: '가능',
+    ja: '収容可',
+    th: 'รองรับได้',
+  },
+
+  // Ô gạch ngang trong bảng sức chứa = "sảnh này không kê được kiểu đó".
+  // Screen reader đọc "—" thành "gạch ngang" hoặc bỏ qua hẳn, nên ô rỗng
+  // phải có tên truy cập riêng (`aria-label`), không để mỗi dấu gạch.
+  capacityNotOffered: {
+    vi: 'Không áp dụng',
+    en: 'Not offered',
+    zh: '不适用',
+    ko: '해당 없음',
+    ja: '対応なし',
+    th: 'ไม่รองรับ',
+  },
 } satisfies Record<string, Record<Locale, string>>
 
 export type UiKey = keyof typeof DICT
@@ -516,17 +562,79 @@ export function ui(key: UiKey, lang: Locale): string {
  * tiếng Thái cũng vậy ("2명" / "2 ท่าน") — nên đây là phép ghép "số + đơn vị"
  * chứ không phải phép chia số ít/số nhiều.
  */
-const GUEST_UNIT: Record<Locale, (n: number) => string> = {
+const GUEST_UNIT: Record<Locale, (n: string) => string> = {
   vi: (n) => `${n} khách`,
-  en: (n) => `${n} ${n === 1 ? 'guest' : 'guests'}`,
+  // Số nhiều tiếng Anh đọc từ CHUỖI đã định dạng, không phải từ số: `'1'` là
+  // trường hợp duy nhất dùng số ít, và `Intl` không chèn dấu phân tách vào
+  // một chữ số nên phép so sánh này luôn đúng.
+  en: (n) => `${n} ${n === '1' ? 'guest' : 'guests'}`,
   zh: (n) => `${n} 位`,
   ko: (n) => `${n}명`,
   ja: (n) => `${n}名`,
   th: (n) => `${n} ท่าน`,
 }
 
+/**
+ * Số có dấu phân tách hàng nghìn theo đúng quy ước từng ngôn ngữ: `vi` dùng
+ * dấu CHẤM (`1.000`), năm ngôn ngữ còn lại dùng dấu phẩy. Giống hệt hàm
+ * `n()` trong `scripts/content/build.ts` — cùng một quy tắc, một bên cho nội
+ * dung seed sẵn, một bên cho con số tính ra lúc chạy.
+ *
+ * Trước bản này `guestsLabel` nội suy số THÔ, nên nó đúng với thanh đặt
+ * phòng (1–6 khách, không có hàng nghìn) và sẽ ra "1000 khách" ngay khi có
+ * nơi thứ hai dùng số lớn — đúng chỗ khối tra sức chứa đang dùng.
+ */
+function formatCount(count: number, lang: Locale): string {
+  return new Intl.NumberFormat(INTL_LOCALES[lang]).format(count)
+}
+
 export function guestsLabel(count: number, lang: Locale): string {
-  return GUEST_UNIT[lang](count)
+  return GUEST_UNIT[lang](formatCount(count, lang))
+}
+
+/**
+ * Câu tóm tắt dưới bảng sức chứa (`CapacityPickerSection`): "Với 420 khách,
+ * 4 trong 8 không gian còn phù hợp."
+ *
+ * Là HÀM chứ không phải chuỗi trong `DICT` vì nó chèn hai con số vào giữa
+ * câu, và trật tự từ khác nhau ở sáu ngôn ngữ — ghép `"Với " + n + " khách"`
+ * ở nơi gọi là cách chắc chắn để bốn ngôn ngữ còn lại ra câu sai ngữ pháp.
+ * Cùng lối viết với `GUEST_UNIT` ngay trên.
+ *
+ * `guests` nhận chuỗi ĐÃ định dạng (qua `guestsLabel`) chứ không phải số
+ * thô: nó đã mang sẵn đơn vị đúng lượng từ của từng ngôn ngữ.
+ */
+const CAPACITY_NOTE: Record<Locale, (guests: string, fit: string, total: string) => string> = {
+  vi: (g, fit, total) => `Với ${g}, ${fit} trong ${total} không gian còn phù hợp.`,
+  en: (g, fit, total) => `For ${g}, ${fit} of ${total} spaces still fit.`,
+  zh: (g, fit, total) => `按 ${g} 计算，${total} 个场地中有 ${fit} 个仍可容纳。`,
+  ko: (g, fit, total) => `${g} 기준으로 ${total}개 공간 중 ${fit}개가 가능합니다.`,
+  ja: (g, fit, total) => `${g}の場合、${total}会場のうち${fit}会場が対応できます。`,
+  th: (g, fit, total) => `สำหรับ ${g} มี ${fit} จาก ${total} พื้นที่ที่ยังรองรับได้`,
+}
+
+/** Không sảnh nào đủ chỗ — câu này phải chỉ ra đường đi tiếp, không chỉ báo
+ * "không có kết quả". Trạng thái RỖNG của khối tra sức chứa. */
+const CAPACITY_NO_MATCH: Record<Locale, (guests: string) => string> = {
+  vi: (g) => `Với ${g}, cần ghép nhiều sảnh — bộ phận tiệc cưới sẽ sắp xếp giúp bạn.`,
+  en: (g) => `For ${g} the halls need to be combined — the wedding team will arrange it with you.`,
+  zh: (g) => `按 ${g} 计算需要合并多个厅，婚礼团队会为您安排。`,
+  ko: (g) => `${g} 규모는 여러 홀을 이어서 사용해야 합니다. 웨딩팀이 함께 준비해 드립니다.`,
+  ja: (g) => `${g}規模では複数の会場をつなげる必要があります。ウエディング担当がご相談に応じます。`,
+  th: (g) => `สำหรับ ${g} ต้องใช้หลายห้องรวมกัน ทีมงานจัดงานแต่งงานจะจัดเตรียมให้ท่าน`,
+}
+
+export function capacityNote(
+  guests: string,
+  fit: string,
+  total: string,
+  lang: Locale,
+): string {
+  return CAPACITY_NOTE[lang](guests, fit, total)
+}
+
+export function capacityNoMatch(guests: string, lang: Locale): string {
+  return CAPACITY_NO_MATCH[lang](guests)
 }
 
 // Tự kiểm: mọi mục trong DICT phải có đủ sáu locale. `satisfies` ở trên đã

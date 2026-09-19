@@ -54,7 +54,9 @@ const SECTIONS = `sections[]{
   ...,
   background ${IMAGE},
   image ${IMAGE},
+  secondaryImage ${IMAGE},
   cta ${LINK},
+  secondaryCta ${LINK},
   ${localeBlockWithFigures('content')},
   cards[]{ ..., image ${IMAGE}, cta ${LINK} },
   _type == "galleryCarouselSection" => { album-> { _id, title, images[] ${IMAGE} } },
@@ -68,7 +70,7 @@ const SECTIONS = `sections[]{
     "resolved": select(
       count(halls) > 0 => halls[]->,
       *[_type == "hall"] | order(order asc)
-    )[]{ _id, name, slug, areaSqm, capacity, description, image ${IMAGE} }
+    )[]{ _id, name, slug, areaSqm, dimensions, capacity, specs, description, image ${IMAGE} }
   },
   _type == "postListSection" => {
     "resolved": *[

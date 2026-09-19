@@ -15,6 +15,9 @@ import { LeadFormSection } from './LeadFormSection'
 import { FaqSection } from './FaqSection'
 import { PostListSection } from './PostListSection'
 import { CollapsibleGroup } from './CollapsibleGroup'
+import { PageNavSection } from './PageNavSection'
+import { CapacityPickerSection } from './CapacityPickerSection'
+import { ProcessSection } from './ProcessSection'
 
 const REGISTRY: Record<string, React.ComponentType<any>> = {
   heroSection: HeroSection,
@@ -32,6 +35,9 @@ const REGISTRY: Record<string, React.ComponentType<any>> = {
   leadFormSection: LeadFormSection,
   faqSection: FaqSection,
   postListSection: PostListSection,
+  pageNavSection: PageNavSection,
+  capacityPickerSection: CapacityPickerSection,
+  processSection: ProcessSection,
 }
 
 /**

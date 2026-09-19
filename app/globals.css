@@ -55,6 +55,33 @@
      `:root` ngay dưới `@theme` vì media query không viết được trong `@theme`. */
   --header-h: 6.25rem;
 
+  /* --- Chiều cao header KHI ĐÃ CUỘN ---
+     Khác `--header-h`, và khác có chủ ý. `--header-h` là chỗ trang CHỪA SẴN
+     cho header: một con số đứng yên, cố tình lấy trạng thái cao nhất, để
+     header đổi trạng thái mà không đẩy nội dung (xem
+     `.rhl-header[data-scrolled]`). Nhưng chiều cao THẬT của thanh lúc khách
+     đang cuộn là `--hdr-row` ở trạng thái thu gọn: 5rem, và 5.75rem từ
+     ngưỡng `nav`.
+
+     Thanh mục lục dính (`.rhl-pagenav`) phải bám con số THẬT này. Bám
+     `--header-h` để lại khe 36px giữa đáy header thu gọn và đỉnh thanh — mà
+     cả hai đều là nền kính, nên khe đó không phải màu nền: nội dung trang
+     chạy qua giữa hai thanh.
+
+     Hai giá trị phải khớp `--hdr-row` trong `.rhl-header[data-scrolled]` ở
+     cả hai dải; đổi một bên mà quên bên kia là khe hở quay lại.
+
+     KHAI Ở `@theme`, không phải `:root` phía dưới: media query `73.75rem`
+     nằm GIỮA hai khối đó, và media query KHÔNG cộng độ ưu tiên — một khai
+     báo `:root` đứng sau nó sẽ đè mất giá trị desktop ở mọi bề ngang.
+     `--header-h` ngay trên cũng khai ở đây, cùng lý do. */
+  --header-h-scrolled: 5rem;
+
+  /* Chiều cao thanh mục lục trong trang. Khai ở đây vì HAI nơi ngoài chính
+     nó phải đọc: `scroll-margin-top` của mọi neo trên trang có thanh này, và
+     `--pagenav-h` cộng vào đó. Cùng lý do với `--header-h`. */
+  --pagenav-h: 3.5rem;
+
   /* --- Trục vàng đồng --- */
   /* Vàng chủ đạo: viền, nền nhỏ, icon, và (theo chỉ đạo) cả nhãn eyebrow. */
   --color-gold: #b8892b;
@@ -160,6 +187,8 @@
 @media (min-width: 73.75rem) {
   :root {
     --header-h: 8rem;
+    /* Khớp `--hdr-row` của `.rhl-header[data-scrolled]` ở cùng ngưỡng. */
+    --header-h-scrolled: 5.75rem;
   }
 }
 
@@ -254,6 +283,18 @@
      chiều cao LỚN NHẤT làm chuẩn là đủ an toàn cho mọi trạng thái. */
   :where(section, h2, h3) {
     scroll-margin-top: calc(var(--header-h) + 0.5rem);
+  }
+
+  /* Trang CÓ thanh mục lục dính thì neo phải chừa cả hai thanh: thanh mục
+     lục dính ngay dưới header, nên nhảy tới `#suc-chua` với lề cũ đưa tiêu
+     đề chui đúng 56px xuống dưới nó.
+
+     Viết bằng `:has()` chứ không bằng một class trên `<main>`: thanh mục lục
+     là một section biên tập viên thêm/bỏ trong Studio, không có prop nào
+     truyền tay xuống tới đây. Cùng cơ chế với
+     `body:has(main > .rhl-hero:first-child)` ở trên — CSS tự biết, không cần JS. */
+  body:has(.rhl-pagenav) :where(section, h2, h3) {
+    scroll-margin-top: calc(var(--header-h) + var(--pagenav-h) + 0.5rem);
   }
 
   /* Viền focus mặc định cho MỌI control — link chân trang, chấm carousel,
@@ -918,6 +959,13 @@
     opacity: 0.6;
   }
 
+  /* Trên ảnh hero tối, nét vàng `#b8892b` của SVG chìm hẳn. Không sửa được
+     bằng `color`: màu nằm trong data-URI, nên phải kéo sáng bằng `filter`. */
+  .rhl-ornament--on-dark {
+    opacity: 0.85;
+    filter: brightness(1.55);
+  }
+
   /* Hai nét kẻ ôm hai bên một đứa con (hạt kim cương hoặc huy hiệu). */
   .rhl-rule {
     display: flex;
@@ -971,6 +1019,94 @@
   .rhl-leader > dd {
     flex: 0 1 auto;
     text-align: right;
+  }
+
+  /* -------------------------------------------------------------------------
+     Thanh mục lục trong trang — `components/sections/PageNavSection.tsx`.
+
+     Dính DƯỚI header chứ không phải ở `top: 0`: header là `fixed` (xem
+     `.rhl-header`), nên `top: 0` đưa thanh này chui thẳng xuống dưới nó và
+     khách chỉ thấy một nửa. Con số dùng là `--header-h-scrolled`, KHÔNG phải
+     `--header-h` — lý do ở chỗ khai hai biến đó trong `@theme`.
+
+     Nền kính đặt ở CHÍNH phần tử này được, khác với header: `.rhl-pagenav`
+     không có con `position: fixed` nào (panel menu điện thoại là con của
+     `<header>`, không phải của thanh này), nên containing block mà
+     `backdrop-filter` sinh ra không ảnh hưởng gì. Ghi chú ở `.rhl-header`
+     giải thích vì sao ở TRÊN kia thì không được.
+     ------------------------------------------------------------------------- */
+  .rhl-pagenav {
+    position: sticky;
+    top: var(--header-h-scrolled);
+    z-index: 30;
+    background: rgb(250 246 238 / 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    /* `inset` shadow chứ không phải `border-bottom`: đường kẻ phải nằm TRONG
+       `--pagenav-h`, nếu không mỗi lần dính thanh lại cao hơn đúng 1px và
+       neo cuộn lệch dần. */
+    box-shadow: inset 0 -1px 0 rgb(184 137 43 / 0.22);
+  }
+
+  .rhl-pagenav__link {
+    display: flex;
+    height: var(--pagenav-h);
+    align-items: center;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-body);
+  }
+
+  .rhl-pagenav__link:hover {
+    color: var(--color-gold-deep);
+  }
+
+  /* -------------------------------------------------------------------------
+     Khung thiệp mời — hero biến thể `invitation` (`HeroSection.tsx`).
+
+     Hai đường kẻ lồng nhau + bốn hạt kim cương ở góc, cùng mô-típ giấy tờ
+     khách sạn đã dùng ở màn hình chờ (`.rhl-loader__frame`). Dựng bằng
+     `::before` (nét trong) và bốn `<span>` (hạt góc) thay vì `border` +
+     `outline`: `outline` không nhận offset ÂM nên không vẽ được nét thụt
+     vào, và bốn hạt phải nằm ĐÈ lên nét ngoài chứ không phải cạnh nó.
+     ------------------------------------------------------------------------- */
+  .rhl-frame {
+    position: relative;
+    border: 1px solid rgb(240 215 138 / 0.55);
+  }
+
+  .rhl-frame::before {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 1px solid rgb(240 215 138 / 0.28);
+    pointer-events: none;
+  }
+
+  .rhl-frame__pin {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    background: var(--color-gold-hi);
+    transform: rotate(45deg);
+  }
+
+  .rhl-frame__pin--tl { top: -4px; left: -4px; }
+  .rhl-frame__pin--tr { top: -4px; right: -4px; }
+  .rhl-frame__pin--bl { bottom: -4px; left: -4px; }
+  .rhl-frame__pin--br { bottom: -4px; right: -4px; }
+
+  /* Mảng hoa văn mờ làm nền section. Độ đục .05 — cùng mức DẤU CHÌM của màn
+     hình chờ; cao hơn là thành giấy dán tường và át mất chữ. */
+  .rhl-bloom {
+    position: absolute;
+    background-image: var(--pattern-damask);
+    background-size: 140px 140px;
+    opacity: 0.05;
+    pointer-events: none;
   }
 }
 

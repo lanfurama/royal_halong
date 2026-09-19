@@ -13,6 +13,9 @@ import { bookingWidgetSection } from './bookingWidgetSection'
 import { leadFormSection } from './leadFormSection'
 import { faqSection } from './faqSection'
 import { postListSection } from './postListSection'
+import { pageNavSection } from './pageNavSection'
+import { capacityPickerSection } from './capacityPickerSection'
+import { processSection } from './processSection'
 
 export const sectionTypes = [
   heroSection,
@@ -30,7 +33,10 @@ export const sectionTypes = [
   leadFormSection,
   faqSection,
   postListSection,
+  pageNavSection,
+  capacityPickerSection,
+  processSection,
 ]
 
-/** Tên 15 block, dùng cho field `of` của page.sections và homePage. */
+/** Tên 18 block, dùng cho field `of` của page.sections và homePage. */
 export const SECTION_TYPE_NAMES = sectionTypes.map((s) => s.name)

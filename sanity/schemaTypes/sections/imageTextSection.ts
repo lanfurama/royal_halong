@@ -1,4 +1,4 @@
-import { defineType, defineField } from 'sanity'
+import { defineType, defineField, defineArrayMember } from 'sanity'
 
 export const imageTextSection = defineType({
   name: 'imageTextSection',
@@ -9,6 +9,44 @@ export const imageTextSection = defineType({
     defineField({ name: 'eyebrow', title: 'Chữ nhỏ phía trên', type: 'localeString' }),
     defineField({ name: 'content', title: 'Nội dung', type: 'localeBlock' }),
     defineField({ name: 'image', title: 'Ảnh', type: 'figure', validation: (r) => r.required() }),
+    defineField({
+      name: 'secondaryImage',
+      title: 'Ảnh phụ (đè lên góc ảnh chính)',
+      type: 'figure',
+      description:
+        'Ảnh nhỏ hơn, viền kem, nằm đè lên góc dưới-phải ảnh chính. Khi có ảnh này, ảnh CHÍNH đổi sang khung dọc 4:5 — chọn ảnh dọc cho cả hai. Để trống thì khối giữ đúng một ảnh 4:3 như cũ.',
+    }),
+    defineField({
+      name: 'highlights',
+      title: 'Điểm nhấn (danh sách dưới nội dung)',
+      type: 'array',
+      // Ba mục là nhịp của bản thiết kế; trên bốn thì cột chữ dài hơn cột
+      // ảnh bên cạnh và hai cột `items-center` lệch hẳn nhau.
+      validation: (r) => r.max(4),
+      description:
+        'Vài câu ngắn trả lời "vì sao chọn nơi này", mỗi câu một hạt kim cương vàng. Để trống thì không hiện. Đây KHÔNG phải chỗ viết đoạn văn — phần kể chuyện thuộc về ô Nội dung ở trên.',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'highlight',
+          fields: [
+            defineField({
+              name: 'title',
+              title: 'Vế in đậm',
+              type: 'localeString',
+              validation: (r) => r.required(),
+            }),
+            defineField({
+              name: 'text',
+              title: 'Vế giải thích',
+              type: 'localeString',
+              description: 'Hiện sau một dấu gạch ngang. Để trống thì chỉ có vế in đậm.',
+            }),
+          ],
+          preview: { select: { title: 'title.vi', subtitle: 'text.vi' } },
+        }),
+      ],
+    }),
     defineField({
       name: 'imageSide',
       title: 'Ảnh nằm bên',
