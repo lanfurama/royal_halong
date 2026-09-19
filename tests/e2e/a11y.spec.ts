@@ -11,7 +11,11 @@ type ContrastViolation = { id: string; nodes: { failureSummary?: string }[] }
 // có BỐ CỤC RIÊNG (`components/pages/*Page.tsx`), tức là hai bộ khối không
 // đi qua `SectionRenderer` — chúng không được bảo hiểm bởi bất kỳ trang nào
 // khác trong danh sách này.
-const SAMPLE = ['', 'deluxe', 'casino', 'culinary', 'our-gallery', 'news']
+// `wedding` là trang nhiều CONTROL mới nhất đi qua `SectionRenderer`: thanh
+// mục lục dính, thanh trượt số khách + bảng tự đổi theo nó, lưới ảnh khảm
+// trên nền tối, biểu mẫu và hỏi đáp kiểu hai cột. Không trang nào khác trong
+// danh sách này chạm tới bốn block đó.
+const SAMPLE = ['', 'deluxe', 'casino', 'culinary', 'our-gallery', 'news', 'wedding']
 
 // `components/ui/Reveal.tsx` hiện nội dung dần bằng transition opacity 700ms
 // khi cuộn tới, và đã tôn trọng prefers-reduced-motion sẵn: `reduced` thì
